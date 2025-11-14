@@ -4,10 +4,12 @@ import React from 'react';
 import {
   DollarSign,
   TrendingUp,
-  Zap,
-  Target,
+  TrendingDown,
+  Activity,
+  PlusCircle,
+  BarChart,
+  PieChart,
   LineChart,
-  Info,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -25,12 +27,14 @@ const StatCard = ({
   icon,
   description,
   change,
+  changeColor,
 }: {
   title: string;
   value: string;
   icon: React.ReactNode;
   description: string;
   change?: string;
+  changeColor?: string;
 }) => (
   <Card className="bg-card/60 border-border/60 hover:border-primary/60 transition-colors duration-300 hover:shadow-2xl hover:shadow-primary/10">
     <CardHeader className="pb-2 flex flex-row items-center justify-between">
@@ -44,7 +48,11 @@ const StatCard = ({
     <CardContent>
       <div className="text-3xl font-bold">{value}</div>
       {change && (
-        <p className="text-xs text-green-400 flex items-center gap-1 mt-1">
+        <p
+          className={`text-xs flex items-center gap-1 mt-1 ${
+            changeColor || 'text-muted-foreground'
+          }`}
+        >
           <TrendingUp className="h-4 w-4" />
           {change}
         </p>
@@ -54,72 +62,99 @@ const StatCard = ({
   </Card>
 );
 
+const ChartPlaceholder = ({ title, icon, description }: { title: string, icon: React.ReactNode, description: string }) => (
+    <Card className="col-span-1 lg:col-span-2 min-h-[300px] flex flex-col items-center justify-center bg-card/40 border-border/40 border-dashed">
+        <div className="text-center p-8">
+            <div className="inline-flex items-center justify-center p-3 mb-4 bg-primary/10 rounded-full">
+                {React.cloneElement(icon as React.ReactElement, { className: "h-10 w-10 text-primary" })}
+            </div>
+            <h3 className="text-lg font-semibold">{title}</h3>
+            <p className="text-sm text-muted-foreground mt-1">{description}</p>
+        </div>
+    </Card>
+);
+
+
 export default function Dashboard() {
   const { user } = useUser();
 
   return (
     <div className="space-y-8">
-       <div className="mb-8">
-        <h1 className="text-4xl font-bold flex items-center gap-2">
-          Welcome back, {user?.displayName || 'Thomas'}
-          <span className="text-3xl">👋</span>
-        </h1>
-        <p className="text-muted-foreground mt-2">
-          Here's your financial overview for today.
-        </p>
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h1 className="text-4xl font-bold flex items-center gap-2">
+            Welcome back, {user?.displayName || 'Thomas'}
+            <span className="text-3xl">👋</span>
+          </h1>
+          <p className="text-muted-foreground mt-2">
+            Here's your financial command center.
+          </p>
+        </div>
+        <div className="flex gap-2">
+            <Button variant="outline">
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Link Account
+            </Button>
+            <Button>
+                View Goals
+            </Button>
+        </div>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          title="Portfolio Value"
-          value="$1512.06"
-          description="+$0.00 (0.00%)"
-          change="+$0.00 (0.00%)"
-          icon={<DollarSign className="h-5 w-5" />}
-        />
-        <StatCard
-          title="Holdings"
-          value="2"
-          description="Active positions"
-          icon={<TrendingUp className="h-5 w-5" />}
-        />
-        <StatCard
-          title="Top Mover"
-          value="QQQ"
-          description="+1.43%"
-          change="+1.43%"
-          icon={<Zap className="h-5 w-5" />}
-        />
-        <StatCard
           title="Net Worth"
           value="$24,812"
           description="Up 3.2% this month"
-          icon={<Target className="h-5 w-5" />}
+          change="+ $776"
+          changeColor="text-green-400"
+          icon={<DollarSign className="h-5 w-5" />}
+        />
+        <StatCard
+          title="Assets"
+          value="$38,120"
+          description="Mainly in investments"
+          icon={<TrendingUp className="h-5 w-5" />}
+        />
+        <StatCard
+          title="Liabilities"
+          value="$13,308"
+          description="Primarily student loans"
+          icon={<TrendingDown className="h-5 w-5" />}
+        />
+        <StatCard
+          title="Monthly Cash Flow"
+          value="+$1,250"
+          description="After all expenses"
+          icon={<Activity className="h-5 w-5" />}
         />
       </div>
 
-      <Card className="bg-card/60 border-border/60">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-3">
-            <span className="text-primary">
-              <LineChart className="h-5 w-5" />
-            </span>
-            Daily Update
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p>
-            Your portfolio is actively tracking market movements. Review your
-            holdings regularly to stay informed.
-          </p>
-          <div className="flex items-center gap-2 text-muted-foreground text-sm mt-4">
-            <Info className="h-4 w-4" />
-            <span>Daily insight powered by AI</span>
-            <span className="text-muted-foreground/50">•</span>
-            <span>Refreshes at midnight</span>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <Card className="col-span-1 lg:col-span-2 bg-card/60 border-border/60">
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2"><LineChart className="text-primary"/>Net Worth Over Time</CardTitle>
+                <CardDescription>Your wealth trajectory for the last 12 months.</CardDescription>
+            </CardHeader>
+            <CardContent className="h-[300px] flex items-center justify-center">
+                 <p className="text-muted-foreground">Chart data coming soon...</p>
+            </CardContent>
+        </Card>
+        <ChartPlaceholder title="Asset Allocation" icon={<PieChart />} description="A breakdown of your assets by class (stocks, crypto, real estate, etc)." />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+         <ChartPlaceholder title="Debt Breakdown" icon={<BarChart />} description="A view of your liabilities by type (student loan, credit card, etc)." />
+         <Card className="col-span-1 lg:col-span-3 bg-card/60 border-border/60">
+            <CardHeader>
+                <CardTitle>Recent Transactions</CardTitle>
+                <CardDescription>Your latest financial activities.</CardDescription>
+            </CardHeader>
+            <CardContent className="h-[300px] flex items-center justify-center">
+                 <p className="text-muted-foreground">Transaction data coming soon...</p>
+            </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
