@@ -9,6 +9,25 @@ const config = {
     './src/**/*.{ts,tsx}',
 	],
   prefix: "",
+  // This safelist is for dynamically created classnames in the LifePlanCanvas
+  // ReactFlow custom nodes. We need to tell Tailwind not to purge them.
+  safelist: [
+    'text-orange-400',
+    'text-blue-400',
+    'text-green-400',
+    'text-pink-400',
+    'text-purple-400',
+    'border-orange-400/50',
+    'border-blue-400/50',
+    'border-green-400/50',
+    'border-pink-400/50',
+    'border-purple-400/50',
+    'hover:shadow-orange-400/20',
+    'hover:shadow-blue-400/20',
+    'hover:shadow-green-400/20',
+    'hover:shadow-pink-400/20',
+    'hover:shadow-purple-400/20',
+  ],
   theme: {
     container: {
       center: true,
