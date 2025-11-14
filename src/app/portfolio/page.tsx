@@ -33,6 +33,7 @@ import {
   FilePieChart,
   BrainCircuit,
   Star,
+  AreaChart,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -46,6 +47,9 @@ import React, { useMemo } from 'react';
 import { deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { PortfolioDialog } from '@/components/portfolio/PortfolioDialog';
 import { Skeleton } from '@/components/ui/skeleton';
+import { PortfolioValueChart } from '@/components/portfolio/charts/PortfolioValueChart';
+import { AssetAllocationChart } from '@/components/portfolio/charts/AssetAllocationChart';
+import { SectorDiversificationChart } from '@/components/portfolio/charts/SectorDiversificationChart';
 
 export type Asset = {
   id?: string;
@@ -157,24 +161,31 @@ const AssetRow = ({ asset, totalValue }: { asset: Asset, totalValue: number }) =
 }
 
 const LoadingSkeleton = () => (
-    <Card className="bg-card/60 border-border/60">
-        <CardHeader>
-            <Skeleton className="h-6 w-1/4 mb-2" />
-            <Skeleton className="h-4 w-1/2" />
-        </CardHeader>
-        <CardContent>
-            <div className="space-y-4">
-                {[...Array(3)].map((_, i) => (
-                    <div key={i} className="flex justify-between items-center">
-                        <div className="w-1/4"><Skeleton className="h-5 w-full" /></div>
-                        <div className="w-1/4"><Skeleton className="h-5 w-full" /></div>
-                        <div className="w-1/4"><Skeleton className="h-5 w-full" /></div>
-                        <div className="w-1/6"><Skeleton className="h-5 w-full" /></div>
-                    </div>
-                ))}
-            </div>
-        </CardContent>
-    </Card>
+    <div className="space-y-6">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+             <Card className="bg-card/60 border-border/60"><CardHeader><Skeleton className="h-5 w-2/4 mb-2" /><Skeleton className="h-8 w-3/4" /></CardHeader></Card>
+             <Card className="bg-card/60 border-border/60"><CardHeader><Skeleton className="h-5 w-2/4 mb-2" /><Skeleton className="h-8 w-3/4" /></CardHeader></Card>
+             <Card className="bg-card/60 border-border/60"><CardHeader><Skeleton className="h-5 w-2/4 mb-2" /><Skeleton className="h-8 w-3/4" /></CardHeader></Card>
+        </div>
+         <Card className="bg-card/60 border-border/60">
+            <CardHeader>
+                <Skeleton className="h-6 w-1/4 mb-2" />
+                <Skeleton className="h-4 w-1/2" />
+            </CardHeader>
+            <CardContent>
+                <div className="space-y-4">
+                    {[...Array(3)].map((_, i) => (
+                         <div key={i} className="flex justify-between items-center p-2">
+                            <div className="w-1/4"><Skeleton className="h-5 w-full" /></div>
+                            <div className="w-1/4"><Skeleton className="h-5 w-full" /></div>
+                            <div className="w-1/4"><Skeleton className="h-5 w-full" /></div>
+                            <div className="w-1/6"><Skeleton className="h-5 w-full" /></div>
+                        </div>
+                    ))}
+                </div>
+            </CardContent>
+        </Card>
+    </div>
 );
 
 export default function PortfolioPage() {
@@ -191,21 +202,30 @@ export default function PortfolioPage() {
 
   const { data: assets, isLoading } = useCollection<Asset>(assetsCollection);
   
-  const totalValue = useMemo(() => {
-    if (!assets) return 0;
-    return assets.reduce((acc, asset) => {
+  const { totalValue, totalCost, overallGainLoss, processedAssets } = useMemo(() => {
+    if (!assets) return { totalValue: 0, totalCost: 0, overallGainLoss: 0, processedAssets: [] };
+
+    let runningTotalValue = 0;
+    let runningTotalCost = 0;
+
+    const processed = assets.map(asset => {
+        // Mock price for now
         const price = asset.price || (asset.type === 'Stock' ? Math.random() * 500 : Math.random() * 70000);
-        return acc + (asset.balance * price);
-    }, 0);
+        const value = asset.balance * price;
+        const cost = asset.balance * (asset.averageCost || 0);
+        runningTotalValue += value;
+        runningTotalCost += cost;
+        return { ...asset, price, value };
+    });
+
+    return {
+        totalValue: runningTotalValue,
+        totalCost: runningTotalCost,
+        overallGainLoss: runningTotalValue - runningTotalCost,
+        processedAssets: processed,
+    };
   }, [assets]);
 
-  const totalCost = useMemo(() => {
-    if (!assets) return 0;
-    return assets.reduce((acc, asset) => acc + (asset.balance * (asset.averageCost || 0)), 0);
-  }, [assets]);
-
-  const overallGainLoss = totalValue - totalCost;
-  
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-center mb-8">
@@ -227,114 +247,110 @@ export default function PortfolioPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="analysis" className="w-full">
+      <Tabs defaultValue="overview" className="w-full">
         <TabsList className="grid w-full grid-cols-4 max-w-2xl mb-6">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="analysis">Holdings Analysis</TabsTrigger>
           <TabsTrigger value="insights">AI Insights</TabsTrigger>
           <TabsTrigger value="watchlist">Watchlist</TabsTrigger>
         </TabsList>
-        <TabsContent value="analysis" className="space-y-6">
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            <Card className="bg-card/60 border-border/60 hover:border-primary/60 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Total Value
-                </CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {formatCurrency(totalValue)}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  +1.5% from last month
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="bg-card/60 border-border/60 hover:border-primary/60 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Overall Gain/Loss
-                </CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className={`text-2xl font-bold ${overallGainLoss >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                  {formatCurrency(overallGainLoss)}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Total return since inception
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="bg-card/60 border-border/60 hover:border-primary/60 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">24h Change</CardTitle>
-                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-green-400">
-                  +{formatCurrency(482.19)} (+2.15%)
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Across all holdings
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {isLoading && <LoadingSkeleton />}
-
-          {!isLoading && assets && (
-             <Card className="bg-card/60 border-border/60 hover:border-primary/60 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10">
-                <CardHeader>
-                  <CardTitle>Positions</CardTitle>
-                  <CardDescription>
-                    Your individual investment holdings.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="hover:bg-transparent">
-                        <TableHead>Asset</TableHead>
-                        <TableHead>Sector</TableHead>
-                        <TableHead>Balance</TableHead>
-                        <TableHead>Price</TableHead>
-                        <TableHead>Gain/Loss</TableHead>
-                        <TableHead>24h</TableHead>
-                        <TableHead className="text-right">Allocation</TableHead>
-                        <TableHead className="w-[50px] text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {assets.map(asset => (
-                            <AssetRow key={asset.id} asset={asset} totalValue={totalValue} />
-                        ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-          )}
-        </TabsContent>
+        
         <TabsContent value="overview">
-           <Card className="min-h-[60vh] flex flex-col items-center justify-center bg-card/60 border-border/60 border-dashed">
-            <CardHeader className="text-center">
-              <div className="inline-flex items-center justify-center p-3 mb-4 bg-primary/10 rounded-full">
-                <FilePieChart className="h-12 w-12 text-primary" />
-              </div>
-              <CardTitle className="text-2xl font-bold">Overview Coming Soon</CardTitle>
-              <CardDescription className="text-muted-foreground">
-                This section will provide a high-level visual breakdown of your portfolio.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="max-w-md text-center text-muted-foreground">
-                Expect charts showing asset class diversification, performance over time, and risk analysis.
-              </p>
-            </CardContent>
-          </Card>
+             <PortfolioValueChart />
+        </TabsContent>
+
+        <TabsContent value="analysis" className="space-y-6">
+          {isLoading ? <LoadingSkeleton /> : (
+            <>
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    <Card className="bg-card/60 border-border/60 hover:border-primary/60 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">
+                        Total Value
+                        </CardTitle>
+                        <DollarSign className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">
+                        {formatCurrency(totalValue)}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                        +1.5% from last month
+                        </p>
+                    </CardContent>
+                    </Card>
+                    <Card className="bg-card/60 border-border/60 hover:border-primary/60 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">
+                        Overall Gain/Loss
+                        </CardTitle>
+                        <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className={`text-2xl font-bold ${overallGainLoss >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                        {formatCurrency(overallGainLoss)}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                        Total return since inception
+                        </p>
+                    </CardContent>
+                    </Card>
+                    <Card className="bg-card/60 border-border/60 hover:border-primary/60 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">24h Change</CardTitle>
+                        <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold text-green-400">
+                        +{formatCurrency(482.19)} (+2.15%)
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                        Across all holdings
+                        </p>
+                    </CardContent>
+                    </Card>
+                </div>
+                
+                <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                    <div className="xl:col-span-1">
+                        <AssetAllocationChart assets={processedAssets} />
+                    </div>
+                     <div className="xl:col-span-2">
+                        <SectorDiversificationChart assets={processedAssets} />
+                    </div>
+                </div>
+
+                <Card className="bg-card/60 border-border/60 hover:border-primary/60 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10">
+                    <CardHeader>
+                    <CardTitle>Positions</CardTitle>
+                    <CardDescription>
+                        Your individual investment holdings.
+                    </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                    <Table>
+                        <TableHeader>
+                        <TableRow className="hover:bg-transparent">
+                            <TableHead>Asset</TableHead>
+                            <TableHead>Sector</TableHead>
+                            <TableHead>Balance</TableHead>
+                            <TableHead>Price</TableHead>
+                            <TableHead>Gain/Loss</TableHead>
+                            <TableHead>24h</TableHead>
+                            <TableHead className="text-right">Allocation</TableHead>
+                            <TableHead className="w-[50px] text-right">Actions</TableHead>
+                        </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {processedAssets.map(asset => (
+                                <AssetRow key={asset.id} asset={asset} totalValue={totalValue} />
+                            ))}
+                        </TableBody>
+                    </Table>
+                    </CardContent>
+                </Card>
+            </>
+          )}
         </TabsContent>
          <TabsContent value="insights">
            <Card className="min-h-[60vh] flex flex-col items-center justify-center bg-card/60 border-border/60 border-dashed">
