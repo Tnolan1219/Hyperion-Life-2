@@ -5,6 +5,7 @@ import {
   DollarSign,
   TrendingUp,
   TrendingDown,
+  Wallet,
   Activity,
   PlusCircle,
   BarChart,
@@ -21,60 +22,65 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { useUser } from '@/firebase';
-import { Progress } from '@/components/ui/progress';
+import {
+  Area,
+  AreaChart as RechartsAreaChart,
+  CartesianGrid,
+  XAxis,
+  ResponsiveContainer,
+  Tooltip,
+} from 'recharts';
 
 const StatCard = ({
   title,
   value,
   icon,
   description,
-  change,
-  changeColor,
 }: {
   title: string;
   value: string;
   icon: React.ReactNode;
   description: string;
-  change?: string;
-  changeColor?: string;
 }) => (
-  <Card className="glass hover:border-primary/60 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1">
+  <Card>
     <CardHeader className="pb-2 flex flex-row items-center justify-between">
       <CardTitle className="text-sm font-medium text-muted-foreground">
         {title}
       </CardTitle>
-      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
+      <div className="text-muted-foreground">
         {icon}
       </div>
     </CardHeader>
     <CardContent>
       <div className="text-3xl font-bold">{value}</div>
-      {change && (
-        <p
-          className={`text-xs flex items-center gap-1 mt-1 ${
-            changeColor || 'text-muted-foreground'
-          }`}
-        >
-          <TrendingUp className="h-4 w-4" />
-          {change}
-        </p>
-      )}
       <p className="text-sm text-muted-foreground mt-1">{description}</p>
     </CardContent>
   </Card>
 );
 
-const ChartPlaceholder = ({ title, icon, description }: { title: string, icon: React.ReactNode, description: string }) => (
-    <Card className="col-span-1 lg:col-span-2 min-h-[300px] flex flex-col items-center justify-center glass border-dashed">
-        <div className="text-center p-8">
-            <div className="inline-flex items-center justify-center p-3 mb-4 bg-primary/10 rounded-full">
-                {React.cloneElement(icon as React.ReactElement, { className: "h-10 w-10 text-primary" })}
-            </div>
-            <h3 className="text-lg font-semibold">{title}</h3>
-            <p className="text-sm text-muted-foreground mt-1">{description}</p>
-        </div>
-    </Card>
-);
+const chartData = [
+    { month: 'Jan', value: 18600 },
+    { month: 'Feb', value: 30500 },
+    { month: 'Mar', value: 23700 },
+    { month: 'Apr', value: 19800 },
+    { month: 'May', value: 25100 },
+    { month: 'Jun', value: 34900 },
+    { month: 'Jul', value: 32000 },
+    { month: 'Aug', value: 38000 },
+];
+
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-background/80 backdrop-blur-sm border border-border/50 rounded-lg p-2 shadow-lg">
+        <p className="label text-sm text-muted-foreground">{`${label}`}</p>
+        <p className="intro font-bold text-base text-primary">{`$${new Intl.NumberFormat().format(payload[0].value)}`}</p>
+      </div>
+    );
+  }
+
+  return null;
+};
 
 
 export default function Dashboard() {
@@ -85,21 +91,12 @@ export default function Dashboard() {
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-4xl font-bold flex items-center gap-2">
-            Welcome back, {user?.displayName || 'Thomas'}
+            Good Morning, {user?.displayName || 'Thomas'}
             <span className="text-3xl">👋</span>
           </h1>
           <p className="text-muted-foreground mt-2">
             Here's your financial command center.
           </p>
-        </div>
-        <div className="flex gap-2">
-            <Button variant="outline">
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Link Account
-            </Button>
-            <Button>
-                View Goals
-            </Button>
         </div>
       </div>
 
@@ -107,104 +104,89 @@ export default function Dashboard() {
         <StatCard
           title="Net Worth"
           value="$24,812"
-          description="Up 3.2% this month"
-          change="+ $776"
-          changeColor="text-green-400"
+          description="+3.2% this month"
           icon={<DollarSign className="h-5 w-5" />}
         />
         <StatCard
           title="Assets"
           value="$38,120"
-          description="Mainly in investments"
+          description="Mainly investments"
           icon={<TrendingUp className="h-5 w-5" />}
         />
         <StatCard
           title="Liabilities"
           value="$13,308"
-          description="Primarily student loans"
+          description="Student loans"
           icon={<TrendingDown className="h-5 w-5" />}
         />
         <StatCard
-          title="Monthly Cash Flow"
+          title="Cash Flow"
           value="+$1,250"
-          description="After all expenses"
+          description="After expenses"
           icon={<Activity className="h-5 w-5" />}
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <Card className="col-span-1 lg:col-span-2 glass">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        <Card className="col-span-1 lg:col-span-3">
             <CardHeader>
-                <CardTitle className="flex items-center gap-2"><LineChart className="text-primary"/>Net Worth Over Time</CardTitle>
-                <CardDescription>Your wealth trajectory for the last 12 months.</CardDescription>
+                <CardTitle className="flex items-center gap-2">Statistics</CardTitle>
             </CardHeader>
-            <CardContent className="h-[300px] flex items-center justify-center">
-                 <p className="text-muted-foreground">Chart data coming soon...</p>
+            <CardContent className="h-[350px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                     <RechartsAreaChart data={chartData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                        <defs>
+                            <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.4}/>
+                                <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                            </linearGradient>
+                        </defs>
+                        <XAxis dataKey="month" tickLine={false} axisLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} />
+                        <Tooltip content={<CustomTooltip />} />
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border) / 0.5)" vertical={false} />
+                        <Area type="monotone" dataKey="value" stroke="hsl(var(--primary))" strokeWidth={2} fillOpacity={1} fill="url(#colorValue)" />
+                    </RechartsAreaChart>
+                </ResponsiveContainer>
             </CardContent>
         </Card>
-        <ChartPlaceholder title="Asset Allocation" icon={<PieChart />} description="A breakdown of your assets by class (stocks, crypto, real estate, etc)." />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <Card className="col-span-1 glass">
+        <Card className="col-span-1 lg:col-span-2">
             <CardHeader>
-                <CardTitle className="flex items-center gap-2"><Target className="text-primary"/>Goal In Focus</CardTitle>
-                <CardDescription>Your top priority right now.</CardDescription>
+                <CardTitle className="flex items-center gap-2">Recent Transactions</CardTitle>
+                <Button variant="ghost" size="sm" className="absolute top-4 right-4">See all</Button>
             </CardHeader>
-            <CardContent className="flex flex-col items-center justify-center text-center h-[300px]">
-                <div 
-                  className="relative h-32 w-32"
-                  style={{
-                    // @ts-ignore
-                    "--progress": '65%',
-                    "--stroke-width": '8px',
-                    "--bg-color": "hsl(var(--secondary))",
-                    "--fg-color": "hsl(var(--primary))",
-                  }}
-                >
-                  <svg className="w-full h-full" viewBox="0 0 100 100">
-                    <circle
-                      className="text-muted"
-                      strokeWidth="var(--stroke-width)"
-                      stroke="var(--bg-color)"
-                      fill="transparent"
-                      r="42"
-                      cx="50"
-                      cy="50"
-                    />
-                    <circle
-                      className="text-primary"
-                      strokeWidth="var(--stroke-width)"
-                      strokeDasharray="264"
-                      strokeDashoffset="calc(264 - (264 * 65) / 100))"
-                      strokeLinecap="round"
-                      stroke="var(--fg-color)"
-                      fill="transparent"
-                      r="42"
-                      cx="50"
-                      cy="50"
-                      style={{
-                        transform: 'rotate(-90deg)',
-                        transformOrigin: '50% 50%',
-                        transition: 'stroke-dashoffset 0.5s ease-in-out'
-                      }}
-                    />
-                  </svg>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                     <span className="text-3xl font-bold">65%</span>
-                  </div>
-                </div>
-                <h3 className="mt-4 font-semibold text-lg">House Down Payment</h3>
-                <p className="text-sm text-muted-foreground">$16,250 / $25,000</p>
-            </CardContent>
-        </Card>
-         <Card className="col-span-1 lg:col-span-3 glass">
-            <CardHeader>
-                <CardTitle>Recent Transactions</CardTitle>
-                <CardDescription>Your latest financial activities.</CardDescription>
-            </CardHeader>
-            <CardContent className="h-[300px] flex items-center justify-center">
-                 <p className="text-muted-foreground">Transaction data coming soon...</p>
+            <CardContent className="h-[350px] space-y-4">
+                 <div className="flex items-center">
+                    <div className="h-10 w-10 rounded-full bg-secondary flex items-center justify-center mr-4"><Wallet /></div>
+                    <div className="flex-grow">
+                        <p className="font-semibold">Dribbble</p>
+                        <p className="text-sm text-muted-foreground">Today, 15:10</p>
+                    </div>
+                    <p className="font-bold">-$142.00</p>
+                 </div>
+                 <div className="flex items-center">
+                    <div className="h-10 w-10 rounded-full bg-secondary flex items-center justify-center mr-4"><TrendingUp /></div>
+                    <div className="flex-grow">
+                        <p className="font-semibold">Trent Bolt</p>
+                        <p className="text-sm text-muted-foreground">Yesterday, 09:45</p>
+                    </div>
+                    <p className="font-bold text-green-400">+$74.00</p>
+                 </div>
+                 <div className="flex items-center">
+                    <div className="h-10 w-10 rounded-full bg-secondary flex items-center justify-center mr-4"><Wallet /></div>
+                    <div className="flex-grow">
+                        <p className="font-semibold">Apple Services</p>
+                        <p className="text-sm text-muted-foreground">Yesterday, 05:10</p>
+                    </div>
+                    <p className="font-bold">-$12.00</p>
+                 </div>
+                 <div className="flex items-center">
+                    <div className="h-10 w-10 rounded-full bg-secondary flex items-center justify-center mr-4"><Wallet /></div>
+                    <div className="flex-grow">
+                        <p className="font-semibold">Ryne LTD</p>
+                        <p className="text-sm text-muted-foreground">2 Aug, 09:11</p>
+                    </div>
+                    <p className="font-bold">-$18.00</p>
+                 </div>
             </CardContent>
         </Card>
       </div>

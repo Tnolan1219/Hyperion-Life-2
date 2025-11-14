@@ -22,19 +22,18 @@ const SignInPrompt = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center animated-background px-4">
-      <Card className="w-full max-w-sm glass border-border/30">
+      <Card className="w-full max-w-sm bg-card border-none shadow-2xl shadow-primary/10">
         <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
-            <BrainCircuit className="h-12 w-12 text-primary" />
-          </div>
-          <CardTitle className="text-3xl font-bold">Welcome to Base 44</CardTitle>
+          <CardTitle className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-purple-400 py-2">
+            FinancePro
+          </CardTitle>
           <CardDescription className="text-muted-foreground pt-2">
             Your AI-powered financial co-pilot.
           </CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-4">
+        <CardContent className="grid gap-4 p-6">
           <Button onClick={handleAnonymousSignIn} className="w-full" size="lg">
-            Sign In As Guest
+            Get Started
           </Button>
           <p className="text-xs text-muted-foreground text-center px-4">
             For this demo, we'll sign you in anonymously to explore the app.
