@@ -5,6 +5,7 @@ import { Inter } from 'next/font/google';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 import { FirebaseProvider } from '@/firebase/provider';
 import { auth, firestore, firebaseApp } from '@/firebase';
+import { ThemeProvider } from '@/components/theme-provider';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -22,18 +23,25 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" suppressHydrationWarning>
       <head />
       <body className={`${inter.variable} font-sans antialiased`}>
-        <FirebaseProvider
-          auth={auth}
-          firestore={firestore}
-          firebaseApp={firebaseApp}
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
         >
-          <FirebaseErrorListener />
-          {children}
-          <Toaster />
-        </FirebaseProvider>
+          <FirebaseProvider
+            auth={auth}
+            firestore={firestore}
+            firebaseApp={firebaseApp}
+          >
+            <FirebaseErrorListener />
+            {children}
+            <Toaster />
+          </FirebaseProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

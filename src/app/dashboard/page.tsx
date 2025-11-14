@@ -6,8 +6,10 @@ import {
   DollarSign,
   Goal,
   Landmark,
-  LogOut,
   User,
+  Sun,
+  Moon,
+  Bell,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -22,9 +24,10 @@ import { initiateAnonymousSignIn } from '@/firebase/non-blocking-login';
 import { collection, query } from 'firebase/firestore';
 import { useCollection } from '@/firebase/firestore/use-collection';
 
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from 'recharts';
+import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, PieChart, Pie } from 'recharts';
 import { Auth } from 'firebase/auth';
 import { useMemoFirebase } from '@/hooks/use-memo-firebase';
+import { useRouter } from 'next/navigation';
 import { Header } from '@/components/landing/header';
 
 type Asset = {
@@ -126,6 +129,11 @@ const Dashboard = () => {
     });
     return Object.entries(allocation).map(([name, value]) => ({ name, value }));
   }, [assets]);
+  
+  const debtToAssetsData = [
+    { name: 'Assets', value: totalAssets },
+    { name: 'Debts', value: totalDebts },
+  ];
 
   return (
     <div className="pt-24 pb-16 space-y-8">
@@ -159,44 +167,57 @@ const Dashboard = () => {
             icon={<Goal className="h-4 w-4 text-text-muted" />}
           />
         </div>
-        <div className="grid md:grid-cols-2 gap-8 mt-8">
-          <Card className="glass">
+        <div className="grid md:grid-cols-3 gap-8 mt-8">
+          <Card className="glass md:col-span-2">
             <CardHeader>
               <CardTitle>Asset Allocation</CardTitle>
               <CardDescription>
-                How your assets are distributed.
+                How your assets are distributed across different classes.
               </CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={assetAllocation} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                <PieChart>
+                  <Pie data={assetAllocation} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} fill="hsl(var(--primary-neon))" label />
+                </PieChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+          <Card className="glass">
+            <CardHeader>
+              <CardTitle>Debt vs. Assets</CardTitle>
+              <CardDescription>Your current financial leverage.</CardDescription>
+            </CardHeader>
+            <CardContent>
+               <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={debtToAssetsData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
                   <XAxis dataKey="name" stroke="hsl(var(--text-muted))" fontSize={12} tickLine={false} axisLine={false} />
                   <YAxis stroke="hsl(var(--text-muted))" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${Number(value) / 1000}k`} />
-                  <Bar dataKey="value" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="value" fill="hsl(var(--primary-neon))" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
-           <Card className="glass">
+        </div>
+         <Card className="glass mt-8">
             <CardHeader>
               <CardTitle>AI Financial Coach</CardTitle>
               <CardDescription>
                 Your personalized financial guide.
               </CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col items-center justify-center text-center h-[300px]">
-                <BrainCircuit className="w-16 h-16 text-primary mb-4" />
+            <CardContent className="flex flex-col items-center justify-center text-center h-[200px]">
+                <BrainCircuit className="w-12 h-12 text-primary-neon mb-4" />
                 <p className="text-text-muted mb-4">Ready to optimize your finances? Start a session with your AI coach.</p>
                 <Button>Start Coaching Session</Button>
             </CardContent>
           </Card>
-        </div>
       </div>
     </div>
   );
 };
 
-const SignIn = ({ auth }: { auth: Auth | null }) => {
+const SignInPrompt = ({ auth }: { auth: Auth | null }) => {
   const handleAnonymousSignIn = async () => {
     if (auth) {
       try {
@@ -233,20 +254,27 @@ const SignIn = ({ auth }: { auth: Auth | null }) => {
 export default function DashboardPage() {
   const { user, isLoading } = useUser();
   const auth = useAuth();
+  const router = useRouter();
 
-  if (isLoading) {
+  React.useEffect(() => {
+    if (!isLoading && !user) {
+      router.push('/');
+    }
+  }, [user, isLoading, router]);
+
+  if (isLoading || !user) {
     return (
-      <div className="min-h-screen gradient-hero flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-primary"></div>
       </div>
     );
   }
-
+  
   return (
-    <div className="min-h-screen bg-bg">
+    <div className="min-h-screen bg-background">
       <Header />
       <main>
-        {user ? <Dashboard /> : <SignIn auth={auth} />}
+        <Dashboard />
       </main>
     </div>
   );
