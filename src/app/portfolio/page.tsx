@@ -31,6 +31,8 @@ import {
   DollarSign,
   TrendingUp,
   FilePieChart,
+  BrainCircuit,
+  Star,
 } from 'lucide-react';
 import {
   DropdownMenu,
