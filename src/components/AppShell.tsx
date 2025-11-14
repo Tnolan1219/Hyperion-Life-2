@@ -33,42 +33,42 @@ const colorClasses: { [key: string]: { [key: string]: string } } = {
     sky: {
         text: 'text-sky-400',
         bg: 'bg-sky-400/10',
-        hoverBg: 'hover:bg-sky-400/10',
+        hoverBg: 'hover:bg-sky-400/20',
         hoverText: 'hover:text-sky-300',
         shadow: 'shadow-sky-500/50'
     },
     violet: {
         text: 'text-violet-400',
         bg: 'bg-violet-400/10',
-        hoverBg: 'hover:bg-violet-400/10',
+        hoverBg: 'hover:bg-violet-400/20',
         hoverText: 'hover:text-violet-300',
         shadow: 'shadow-violet-500/50'
     },
     amber: {
         text: 'text-amber-400',
         bg: 'bg-amber-400/10',
-        hoverBg: 'hover:bg-amber-400/10',
+        hoverBg: 'hover:bg-amber-400/20',
         hoverText: 'hover:text-amber-300',
         shadow: 'shadow-amber-500/50'
     },
     cyan: {
         text: 'text-cyan-400',
         bg: 'bg-cyan-400/10',
-        hoverBg: 'hover:bg-cyan-400/10',
+        hoverBg: 'hover:bg-cyan-400/20',
         hoverText: 'hover:text-cyan-300',
         shadow: 'shadow-cyan-500/50'
     },
     rose: {
         text: 'text-rose-400',
         bg: 'bg-rose-400/10',
-        hoverBg: 'hover:bg-rose-400/10',
+        hoverBg: 'hover:bg-rose-400/20',
         hoverText: 'hover:text-rose-300',
         shadow: 'shadow-rose-500/50'
     },
     slate: {
         text: 'text-slate-400',
         bg: 'bg-slate-400/10',
-        hoverBg: 'hover:bg-slate-400/10',
+        hoverBg: 'hover:bg-slate-400/20',
         hoverText: 'hover:text-slate-300',
         shadow: 'shadow-slate-500/50'
     }
@@ -97,11 +97,9 @@ function NavLink({
           <Link
             href={href}
             className={cn(
-              'group flex items-center justify-center rounded-lg h-12 w-12 my-1 text-muted-foreground transition-all duration-300 relative',
-              colors.hoverBg,
-              colors.hoverText,
-              isActive && `${colors.bg} ${colors.text} font-semibold`,
-              'transform-gpu hover:scale-[1.03]'
+              'group flex items-center justify-center rounded-2xl h-12 w-12 my-2 text-muted-foreground transition-all duration-300 relative',
+              'transform-gpu hover:scale-[1.05]',
+              isActive ? `${colors.bg} ${colors.text} font-semibold` : 'hover:bg-accent/50'
             )}
           >
             <div className={cn(
@@ -112,8 +110,8 @@ function NavLink({
             <Icon className={cn("h-6 w-6 transition-transform duration-300 group-hover:scale-110", isActive && colors.text)} />
           </Link>
         </TooltipTrigger>
-        <TooltipContent side="right" className="bg-card/90 backdrop-blur-sm text-foreground">
-          {label}
+        <TooltipContent side="right" className="glass text-foreground border-border/20">
+          <p>{label}</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
@@ -144,23 +142,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="grid min-h-screen w-full md:grid-cols-[72px_1fr]">
-      <aside className="hidden md:flex p-2">
-        <div className="flex h-full max-h-screen flex-col items-center gap-2 relative glass rounded-xl">
-          <div className="flex h-14 items-center justify-center w-full border-b border-border/20 lg:h-[60px]">
+    <div className="grid min-h-screen w-full md:grid-cols-[88px_1fr]">
+      <aside className="hidden md:flex flex-col items-center py-2 px-2">
+        <div className="flex h-14 items-center justify-center w-full lg:h-[60px] mb-2">
             <Link href="/" className="flex items-center justify-center gap-3 font-semibold text-foreground transition-opacity duration-300">
-              <span className="text-primary">
-                <BrainCircuit className="h-6 w-6" />
-              </span>
+            <span className="text-primary">
+                <BrainCircuit className="h-7 w-7" />
+            </span>
             </Link>
-          </div>
-          <div className="flex-1 py-4">
+        </div>
+        <div className="flex-1 py-4">
             <nav className="grid items-start text-sm font-medium">
-              {navItems.map(item => (
+            {navItems.map(item => (
                 <NavLink key={item.href} {...item} />
-              ))}
+            ))}
             </nav>
-          </div>
         </div>
       </aside>
       <div className="flex flex-col">
