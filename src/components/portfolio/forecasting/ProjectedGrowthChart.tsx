@@ -5,7 +5,7 @@ import { AreaChart } from 'lucide-react';
 
 export function ProjectedGrowthChart() {
   return (
-    <Card className="min-h-[300px] flex flex-col items-center justify-center bg-card/60 border-border/60 border-dashed">
+    <Card className="min-h-[300px] flex flex-col items-center justify-center bg-card/40 border-border/40 border-dashed">
       <CardHeader className="text-center">
         <div className="inline-flex items-center justify-center p-3 mb-4 bg-primary/10 rounded-full">
           <AreaChart className="h-10 w-10 text-primary" />

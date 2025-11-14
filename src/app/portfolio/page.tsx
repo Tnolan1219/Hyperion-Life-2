@@ -369,7 +369,7 @@ export default function PortfolioPage() {
             </div>
         </TabsContent>
          <TabsContent value="insights">
-           <Card className="min-h-[60vh] flex flex-col items-center justify-center bg-card/60 border-border/60 border-dashed">
+           <Card className="min-h-[60vh] flex flex-col items-center justify-center bg-card/40 border-border/40 border-dashed">
             <CardHeader className="text-center">
               <div className="inline-flex items-center justify-center p-3 mb-4 bg-primary/10 rounded-full">
                 <BrainCircuit className="h-12 w-12 text-primary" />
@@ -387,7 +387,7 @@ export default function PortfolioPage() {
           </Card>
         </TabsContent>
          <TabsContent value="watchlist">
-           <Card className="min-h-[60vh] flex flex-col items-center justify-center bg-card/60 border-border/60 border-dashed">
+           <Card className="min-h-[60vh] flex flex-col items-center justify-center bg-card/40 border-border/40 border-dashed">
             <CardHeader className="text-center">
               <div className="inline-flex items-center justify-center p-3 mb-4 bg-primary/10 rounded-full">
                 <Star className="h-12 w-12 text-primary" />
