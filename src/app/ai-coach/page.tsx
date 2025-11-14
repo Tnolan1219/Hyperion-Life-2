@@ -5,6 +5,7 @@ import React, { useState, useMemo } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { Label } from "@/components/ui/label";
 import { Lightbulb, User, Bot, Loader2, Sparkles, Wand2 } from 'lucide-react';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection } from 'firebase/firestore';
@@ -12,7 +13,7 @@ import { synthesizeUserPersona } from '@/ai/flows/synthesize-user-persona';
 import { generatePersonalizedFinancialAdvice } from '@/ai/flows/generate-personalized-financial-advice';
 import { simulateFinancialScenario } from '@/ai/flows/simulate-financial-scenarios';
 
-import type { Asset, Debt, Transaction } from '@/app/portfolio/page';
+import type { Asset, Debt } from '@/app/portfolio/page';
 import type { Goal } from '@/app/goals/page';
 
 const formatCurrency = (value: number) =>
@@ -274,5 +275,3 @@ export default function AICoachPage() {
     </div>
   );
 }
-
-    
