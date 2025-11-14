@@ -2,23 +2,25 @@
 
 import React, { useEffect, useState } from 'react';
 import { Node } from 'reactflow';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
+import { CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { X, Zap } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { X, Zap, Trash2, LocateFixed } from 'lucide-react';
+import { Separator } from '../ui/separator';
 
 interface NodeEditorProps {
   selectedNode: Node | null;
   onNodeDataChange: (nodeId: string, newData: any) => void;
   closeEditor: () => void;
   startConnecting: () => void;
+  onDeleteNode: () => void;
+  onCenterNode: () => void;
 }
 
-export function NodeEditor({ selectedNode, onNodeDataChange, closeEditor, startConnecting }: NodeEditorProps) {
+export function NodeEditor({ selectedNode, onNodeDataChange, closeEditor, startConnecting, onDeleteNode, onCenterNode }: NodeEditorProps) {
   const [formData, setFormData] = useState(selectedNode?.data);
 
   useEffect(() => {
@@ -130,11 +132,22 @@ export function NodeEditor({ selectedNode, onNodeDataChange, closeEditor, startC
           />
         </div>
       </CardContent>
-      <div className="p-2 space-y-2">
-        <Button onClick={startConnecting} className="w-full">
+      <div className="p-2 space-y-2 mt-auto">
+        <Separator className="my-2" />
+        <Button onClick={startConnecting} className="w-full" variant="outline">
             <Zap className="mr-2 h-4 w-4" />
             Connect to another node
         </Button>
+        <div className="grid grid-cols-2 gap-2">
+            <Button onClick={onCenterNode} variant="outline" className="w-full">
+                <LocateFixed className="mr-2 h-4 w-4" />
+                Center
+            </Button>
+            <Button onClick={onDeleteNode} variant="destructive" className="w-full">
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete Node
+            </Button>
+        </div>
       </div>
     </div>
   );
