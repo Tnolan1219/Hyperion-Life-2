@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
@@ -29,6 +30,8 @@ import { firestore } from '@/firebase';
 
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from 'recharts';
 import { getAuth } from 'firebase/auth';
+import { useMemoFirebase } from '@/hooks/use-memo-firebase';
+import { useFirestore } from '@/firebase';
 
 type Asset = {
   type: string;
@@ -169,33 +172,35 @@ const StatCard = ({
 
 const Dashboard = () => {
   const { user } = useUser();
+  const firestore = useFirestore();
 
-  const assetsQuery = useMemo(
+  const assetsQuery = useMemoFirebase(
     () =>
-      user
-        ? query(collection(firestore, 'assets'), where('userId', '==', user.uid))
+      user && firestore
+        ? query(collection(firestore, 'users', user.uid, 'assets'))
         : null,
-    [user]
+    [user?.uid, firestore]
   );
   const { data: assets } = useCollection<Asset>(assetsQuery);
 
-  const debtsQuery = useMemo(
+  const debtsQuery = useMemoFirebase(
     () =>
-      user
-        ? query(collection(firestore, 'debts'), where('userId', '==', user.uid))
+      user && firestore
+        ? query(collection(firestore, 'users', user.uid, 'debts'))
         : null,
-    [user]
+    [user?.uid, firestore]
   );
   const { data: debts } = useCollection<Debt>(debtsQuery);
 
-  const goalsQuery = useMemo(
+  const goalsQuery = useMemoFirebase(
     () =>
-      user
-        ? query(collection(firestore, 'goals'), where('userId', '==', user.uid))
+      user && firestore
+        ? query(collection(firestore, 'users', user.uid, 'goals'))
         : null,
-    [user]
+    [user?.uid, firestore]
   );
   const { data: goals } = useCollection<Goal>(goalsQuery);
+
 
   const totalAssets = useMemo(
     () => assets?.reduce((sum, asset) => sum + asset.value, 0) || 0,
@@ -352,3 +357,4 @@ export default function AppPage() {
     </div>
   );
 }
+ 
