@@ -29,6 +29,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import { useUser, useFirestore } from '@/firebase';
 import {
   addDocumentNonBlocking,
@@ -37,20 +38,26 @@ import {
 import { collection, doc } from 'firebase/firestore';
 
 const assetSchema = z.object({
-  type: z.enum(['Stock', 'Crypto']),
+  type: z.enum(['Stock', 'ETF', 'Crypto', 'Bond', 'Real Estate', 'Cash']),
   ticker: z.string().min(1, 'Ticker is required.').toUpperCase(),
   name: z.string().min(1, 'Asset name is required.'),
-  balance: z.coerce.number().min(0.000001, 'Balance must be greater than 0.'),
+  balance: z.coerce.number().min(0, 'Balance must be a positive number.'),
+  averageCost: z.coerce.number().optional(),
+  sector: z.string().optional(),
+  notes: z.string().optional(),
 });
 
 type AssetFormData = z.infer<typeof assetSchema>;
 
 export type Asset = {
   id?: string;
-  type: 'Stock' | 'Crypto';
+  type: 'Stock' | 'ETF' | 'Crypto' | 'Bond' | 'Real Estate' | 'Cash';
   ticker: string;
   name: string;
   balance: number;
+  averageCost?: number;
+  sector?: string;
+  notes?: string;
   userId?: string;
 };
 
@@ -71,6 +78,9 @@ export function PortfolioDialog({ isOpen, setIsOpen, asset }: PortfolioDialogPro
       ticker: asset?.ticker || '',
       name: asset?.name || '',
       balance: asset?.balance || 0,
+      averageCost: asset?.averageCost || 0,
+      sector: asset?.sector || '',
+      notes: asset?.notes || '',
     },
   });
 
@@ -80,6 +90,9 @@ export function PortfolioDialog({ isOpen, setIsOpen, asset }: PortfolioDialogPro
       ticker: asset?.ticker || '',
       name: asset?.name || '',
       balance: asset?.balance || 0,
+      averageCost: asset?.averageCost || 0,
+      sector: asset?.sector || '',
+      notes: asset?.notes || '',
     });
   }, [asset, form]);
 
@@ -99,55 +112,60 @@ export function PortfolioDialog({ isOpen, setIsOpen, asset }: PortfolioDialogPro
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>{asset ? 'Edit Asset' : 'Add New Asset'}</DialogTitle>
           <DialogDescription>
             {asset
               ? "Update your asset's details."
-              : 'Add a new stock or crypto holding to your portfolio.'}
+              : 'Add a new holding to your portfolio.'}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Asset Type</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
+            <div className="grid grid-cols-2 gap-4">
+                <FormField
+                control={form.control}
+                name="type"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Asset Type</FormLabel>
+                    <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                    >
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select an asset type" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                        <SelectItem value="Stock">Stock</SelectItem>
+                        <SelectItem value="ETF">ETF</SelectItem>
+                        <SelectItem value="Crypto">Crypto</SelectItem>
+                        <SelectItem value="Bond">Bond</SelectItem>
+                        <SelectItem value="Real Estate">Real Estate</SelectItem>
+                        <SelectItem value="Cash">Cash</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                <FormField
+                control={form.control}
+                name="ticker"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Ticker Symbol</FormLabel>
                     <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select an asset type" />
-                      </SelectTrigger>
+                        <Input placeholder="e.g., AAPL, BTC" {...field} />
                     </FormControl>
-                    <SelectContent>
-                      <SelectItem value="Stock">Stock</SelectItem>
-                      <SelectItem value="Crypto">Crypto</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="ticker"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Ticker Symbol</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g., AAPL, BTC" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+            </div>
 
             <FormField
               control={form.control}
@@ -163,14 +181,57 @@ export function PortfolioDialog({ isOpen, setIsOpen, asset }: PortfolioDialogPro
               )}
             />
 
-            <FormField
+            <div className="grid grid-cols-2 gap-4">
+                <FormField
+                control={form.control}
+                name="balance"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Balance / Quantity</FormLabel>
+                    <FormControl>
+                        <Input type="number" step="any" placeholder="e.g., 10.5" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                <FormField
+                control={form.control}
+                name="averageCost"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Average Cost per Unit</FormLabel>
+                    <FormControl>
+                        <Input type="number" step="any" placeholder="e.g., 150.75" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+            </div>
+            
+             <FormField
               control={form.control}
-              name="balance"
+              name="sector"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Balance / Quantity</FormLabel>
+                  <FormLabel>Sector</FormLabel>
                   <FormControl>
-                    <Input type="number" step="any" placeholder="e.g., 10.5" {...field} />
+                    <Input placeholder="e.g., Technology, Healthcare" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+             <FormField
+              control={form.control}
+              name="notes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Notes</FormLabel>
+                  <FormControl>
+                    <Textarea placeholder="e.g., Long-term hold, bought on dip" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

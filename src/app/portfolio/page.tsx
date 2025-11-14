@@ -47,10 +47,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export type Asset = {
   id?: string;
-  type: 'Stock' | 'Crypto';
+  type: 'Stock' | 'ETF' | 'Crypto' | 'Bond' | 'Real Estate' | 'Cash';
   ticker: string;
   name: string;
   balance: number;
+  averageCost?: number;
+  sector?: string;
+  notes?: string;
   userId?: string;
   price?: number; // Price will be fetched from an API in a future step
 };
@@ -70,6 +73,8 @@ const AssetRow = ({ asset, totalValue }: { asset: Asset, totalValue: number }) =
     // Mock data for display until API is integrated
     const price = asset.price || (asset.type === 'Stock' ? Math.random() * 500 : Math.random() * 70000);
     const value = asset.balance * price;
+    const gainLoss = asset.averageCost ? value - (asset.balance * asset.averageCost) : 0;
+    const gainLossPercent = asset.averageCost && asset.averageCost > 0 ? (gainLoss / (asset.balance * asset.averageCost)) * 100 : 0;
     const change24h = (Math.random() - 0.5) * 10;
     const allocation = totalValue > 0 ? (value / totalValue) * 100 : 0;
 
@@ -89,13 +94,23 @@ const AssetRow = ({ asset, totalValue }: { asset: Asset, totalValue: number }) =
               {asset.name}
             </div>
           </TableCell>
+           <TableCell>{asset.sector || 'N/A'}</TableCell>
           <TableCell>
             <div>{asset.balance}</div>
             <div className="text-sm text-muted-foreground">
               {formatCurrency(value)}
             </div>
           </TableCell>
-          <TableCell>{formatCurrency(price)}</TableCell>
+          <TableCell>
+            <div>{formatCurrency(price)}</div>
+            <div className="text-xs text-muted-foreground">
+                Avg. {formatCurrency(asset.averageCost || 0)}
+            </div>
+          </TableCell>
+           <TableCell className={gainLoss >= 0 ? 'text-green-400' : 'text-red-400'}>
+            <div>{formatCurrency(gainLoss)}</div>
+            <div className="text-xs">({gainLossPercent.toFixed(2)}%)</div>
+          </TableCell>
           <TableCell
             className={
               change24h > 0
@@ -181,6 +196,13 @@ export default function PortfolioPage() {
         return acc + (asset.balance * price);
     }, 0);
   }, [assets]);
+
+  const totalCost = useMemo(() => {
+    if (!assets) return 0;
+    return assets.reduce((acc, asset) => acc + (asset.balance * (asset.averageCost || 0)), 0);
+  }, [assets]);
+
+  const overallGainLoss = totalValue - totalCost;
   
   return (
     <div className="space-y-8">
@@ -204,9 +226,11 @@ export default function PortfolioPage() {
       </div>
 
       <Tabs defaultValue="analysis" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 max-w-lg mb-6">
-          <TabsTrigger value="analysis">Stock Analysis</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-4 max-w-2xl mb-6">
           <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="analysis">Holdings Analysis</TabsTrigger>
+          <TabsTrigger value="insights">AI Insights</TabsTrigger>
+          <TabsTrigger value="watchlist">Watchlist</TabsTrigger>
         </TabsList>
         <TabsContent value="analysis" className="space-y-6">
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -234,8 +258,8 @@ export default function PortfolioPage() {
                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-400">
-                  +{formatCurrency(3450.72)}
+                <div className={`text-2xl font-bold ${overallGainLoss >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                  {formatCurrency(overallGainLoss)}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Total return since inception
@@ -272,9 +296,11 @@ export default function PortfolioPage() {
                   <Table>
                     <TableHeader>
                       <TableRow className="hover:bg-transparent">
-                        <TableHead className="w-[150px]">Asset</TableHead>
+                        <TableHead>Asset</TableHead>
+                        <TableHead>Sector</TableHead>
                         <TableHead>Balance</TableHead>
                         <TableHead>Price</TableHead>
+                        <TableHead>Gain/Loss</TableHead>
                         <TableHead>24h</TableHead>
                         <TableHead className="text-right">Allocation</TableHead>
                         <TableHead className="w-[50px] text-right">Actions</TableHead>
@@ -303,7 +329,43 @@ export default function PortfolioPage() {
             </CardHeader>
             <CardContent>
               <p className="max-w-md text-center text-muted-foreground">
-                Expect charts showing asset class diversification (stocks, crypto, etc.), performance over time, and risk analysis.
+                Expect charts showing asset class diversification, performance over time, and risk analysis.
+              </p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+         <TabsContent value="insights">
+           <Card className="min-h-[60vh] flex flex-col items-center justify-center bg-card/60 border-border/60 border-dashed">
+            <CardHeader className="text-center">
+              <div className="inline-flex items-center justify-center p-3 mb-4 bg-primary/10 rounded-full">
+                <BrainCircuit className="h-12 w-12 text-primary" />
+              </div>
+              <CardTitle className="text-2xl font-bold">AI Insights Coming Soon</CardTitle>
+              <CardDescription className="text-muted-foreground">
+                Get AI-powered recommendations and analysis.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="max-w-md text-center text-muted-foreground">
+                This area will feature rebalancing suggestions, tax-loss harvesting tips, and goal alignment analysis.
+              </p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+         <TabsContent value="watchlist">
+           <Card className="min-h-[60vh] flex flex-col items-center justify-center bg-card/60 border-border/60 border-dashed">
+            <CardHeader className="text-center">
+              <div className="inline-flex items-center justify-center p-3 mb-4 bg-primary/10 rounded-full">
+                <Star className="h-12 w-12 text-primary" />
+              </div >
+              <CardTitle className="text-2xl font-bold">Watchlist Coming Soon</CardTitle>
+              <CardDescription className="text-muted-foreground">
+                Track assets you're interested in.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="max-w-md text-center text-muted-foreground">
+                You'll be able to add tickers, view trends, and set price alerts right here.
               </p>
             </CardContent>
           </Card>
