@@ -117,17 +117,17 @@ function NavLink({
 }
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const { user, isLoading } = useUser();
+  const { user, isUserLoading } = useUser();
   const router = useRouter();
   const pathname = usePathname();
 
   React.useEffect(() => {
-    if (!isLoading && !user) {
+    if (!isUserLoading && !user) {
       router.push('/');
     }
-  }, [user, isLoading, router]);
+  }, [user, isUserLoading, router]);
 
-  if (isLoading || (!user && pathname !== '/')) {
+  if (isUserLoading || (!user && pathname !== '/')) {
     return (
       <div className="min-h-screen flex items-center justify-center animated-background">
         <div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-primary"></div>
@@ -165,3 +165,5 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     </div>
   );
 }
+
+    

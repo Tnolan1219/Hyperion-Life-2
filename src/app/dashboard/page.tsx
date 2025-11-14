@@ -21,7 +21,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { useUser, useCollection, useFirestore } from '@/firebase';
+import { useUser, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import {
   Area,
   AreaChart as RechartsAreaChart,
@@ -160,7 +160,7 @@ export default function Dashboard() {
     setGreeting(getGreeting());
   }, []);
 
-  const goalsCollection = useMemo(() => {
+  const goalsCollection = useMemoFirebase(() => {
     if (firestore && user) {
       return collection(firestore, `users/${user.uid}/goals`);
     }
@@ -184,7 +184,7 @@ export default function Dashboard() {
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-4xl font-bold flex items-center gap-3">
-            {greeting}, {user?.displayName || 'Thomas'}
+            {greeting}, {user?.displayName || 'Guest'}
             <span className="text-3xl">👋</span>
           </h1>
           <p className="text-muted-foreground mt-2">
@@ -293,3 +293,5 @@ export default function Dashboard() {
     </div>
   );
 }
+
+    

@@ -4,18 +4,25 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { useUser, useAuth } from '@/firebase';
 import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { initiateAnonymousSignIn } from '@/firebase/non-blocking-login';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { initiateGoogleSignIn } from '@/firebase/non-blocking-login';
 import { BrainCircuit } from 'lucide-react';
+import { FcGoogle } from 'react-icons/fc';
 
 const SignInPrompt = () => {
   const auth = useAuth();
-  const handleAnonymousSignIn = async () => {
+  const handleGoogleSignIn = async () => {
     if (auth) {
       try {
-        initiateAnonymousSignIn(auth);
+        initiateGoogleSignIn(auth);
       } catch (error) {
-        console.error('Anonymous sign-in failed', error);
+        console.error('Google sign-in failed', error);
       }
     }
   };
@@ -32,11 +39,12 @@ const SignInPrompt = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 p-6">
-          <Button onClick={handleAnonymousSignIn} className="w-full" size="lg">
-            Get Started
+          <Button onClick={handleGoogleSignIn} className="w-full" size="lg">
+            <FcGoogle className="mr-2 h-5 w-5" />
+            Sign in with Google
           </Button>
           <p className="text-xs text-muted-foreground text-center px-4">
-            For this demo, we'll sign you in anonymously to explore the app.
+            Sign in to securely save and track your financial data.
           </p>
         </CardContent>
       </Card>
@@ -44,19 +52,17 @@ const SignInPrompt = () => {
   );
 };
 
-
 export default function LandingPage() {
-  const { user, isLoading } = useUser();
+  const { user, isUserLoading } = useUser();
   const router = useRouter();
 
   React.useEffect(() => {
-    if (!isLoading && user) {
+    if (!isUserLoading && user) {
       router.push('/dashboard');
     }
-  }, [user, isLoading, router]);
+  }, [user, isUserLoading, router]);
 
-
-  if (isLoading || user) {
+  if (isUserLoading || user) {
     return (
       <div className="min-h-screen flex items-center justify-center animated-background">
         <div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-primary"></div>
@@ -66,3 +72,5 @@ export default function LandingPage() {
 
   return <SignInPrompt />;
 }
+
+    

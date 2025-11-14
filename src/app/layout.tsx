@@ -2,12 +2,9 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { Inter } from 'next/font/google';
-import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
-import { FirebaseProvider } from '@/firebase/provider';
-import { auth, firestore, firebaseApp } from '@/firebase';
+import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { ThemeProvider } from '@/components/theme-provider';
 import { AppShell } from '@/components/AppShell';
-
 
 const inter = Inter({
   subsets: ['latin'],
@@ -37,17 +34,14 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <FirebaseProvider
-            auth={auth}
-            firestore={firestore}
-            firebaseApp={firebaseApp}
-          >
-            <FirebaseErrorListener />
-              <AppShell>{children}</AppShell>
+          <FirebaseClientProvider>
+            <AppShell>{children}</AppShell>
             <Toaster />
-          </FirebaseProvider>
+          </FirebaseClientProvider>
         </ThemeProvider>
       </body>
     </html>
   );
 }
+
+    

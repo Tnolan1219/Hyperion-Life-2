@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { PlusCircle, Edit, Trash2, Home, Car, PiggyBank, Briefcase, GraduationCap } from 'lucide-react';
-import { useCollection, useUser, useFirestore } from '@/firebase';
+import { useCollection, useUser, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import { useMemo } from 'react';
 import { deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
@@ -154,7 +154,7 @@ export default function GoalsPage() {
   const { user } = useUser();
   const firestore = useFirestore();
 
-  const goalsCollection = useMemo(() => {
+  const goalsCollection = useMemoFirebase(() => {
     if (firestore && user) {
       return collection(firestore, `users/${user.uid}/goals`);
     }
@@ -198,3 +198,5 @@ export default function GoalsPage() {
     </div>
   );
 }
+
+    

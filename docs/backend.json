@@ -525,8 +525,7 @@
   },
   "auth": {
     "providers": [
-      "password",
-      "anonymous"
+      "google.com"
     ]
   },
   "firestore": {
@@ -739,3 +738,5 @@
     "reasoning": "The Firestore data structure is designed to ensure Authorization Independence, Clarity of Intent, and support secure list operations (QAPs). User-owned data is stored in hierarchical paths under the `/users/{userId}` collection, ensuring clear ownership.  This eliminates the need for `get()` calls in security rules to check ownership, enabling atomic operations. Tips, Links, and NewsCache are stored in root-level collections, allowing global read access without compromising user data.\n\nAuthorization Independence is achieved by avoiding hierarchical authorization dependencies. For instance, assets, debts, goals, advice and AI sessions are stored under the user's document, making it easy to check ownership directly in the security rules without needing to access parent documents.\n\nQAPs are supported through structural segregation. Publicly accessible data (tips, links, newsCache) is stored separately from user-specific data, enabling secure `list` operations. User-specific data (assets, debts, goals, advice, aiSessions) benefits from path-based ownership, further simplifying and securing `list` operations."
   }
 }
+
+    

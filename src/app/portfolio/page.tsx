@@ -37,7 +37,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useCollection, useUser, useFirestore } from '@/firebase';
+import { useCollection, useUser, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import React, { useMemo, useState } from 'react';
 import { deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
@@ -195,7 +195,7 @@ const HoldingsAnalysisSection = () => {
     const { user } = useUser();
     const firestore = useFirestore();
 
-    const assetsCollection = useMemo(() => {
+    const assetsCollection = useMemoFirebase(() => {
         if (firestore && user) {
         return collection(firestore, `users/${user.uid}/assets`);
         }
@@ -436,3 +436,5 @@ export default function NetWorthPage() {
     </div>
   );
 }
+
+    

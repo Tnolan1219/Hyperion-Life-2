@@ -33,7 +33,7 @@ import { cn } from '@/lib/utils';
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: Home, color: 'sky' },
   { href: '/life-plan', label: 'Life Plan', icon: Map, color: 'violet' },
-  { href: '/portfolio', label: 'Portfolio', icon: AreaChart, color: 'amber' },
+  { href: '/portfolio', label: 'Net Worth', icon: Wallet, color: 'amber' },
   { href: '/ai-coach', label: 'AI Coach', icon: BrainCircuit, color: 'cyan' },
   { href: '/goals', label: 'Goals', icon: Star, color: 'rose' },
   { href: '/settings', label: 'Settings', icon: Settings, color: 'slate' },
@@ -129,6 +129,7 @@ export const Header = () => {
                 className="relative h-8 w-8 rounded-full"
               >
                 <Avatar className="h-8 w-8">
+                  <AvatarImage src={user.photoURL || ''} alt={user.displayName || 'User'}/>
                   <AvatarFallback>
                     <UserIcon className="h-5 w-5" />
                   </AvatarFallback>
@@ -142,7 +143,7 @@ export const Header = () => {
                     {user.displayName || 'Guest User'}
                   </p>
                   <p className="text-xs leading-none text-muted-foreground">
-                    {user.email || 'guest@email.com'}
+                    {user.email || 'No email provided'}
                   </p>
                 </div>
               </DropdownMenuLabel>
@@ -161,3 +162,5 @@ export const Header = () => {
     </header>
   );
 };
+
+    
