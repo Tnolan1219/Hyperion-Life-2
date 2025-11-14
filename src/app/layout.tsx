@@ -1,11 +1,19 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
-import { FirebaseClientProvider } from '@/firebase';
+import { Inter } from 'next/font/google';
+import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
+import { FirebaseProvider } from '@/firebase/provider';
+import { auth, firestore, firebaseApp } from '@/firebase';
+
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-base',
+});
 
 export const metadata: Metadata = {
-  title: 'Base 44',
-  description: 'Next-generation financial coaching platform',
+  title: 'StockMind AI',
+  description: 'Advanced stock analysis powered by artificial intelligence.',
 };
 
 export default function RootLayout({
@@ -15,16 +23,17 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Code+Pro:wght@400;600&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet" />
-      </head>
-      <body className="font-body antialiased">
-        <FirebaseClientProvider>
+      <head />
+      <body className={`${inter.variable} font-sans antialiased`}>
+        <FirebaseProvider
+          auth={auth}
+          firestore={firestore}
+          firebaseApp={firebaseApp}
+        >
+          <FirebaseErrorListener />
           {children}
-        </FirebaseClientProvider>
-        <Toaster />
+          <Toaster />
+        </FirebaseProvider>
       </body>
     </html>
   );

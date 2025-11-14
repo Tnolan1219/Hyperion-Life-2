@@ -1,161 +1,353 @@
 'use client';
 
+import React, { useEffect, useState, useMemo } from 'react';
+import {
+  Sparkles,
+  TrendingUp,
+  Layout,
+  ShieldCheck,
+  LogOut,
+  User,
+  BrainCircuit,
+  DollarSign,
+  Landmark,
+  Goal,
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import {
-  ArrowDownRight,
-  ArrowUpRight,
-  Bot,
-  DollarSign,
-  TrendingUp,
-} from 'lucide-react';
-import Ticker from '@/components/dashboard/ticker';
-import NetWorthChart from '@/components/dashboard/net-worth-chart';
-import GoalsOverview from '@/components/dashboard/goals-overview';
-import { RecentTransactions } from '@/components/dashboard/recent-transactions';
-import StatCard from '@/components/dashboard/stat-card';
-import { Separator } from '@/components/ui/separator';
-import { Button } from '@/components/ui/button';
-import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
+import { useAuth, useUser } from '@/firebase/auth/use-user';
+import { initiateAnonymousSignIn } from '@/firebase/non-blocking-login';
 import { collection, query, where } from 'firebase/firestore';
-import type { Asset, Debt, Goal, Tip } from '@/lib/types';
-import Link from 'next/link';
+import { useCollection } from '@/firebase/firestore/use-collection';
+import { firestore } from '@/firebase';
 
-export default function DashboardPage() {
-  const { firestore, user } = useFirebase();
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from 'recharts';
+import { getAuth } from 'firebase/auth';
 
-  const assetsQuery = useMemoFirebase(
-    () => (user ? query(collection(firestore, 'users', user.uid, 'assets')) : null),
-    [firestore, user]
-  );
-  const { data: assets, isLoading: assetsLoading } = useCollection<Asset>(assetsQuery);
+type Asset = {
+  type: string;
+  value: number;
+};
+type Debt = {
+  type: string;
+  balance: number;
+};
+type Goal = {
+  goalType: string;
+  targetAmount: number;
+  progressAmount: number;
+};
 
-  const debtsQuery = useMemoFirebase(
-    () => (user ? query(collection(firestore, 'users', user.uid, 'debts')) : null),
-    [firestore, user]
-  );
-  const { data: debts, isLoading: debtsLoading } = useCollection<Debt>(debtsQuery);
-  
-  const goalsQuery = useMemoFirebase(
-    () => (user ? query(collection(firestore, 'users', user.uid, 'goals')) : null),
-    [firestore, user]
-  );
-  const { data: goals, isLoading: goalsLoading } = useCollection<Goal>(goalsQuery);
+const Header = () => {
+  const { user } = useUser();
+  const auth = useAuth();
+  const [scrolled, setScrolled] = useState(false);
 
-  const tipsQuery = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'tips') : null),
-    [firestore]
-  );
-  const { data: tips } = useCollection<Tip>(tipsQuery);
-
-  const tickerItems = tips?.map(tip => tip.body) ?? [
-    'Quick Tip: Automate your savings to build wealth effortlessly.',
-    'Market News: Tech stocks surge on positive economic data.',
-    'AI Advice: Based on your risk tolerance, consider diversifying into ETFs.',
-    'Resource: Check out our blog for tips on debt management.',
-    'Quick Tip: Review your budget monthly to stay on track.',
-    'Market News: Inflation shows signs of cooling, bond yields adjust.',
-    'AI Advice: Your emergency fund is on track to meet your 6-month goal.',
-  ];
-
-  const totalAssets = assets?.reduce((sum, asset) => sum + asset.value, 0) ?? 0;
-  const totalDebts = debts?.reduce((sum, debt) => sum + debt.balance, 0) ?? 0;
-  const netWorth = totalAssets - totalDebts;
-
-  const totalInvesting = assets?.filter(a => a.type === 'investment').reduce((sum, asset) => sum + asset.value, 0) ?? 0;
-  
-  const isLoading = assetsLoading || debtsLoading;
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 10);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   return (
-    <div className="flex flex-col gap-8">
-      <Ticker items={tickerItems} />
-
-      <main className="grid flex-1 items-start gap-4 sm:px-6 sm:py-0 md:gap-8">
-        <div className="grid auto-rows-max items-start gap-4 md:gap-8 lg:col-span-2">
-          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4">
-            <StatCard
-              title="Net Worth"
-              value={netWorth}
-              trend="+2.1% from last month"
-              icon={<TrendingUp className="h-6 w-6 text-foreground/80" />}
-              isLoading={isLoading}
-              isCurrency
+    <header
+      className={`fixed top-0 left-0 right-0 z-50 h-16 transition-all duration-300 ${
+        scrolled
+          ? 'bg-bg-elevated/80 border-b border-outline backdrop-blur-sm'
+          : 'bg-transparent'
+      }`}
+    >
+      <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className="text-primary"
+          >
+            <path
+              d="M12 2L2 7V17L12 22L22 17V7L12 2Z"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
             />
-            <StatCard
-              title="Assets"
-              value={totalAssets}
-              trend="+1.5% from last month"
-              icon={<ArrowUpRight className="h-6 w-6 text-green-400" />}
-              isLoading={isLoading}
-              isCurrency
+            <path
+              d="M2 7L12 12"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
             />
-            <StatCard
-              title="Debts"
-              value={totalDebts}
-              trend="-0.5% from last month"
-              icon={<ArrowDownRight className="h-6 w-6 text-red-400" />}
-              isLoading={isLoading}
-              isCurrency
+            <path
+              d="M12 22V12"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
             />
-            <StatCard
-              title="Investing"
-              value={totalInvesting}
-              trend="+4.2% from last month"
-              icon={<DollarSign className="h-6 w-6 text-foreground/80" />}
-              isLoading={isLoading}
-              isCurrency
+            <path
+              d="M22 7L12 12"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
             />
-          </div>
-          <div className="grid gap-4 md:gap-8 lg:grid-cols-2">
-            <Card className="bg-card/80 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle>Net Worth Over Time</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <NetWorthChart />
-              </CardContent>
-            </Card>
-            <GoalsOverview goals={goals} isLoading={goalsLoading} />
-          </div>
+            <path
+              d="M17 4.5L7 9.5"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          <span className="text-xl font-bold">StockMind AI</span>
         </div>
+        {user && (
+          <nav className="hidden md:flex items-center gap-2 text-sm">
+            <Button variant="ghost" size="sm">
+              <Landmark className="mr-2 h-4 w-4" /> Assets
+            </Button>
+            <Button variant="ghost" size="sm">
+              <DollarSign className="mr-2 h-4 w-4" /> Debts
+            </Button>
+            <Button variant="ghost" size="sm">
+              <Goal className="mr-2 h-4 w-4" /> Goals
+            </Button>
+            <Button variant="ghost" size="sm">
+              <BrainCircuit className="mr-2 h-4 w-4" /> Coaching
+            </Button>
+          </nav>
+        )}
+        {user && auth ? (
+          <Button variant="ghost" onClick={() => auth.signOut()}>
+            <LogOut className="mr-2 h-4 w-4" />
+            Log out
+          </Button>
+        ) : (
+          <div />
+        )}
+      </div>
+    </header>
+  );
+};
 
-        <div className="grid gap-4 md:gap-8 lg:grid-cols-3">
-          <div className="lg:col-span-2">
-            <RecentTransactions />
-          </div>
-          <Card className="flex flex-col bg-card/80 backdrop-blur-sm">
-            <CardHeader className="flex-1">
-              <CardTitle className="flex items-center gap-2">
-                <Bot className="h-5 w-5 text-primary" />
-                AI Coaching Nudges
-              </CardTitle>
+const StatCard = ({
+  title,
+  value,
+  icon,
+  description,
+}: {
+  title: string;
+  value: string;
+  icon: React.ReactNode;
+  description?: string;
+}) => (
+  <Card>
+    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+      <CardTitle className="text-sm font-medium">{title}</CardTitle>
+      {icon}
+    </CardHeader>
+    <CardContent>
+      <div className="text-2xl font-bold">{value}</div>
+      {description && (
+        <p className="text-xs text-text-muted">{description}</p>
+      )}
+    </CardContent>
+  </Card>
+);
+
+const Dashboard = () => {
+  const { user } = useUser();
+
+  const assetsQuery = useMemo(
+    () =>
+      user
+        ? query(collection(firestore, 'assets'), where('userId', '==', user.uid))
+        : null,
+    [user]
+  );
+  const { data: assets } = useCollection<Asset>(assetsQuery);
+
+  const debtsQuery = useMemo(
+    () =>
+      user
+        ? query(collection(firestore, 'debts'), where('userId', '==', user.uid))
+        : null,
+    [user]
+  );
+  const { data: debts } = useCollection<Debt>(debtsQuery);
+
+  const goalsQuery = useMemo(
+    () =>
+      user
+        ? query(collection(firestore, 'goals'), where('userId', '==', user.uid))
+        : null,
+    [user]
+  );
+  const { data: goals } = useCollection<Goal>(goalsQuery);
+
+  const totalAssets = useMemo(
+    () => assets?.reduce((sum, asset) => sum + asset.value, 0) || 0,
+    [assets]
+  );
+  const totalDebts = useMemo(
+    () => debts?.reduce((sum, debt) => sum + debt.balance, 0) || 0,
+    [debts]
+  );
+  const netWorth = totalAssets - totalDebts;
+
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value);
+
+  const assetAllocation = useMemo(() => {
+    const allocation: { [key: string]: number } = {};
+    assets?.forEach(asset => {
+      if (allocation[asset.type]) {
+        allocation[asset.type] += asset.value;
+      } else {
+        allocation[asset.type] = asset.value;
+      }
+    });
+    return Object.entries(allocation).map(([name, value]) => ({ name, value }));
+  }, [assets]);
+
+  return (
+    <div className="pt-24 pb-16 space-y-8">
+      <div className="max-w-7xl mx-auto px-4">
+        <h1 className="text-3xl font-bold mb-6">
+          Welcome back, {user?.displayName || 'Investor'}
+        </h1>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <StatCard
+            title="Net Worth"
+            value={formatCurrency(netWorth)}
+            description="Total assets minus total debts"
+            icon={<User className="h-4 w-4 text-text-muted" />}
+          />
+          <StatCard
+            title="Total Assets"
+            value={formatCurrency(totalAssets)}
+            description={`${assets?.length || 0} assets tracked`}
+            icon={<Landmark className="h-4 w-4 text-text-muted" />}
+          />
+          <StatCard
+            title="Total Debts"
+            value={formatCurrency(totalDebts)}
+            description={`${debts?.length || 0} debts tracked`}
+            icon={<DollarSign className="h-4 w-4 text-text-muted" />}
+          />
+          <StatCard
+            title="Goals"
+            value={`${goals?.length || 0} Active`}
+            description="On track to meet your targets"
+            icon={<Goal className="h-4 w-4 text-text-muted" />}
+          />
+        </div>
+        <div className="grid md:grid-cols-2 gap-8 mt-8">
+          <Card>
+            <CardHeader>
+              <CardTitle>Asset Allocation</CardTitle>
+              <CardDescription>
+                How your assets are distributed.
+              </CardDescription>
             </CardHeader>
-            <CardContent className="flex-1 flex flex-col justify-between">
-              <div className="space-y-4 text-sm text-foreground/80">
-                <p>
-                  You've categorized 3 transactions this week. Great job
-                  staying on top of your spending!
-                </p>
-                <Separator />
-                <p>
-                  Your "House Down Payment" goal is 75% complete. You're projected to
-                  hit your target 2 months ahead of schedule!
-                </p>
-                <Separator />
-                <p>
-                  Consider increasing your 401(k) contribution by 1% to maximize your employer match.
-                </p>
-              </div>
-              <Button variant="outline" className="mt-6 w-full" asChild>
-                <Link href="/coaching">Start AI Coaching</Link>
-              </Button>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={assetAllocation} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                  <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${Number(value) / 1000}k`} />
+                  <Bar dataKey="value" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+           <Card>
+            <CardHeader>
+              <CardTitle>AI Financial Coach</CardTitle>
+              <CardDescription>
+                Your personalized financial guide.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col items-center justify-center text-center h-[300px]">
+                <BrainCircuit className="w-16 h-16 text-primary mb-4" />
+                <p className="text-text-muted mb-4">Ready to optimize your finances? Start a session with your AI coach.</p>
+                <Button>Start Coaching Session</Button>
             </CardContent>
           </Card>
         </div>
+      </div>
+    </div>
+  );
+};
+
+const SignIn = () => {
+  const auth = getAuth();
+  
+  const handleAnonymousSignIn = async () => {
+    if (auth) {
+      try {
+        initiateAnonymousSignIn(auth);
+      } catch (error) {
+        console.error('Anonymous sign-in failed', error);
+      }
+    }
+  };
+
+  return (
+    <div className="min-h-screen gradient-hero flex items-center justify-center">
+      <Card className="w-full max-w-sm">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl">Welcome to StockMind AI</CardTitle>
+          <CardDescription>
+            Sign in to continue to your dashboard
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4">
+          <Button onClick={handleAnonymousSignIn} className="w-full">
+            Sign In As Guest
+          </Button>
+          <p className="text-xs text-text-muted text-center">
+            By signing in, you agree to our Terms of Service. For this demo, we'll
+            sign you in anonymously.
+          </p>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+export default function AppPage() {
+  const { user, isLoading } = useUser();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen gradient-hero flex items-center justify-center">
+        <div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-primary"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-bg">
+      <Header />
+      <main className="overflow-x-hidden">
+        {user ? <Dashboard /> : <SignIn />}
       </main>
     </div>
   );

@@ -1,12 +1,14 @@
-import type {Config} from 'tailwindcss';
+import type { Config } from "tailwindcss"
 
-export default {
-  darkMode: ['class'],
+const config = {
+  darkMode: ["class"],
   content: [
-    './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
-    './src/components/**/*.{js,ts,jsx,tsx,mdx}',
-    './src/app/**/*.{js,ts,jsx,tsx,mdx}',
-  ],
+    './pages/**/*.{ts,tsx}',
+    './components/**/*.{ts,tsx}',
+    './app/**/*.{ts,tsx}',
+    './src/**/*.{ts,tsx}',
+	],
+  prefix: "",
   theme: {
     container: {
       center: true,
@@ -17,96 +19,78 @@ export default {
     },
     extend: {
       fontFamily: {
-        body: ['Inter', 'sans-serif'],
-        headline: ['Space Grotesk', 'sans-serif'],
-        code: ['Source Code Pro', 'monospace'],
+        sans: ["var(--font-base)", "Inter", "ui-sans-serif", "system-ui"],
       },
       colors: {
-        background: 'hsl(var(--background))',
-        foreground: 'hsl(var(--foreground))',
-        card: {
-          DEFAULT: 'hsl(var(--card))',
-          foreground: 'hsl(var(--card-foreground))',
-        },
-        popover: {
-          DEFAULT: 'hsl(var(--popover))',
-          foreground: 'hsl(var(--popover-foreground))',
-        },
+        bg: 'hsl(var(--bg))',
+        'bg-elevated': 'hsl(var(--bg-elevated))',
+        panel: 'hsl(var(--panel))',
+        text: 'hsl(var(--text))',
+        'text-muted': 'hsl(var(--text-muted))',
         primary: {
           DEFAULT: 'hsl(var(--primary))',
-          foreground: 'hsl(var(--primary-foreground))',
+          '600': 'hsl(var(--primary-600))',
+          '700': 'hsl(var(--primary-700))',
+        },
+        success: 'hsl(var(--success))',
+        warning: 'hsl(var(--warning))',
+        danger: 'hsl(var(--danger))',
+        chip: 'hsl(var(--chip))',
+        outline: 'hsl(var(--outline))',
+        border: "hsl(var(--border))",
+        input: "hsl(var(--input))",
+        ring: "hsl(var(--ring))",
+        background: "hsl(var(--bg))",
+        foreground: "hsl(var(--text))",
+        card: {
+          DEFAULT: "hsl(var(--panel))",
+          foreground: "hsl(var(--text))",
+        },
+        popover: {
+          DEFAULT: "hsl(var(--bg-elevated))",
+          foreground: "hsl(var(--text))",
         },
         secondary: {
-          DEFAULT: 'hsl(var(--secondary))',
-          foreground: 'hsl(var(--secondary-foreground))',
+          DEFAULT: "hsl(var(--chip))",
+          foreground: "hsl(var(--text))",
         },
         muted: {
-          DEFAULT: 'hsl(var(--muted))',
-          foreground: 'hsl(var(--muted-foreground))',
+          DEFAULT: "hsl(var(--chip))",
+          foreground: "hsl(var(--text-muted))",
         },
         accent: {
-          DEFAULT: 'hsl(var(--accent))',
-          foreground: 'hsl(var(--accent-foreground))',
+          DEFAULT: "hsl(var(--chip))",
+          foreground: "hsl(var(--text))",
         },
         destructive: {
-          DEFAULT: 'hsl(var(--destructive))',
-          foreground: 'hsl(var(--destructive-foreground))',
-        },
-        border: 'hsl(var(--border))',
-        input: 'hsl(var(--input))',
-        ring: 'hsl(var(--ring))',
-        chart: {
-          '1': 'hsl(var(--chart-1))',
-          '2': 'hsl(var(--chart-2))',
-          '3': 'hsl(var(--chart-3))',
-          '4': 'hsl(var(--chart-4))',
-          '5': 'hsl(var(--chart-5))',
-        },
-        sidebar: {
-          DEFAULT: 'hsl(var(--sidebar-background))',
-          foreground: 'hsl(var(--sidebar-foreground))',
-          primary: 'hsl(var(--sidebar-primary))',
-          'primary-foreground': 'hsl(var(--sidebar-primary-foreground))',
-          accent: 'hsl(var(--sidebar-accent))',
-          'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
-          border: 'hsl(var(--sidebar-border))',
-          ring: 'hsl(var(--sidebar-ring))',
+          DEFAULT: "hsl(var(--danger))",
+          foreground: "hsl(var(--text))",
         },
       },
       borderRadius: {
-        lg: 'var(--radius)',
-        md: 'calc(var(--radius) - 2px)',
-        sm: 'calc(var(--radius) - 4px)',
+        lg: "var(--radius-lg)",
+        md: "var(--radius-md)",
+        sm: "var(--radius-sm)",
+        xl: "var(--radius-xl)",
+        full: "var(--radius-full)",
       },
       keyframes: {
-        'accordion-down': {
-          from: {
-            height: '0',
-          },
-          to: {
-            height: 'var(--radix-accordion-content-height)',
-          },
+        "accordion-down": {
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
         },
-        'accordion-up': {
-          from: {
-            height: 'var(--radix-accordion-content-height)',
-          },
-          to: {
-            height: '0',
-          },
+        "accordion-up": {
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
         },
       },
       animation: {
-        'accordion-down': 'accordion-down 0.2s ease-out',
-        'accordion-up': 'accordion-up 0.2s ease-out',
+        "accordion-down": "accordion-down 0.2s ease-out",
+        "accordion-up": "accordion-up 0.2s ease-out",
       },
-      boxShadow: {
-        glow: '0 0 20px rgba(110,231,255,0.35)'
-      },
-      transitionTimingFunction: {
-        soft: 'cubic-bezier(0.25, 0.1, 0.25, 1.0)'
-      }
     },
   },
-  plugins: [require('tailwindcss-animate')],
-} satisfies Config;
+  plugins: [require("tailwindcss-animate")],
+} satisfies Config
+
+export default config

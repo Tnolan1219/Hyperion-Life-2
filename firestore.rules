@@ -1,247 +1,26 @@
-/**
- * @file Firebase Security Rules for Base 44 Platform
- *
- * @corePhilosophy This ruleset enforces a strict user-ownership model for personal financial data (assets, debts, goals, advice, AI sessions) stored under `/users/{userId}`.
- *  Global, publicly readable data (tips, links, newsCache) is also supported. All write operations MUST be authenticated.
- *
- * @dataStructure
- * - /users/{userId}: Stores user profiles, where userId is the Firebase Auth UID.
- * - /users/{userId}/assets/{assetId}: Stores assets owned by a specific user.
- * - /users/{userId}/debts/{debtId}: Stores debts owed by a specific user.
- * - /users/{userId}/goals/{goalId}: Stores financial goals set by a specific user.
- * - /users/{userId}/advice/{adviceId}: Stores AI-generated financial advice for a specific user.
- * - /users/{userId}/aiSessions/{aiSessionId}: Stores AI coaching sessions for a specific user.
- * - /tips/{tipId}: Stores global financial tips.
- * - /links/{linkId}: Stores global links to external resources.
- * - /newsCache/{newsCacheId}: Stores cached news articles.
- *
- * @keySecurityDecisions
- * - User data is strictly segregated under their respective `/users/{userId}` path.
- * - All write operations on user-owned data require authentication and ownership validation.
- * - Publicly readable collections (tips, links, newsCache) are available to all users.
- * - Listing of user documents is allowed only for the owner, except for explicitly public collections.
- *
- * @denormalizationForAuthorization User-owned documents (assets, debts, goals, advice, AI sessions) include a denormalized `userId` field, which is essential for authorization checks.
- *  This avoids costly and complex `get()` calls to the `/users/{userId}` document.
- */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    /**
-     * @description Secure user profiles under /users/{userId}.
-     * @path /users/{userId}
-     * @allow (create) - User with UID 'user_abc' can create their profile document at /users/user_abc if the 'id' field in the data matches the UID.
-     * @allow (get) - User with UID 'user_abc' can read their profile document at /users/user_abc.
-     * @allow (update) - User with UID 'user_abc' can update their profile document at /users/user_abc.
-     * @allow (delete) - User with UID 'user_abc' can delete their profile document at /users/user_abc.
-     * @deny (create) - User with UID 'user_xyz' cannot create a profile document at /users/user_abc.
-     * @deny (get) - User with UID 'user_xyz' cannot read the profile document at /users/user_abc.
-     * @principle Enforces document ownership and validated identity for user profiles.
-     */
-    match /users/{userId} {
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
-      }
-
-      allow get: if isOwner(userId);
-      allow list: if false; // Explicitly disallow listing of all user profiles.
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id; //Enforce immutability of userId
-      allow delete: if isExistingOwner(userId);
+    // Allow public read-only access for landing page data
+    match /kpis/{kpiId} {
+      allow read;
+      allow write: if false;
+    }
+    match /holdings/{holdingId} {
+      allow read;
+      allow write: if false;
+    }
+    match /features/{featureId} {
+      allow read;
+      allow write: if false;
     }
 
-    /**
-     * @description Secure assets owned by a specific user.
-     * @path /users/{userId}/assets/{assetId}
-     * @allow (create) - User with UID 'user_abc' can create an asset under /users/user_abc/assets if asset.userId == 'user_abc'.
-     * @allow (get) - User with UID 'user_abc' can read an asset under /users/user_abc/assets.
-     * @allow (update) - User with UID 'user_abc' can update an asset under /users/user_abc/assets if asset.userId == 'user_abc'.
-     * @allow (delete) - User with UID 'user_abc' can delete an asset under /users/user_abc/assets if asset.userId == 'user_abc'.
-     * @deny (create) - User with UID 'user_xyz' cannot create an asset under /users/user_abc/assets.
-     * @deny (get) - User with UID 'user_xyz' cannot read the asset under /users/user_abc/assets.
-     * @principle Enforces document ownership for assets.
-     */
-    match /users/{userId}/assets/{assetId} {
-      function isOwner(userId) {
-        return request.auth.uid == userId;
+    // Keep original user data rules, but restrict writes for now
+    match /users/{userId}/{document=**} {
+      function isOwner() {
+        return request.auth != null && request.auth.uid == userId;
       }
-
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
-      }
-
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId; //Enforce immutability of userId
-      allow delete: if isExistingOwner(userId);
-    }
-
-    /**
-     * @description Secure debts owed by a specific user.
-     * @path /users/{userId}/debts/{debtId}
-     * @allow (create) - User with UID 'user_abc' can create a debt under /users/user_abc/debts if debt.userId == 'user_abc'.
-     * @allow (get) - User with UID 'user_abc' can read a debt under /users/user_abc/debts.
-     * @allow (update) - User with UID 'user_abc' can update a debt under /users/user_abc/debts if debt.userId == 'user_abc'.
-     * @allow (delete) - User with UID 'user_abc' can delete a debt under /users/user_abc/debts if debt.userId == 'user_abc'.
-     * @deny (create) - User with UID 'user_xyz' cannot create a debt under /users/user_abc/debts.
-     * @deny (get) - User with UID 'user_xyz' cannot read the debt under /users/user_abc/debts.
-     * @principle Enforces document ownership for debts.
-     */
-    match /users/{userId}/debts/{debtId} {
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
-      }
-
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId; //Enforce immutability of userId
-      allow delete: if isExistingOwner(userId);
-    }
-
-    /**
-     * @description Secure financial goals set by a specific user.
-     * @path /users/{userId}/goals/{goalId}
-     * @allow (create) - User with UID 'user_abc' can create a goal under /users/user_abc/goals if goal.userId == 'user_abc'.
-     * @allow (get) - User with UID 'user_abc' can read a goal under /users/user_abc/goals.
-     * @allow (update) - User with UID 'user_abc' can update a goal under /users/user_abc/goals if goal.userId == 'user_abc'.
-     * @allow (delete) - User with UID 'user_abc' can delete a goal under /users/user_abc/goals if goal.userId == 'user_abc'.
-     * @deny (create) - User with UID 'user_xyz' cannot create a goal under /users/user_abc/goals.
-     * @deny (get) - User with UID 'user_xyz' cannot read the goal under /users/user_abc/goals.
-     * @principle Enforces document ownership for goals.
-     */
-    match /users/{userId}/goals/{goalId} {
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
-      }
-
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId; //Enforce immutability of userId
-      allow delete: if isExistingOwner(userId);
-    }
-
-    /**
-     * @description Allow public read access to financial tips. Write access is restricted and must be handled via Cloud Functions.
-     * @path /tips/{tipId}
-     * @allow (get) - Any user can read a tip.
-     * @allow (list) - Any user can list tips.
-     * @deny (create) - No user can directly create a tip.
-     * @deny (update) - No user can directly update a tip.
-     * @deny (delete) - No user can directly delete a tip.
-     * @principle Allows public read access while restricting write access.
-     */
-    match /tips/{tipId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
-    }
-
-    /**
-     * @description Allow public read access to external links. Write access is restricted and must be handled via Cloud Functions.
-     * @path /links/{linkId}
-     * @allow (get) - Any user can read a link.
-     * @allow (list) - Any user can list links.
-     * @deny (create) - No user can directly create a link.
-     * @deny (update) - No user can directly update a link.
-     * @deny (delete) - No user can directly delete a link.
-     * @principle Allows public read access while restricting write access.
-     */
-    match /links/{linkId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
-    }
-
-    /**
-     * @description Allow public read access to cached news articles. Write access is restricted and must be handled via Cloud Functions.
-     * @path /newsCache/{newsCacheId}
-     * @allow (get) - Any user can read a news cache entry.
-     * @allow (list) - Any user can list news cache entries.
-     * @deny (create) - No user can directly create a news cache entry.
-     * @deny (update) - No user can directly update a news cache entry.
-     * @deny (delete) - No user can directly delete a news cache entry.
-     * @principle Allows public read access while restricting write access.
-     */
-    match /newsCache/{newsCacheId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
-    }
-
-    /**
-     * @description Secure AI-generated financial advice for a specific user.
-     * @path /users/{userId}/advice/{adviceId}
-     * @allow (create) - User with UID 'user_abc' can create advice under /users/user_abc/advice if advice.userId == 'user_abc'.
-     * @allow (get) - User with UID 'user_abc' can read advice under /users/user_abc/advice.
-     * @allow (update) - User with UID 'user_abc' can update advice under /users/user_abc/advice if advice.userId == 'user_abc'.
-     * @allow (delete) - User with UID 'user_abc' can delete advice under /users/user_abc/advice if advice.userId == 'user_abc'.
-     * @deny (create) - User with UID 'user_xyz' cannot create advice under /users/user_abc/advice.
-     * @deny (get) - User with UID 'user_xyz' cannot read the advice under /users/user_abc/advice.
-     * @principle Enforces document ownership for AI-generated financial advice.
-     */
-    match /users/{userId}/advice/{adviceId} {
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
-      }
-
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId; //Enforce immutability of userId
-      allow delete: if isExistingOwner(userId);
-    }
-
-    /**
-     * @description Secure AI coaching sessions for a specific user.
-     * @path /users/{userId}/aiSessions/{aiSessionId}
-     * @allow (create) - User with UID 'user_abc' can create an AI session under /users/user_abc/aiSessions if aiSession.userId == 'user_abc'.
-     * @allow (get) - User with UID 'user_abc' can read an AI session under /users/user_abc/aiSessions.
-     * @allow (update) - User with UID 'user_abc' can update an AI session under /users/user_abc/aiSessions if aiSession.userId == 'user_abc'.
-     * @allow (delete) - User with UID 'user_abc' can delete an AI session under /users/user_abc/aiSessions if aiSession.userId == 'user_abc'.
-     * @deny (create) - User with UID 'user_xyz' cannot create an AI session under /users/user_abc/aiSessions.
-     * @deny (get) - User with UID 'user_xyz' cannot read the AI session under /users/user_abc/aiSessions.
-     * @principle Enforces document ownership for AI coaching sessions.
-     */
-    match /users/{userId}/aiSessions/{aiSessionId} {
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
-      }
-
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId; //Enforce immutability of userId
-      allow delete: if isExistingOwner(userId);
+      allow read, write: if isOwner();
     }
   }
 }

@@ -1,30 +1,18 @@
 export const Logo = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 256 256"
-    width={32}
-    height={32}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
     {...props}
   >
-    <g fill="currentColor">
-      <path d="M128 32l96 192H32L128 32z" opacity={0.2} />
-      <path d="M128 32L32 224h192L128 32zm0 4l90.36 180.72H37.64L128 36z" />
-      <path
-        d="M128 112v80"
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={16}
-      />
-      <path
-        d="M96 144h64"
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={16}
-      />
-    </g>
+    <path d="M12 2L2 7V17L12 22L22 17V7L12 2Z"/>
+    <path d="M2 7L12 12"/>
+    <path d="M12 22V12"/>
+    <path d="M22 7L12 12"/>
+    <path d="M17 4.5L7 9.5"/>
   </svg>
 );
