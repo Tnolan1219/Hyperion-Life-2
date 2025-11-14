@@ -10,6 +10,7 @@ import {
   BarChart,
   PieChart,
   LineChart,
+  Target,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -20,6 +21,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { useUser } from '@/firebase';
+import { Progress } from '@/components/ui/progress';
 
 const StatCard = ({
   title,
@@ -36,7 +38,7 @@ const StatCard = ({
   change?: string;
   changeColor?: string;
 }) => (
-  <Card className="bg-card/60 border-border/60 hover:border-primary/60 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1">
+  <Card className="glass hover:border-primary/60 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1">
     <CardHeader className="pb-2 flex flex-row items-center justify-between">
       <CardTitle className="text-sm font-medium text-muted-foreground">
         {title}
@@ -63,7 +65,7 @@ const StatCard = ({
 );
 
 const ChartPlaceholder = ({ title, icon, description }: { title: string, icon: React.ReactNode, description: string }) => (
-    <Card className="col-span-1 lg:col-span-2 min-h-[300px] flex flex-col items-center justify-center bg-card/40 border-border/40 border-dashed">
+    <Card className="col-span-1 lg:col-span-2 min-h-[300px] flex flex-col items-center justify-center glass border-dashed">
         <div className="text-center p-8">
             <div className="inline-flex items-center justify-center p-3 mb-4 bg-primary/10 rounded-full">
                 {React.cloneElement(icon as React.ReactElement, { className: "h-10 w-10 text-primary" })}
@@ -131,7 +133,7 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <Card className="col-span-1 lg:col-span-2 bg-card/60 border-border/60 hover:border-primary/60 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10">
+        <Card className="col-span-1 lg:col-span-2 glass">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2"><LineChart className="text-primary"/>Net Worth Over Time</CardTitle>
                 <CardDescription>Your wealth trajectory for the last 12 months.</CardDescription>
@@ -144,8 +146,59 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-         <ChartPlaceholder title="Debt Breakdown" icon={<BarChart />} description="A view of your liabilities by type (student loan, credit card, etc)." />
-         <Card className="col-span-1 lg:col-span-3 bg-card/60 border-border/60 hover:border-primary/60 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10">
+        <Card className="col-span-1 glass">
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2"><Target className="text-primary"/>Goal In Focus</CardTitle>
+                <CardDescription>Your top priority right now.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col items-center justify-center text-center h-[300px]">
+                <div 
+                  className="relative h-32 w-32"
+                  style={{
+                    // @ts-ignore
+                    "--progress": '65%',
+                    "--stroke-width": '8px',
+                    "--bg-color": "hsl(var(--secondary))",
+                    "--fg-color": "hsl(var(--primary))",
+                  }}
+                >
+                  <svg className="w-full h-full" viewBox="0 0 100 100">
+                    <circle
+                      className="text-muted"
+                      strokeWidth="var(--stroke-width)"
+                      stroke="var(--bg-color)"
+                      fill="transparent"
+                      r="42"
+                      cx="50"
+                      cy="50"
+                    />
+                    <circle
+                      className="text-primary"
+                      strokeWidth="var(--stroke-width)"
+                      strokeDasharray="264"
+                      strokeDashoffset="calc(264 - (264 * 65) / 100))"
+                      strokeLinecap="round"
+                      stroke="var(--fg-color)"
+                      fill="transparent"
+                      r="42"
+                      cx="50"
+                      cy="50"
+                      style={{
+                        transform: 'rotate(-90deg)',
+                        transformOrigin: '50% 50%',
+                        transition: 'stroke-dashoffset 0.5s ease-in-out'
+                      }}
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                     <span className="text-3xl font-bold">65%</span>
+                  </div>
+                </div>
+                <h3 className="mt-4 font-semibold text-lg">House Down Payment</h3>
+                <p className="text-sm text-muted-foreground">$16,250 / $25,000</p>
+            </CardContent>
+        </Card>
+         <Card className="col-span-1 lg:col-span-3 glass">
             <CardHeader>
                 <CardTitle>Recent Transactions</CardTitle>
                 <CardDescription>Your latest financial activities.</CardDescription>

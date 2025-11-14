@@ -27,6 +27,17 @@ const config = {
     'hover:shadow-green-400/20',
     'hover:shadow-pink-400/20',
     'hover:shadow-purple-400/20',
+    // Safelist for goal categories
+    'bg-blue-500/10',
+    'text-blue-500',
+    'bg-green-500/10',
+    'text-green-500',
+    'bg-purple-500/10',
+    'text-purple-500',
+    'bg-red-500/10',
+    'text-red-500',
+    'bg-orange-500/10',
+    'text-orange-500',
   ],
   theme: {
     container: {

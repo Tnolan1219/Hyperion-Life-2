@@ -30,30 +30,28 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { Calendar as CalendarIcon } from 'lucide-react';
 import { useUser, useFirestore } from '@/firebase';
 import {
   addDocumentNonBlocking,
   updateDocumentNonBlocking,
 } from '@/firebase/non-blocking-updates';
 import { collection, doc } from 'firebase/firestore';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
+import { goalCategories, Goal, GoalCategory } from '@/app/goals/page';
 
 const goalSchema = z.object({
   title: z.string().min(1, 'Title is required.'),
   category: z.string().min(1, 'Category is required.'),
   targetAmount: z.coerce.number().min(1, 'Target amount must be greater than 0.'),
   currentAmount: z.coerce.number().min(0, 'Current amount cannot be negative.'),
+  targetDate: z.date().optional(),
 });
 
 type GoalFormData = z.infer<typeof goalSchema>;
-
-export type Goal = {
-  id?: string;
-  title: string;
-  targetAmount: number;
-  currentAmount: number;
-  category: string;
-  userId?: string;
-};
 
 interface GoalDialogProps {
   isOpen: boolean;
@@ -72,6 +70,7 @@ export function GoalDialog({ isOpen, setIsOpen, goal }: GoalDialogProps) {
       category: goal?.category || '',
       targetAmount: goal?.targetAmount || 0,
       currentAmount: goal?.currentAmount || 0,
+      targetDate: goal?.targetDate ? new Date(goal.targetDate) : undefined,
     },
   });
 
@@ -81,20 +80,26 @@ export function GoalDialog({ isOpen, setIsOpen, goal }: GoalDialogProps) {
         category: goal?.category || '',
         targetAmount: goal?.targetAmount || 0,
         currentAmount: goal?.currentAmount || 0,
+        targetDate: goal?.targetDate ? new Date(goal.targetDate) : undefined,
     });
   }, [goal, form])
 
   const onSubmit = (data: GoalFormData) => {
     if (!firestore || !user) return;
 
+    const goalData = {
+        ...data,
+        targetDate: data.targetDate ? data.targetDate.toISOString() : null,
+    };
+
     if (goal?.id) {
       // Update existing goal
       const goalDocRef = doc(firestore, `users/${user.uid}/goals`, goal.id);
-      updateDocumentNonBlocking(goalDocRef, data);
+      updateDocumentNonBlocking(goalDocRef, goalData);
     } else {
       // Create new goal
       const goalsCollection = collection(firestore, `users/${user.uid}/goals`);
-      addDocumentNonBlocking(goalsCollection, { ...data, userId: user.uid });
+      addDocumentNonBlocking(goalsCollection, { ...goalData, userId: user.uid });
     }
     setIsOpen(false);
     form.reset();
@@ -102,7 +107,7 @@ export function GoalDialog({ isOpen, setIsOpen, goal }: GoalDialogProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{goal ? 'Edit Goal' : 'Create New Goal'}</DialogTitle>
           <DialogDescription>
@@ -142,15 +147,14 @@ export function GoalDialog({ isOpen, setIsOpen, goal }: GoalDialogProps) {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="Savings">Savings</SelectItem>
-                      <SelectItem value="Investment">Investment</SelectItem>
-                      <SelectItem value="Debt Reduction">
-                        Debt Reduction
-                      </SelectItem>
-                      <SelectItem value="Major Purchase">
-                        Major Purchase
-                      </SelectItem>
-                      <SelectItem value="Retirement">Retirement</SelectItem>
+                      {goalCategories.map(({ name, icon: Icon }) => (
+                        <SelectItem key={name} value={name}>
+                            <div className="flex items-center gap-2">
+                                <Icon className="h-4 w-4" />
+                                {name}
+                            </div>
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -185,6 +189,47 @@ export function GoalDialog({ isOpen, setIsOpen, goal }: GoalDialogProps) {
                 )}
               />
             </div>
+            <FormField
+              control={form.control}
+              name="targetDate"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel>Target Date</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant={'outline'}
+                          className={cn(
+                            'w-full pl-3 text-left font-normal',
+                            !field.value && 'text-muted-foreground'
+                          )}
+                        >
+                          {field.value ? (
+                            format(field.value, 'PPP')
+                          ) : (
+                            <span>Pick a date</span>
+                          )}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        disabled={(date) =>
+                          date < new Date() || date < new Date('1900-01-01')
+                        }
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <DialogFooter>
               <Button type="button" variant="ghost" onClick={() => setIsOpen(false)}>
                 Cancel
