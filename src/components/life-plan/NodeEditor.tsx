@@ -8,60 +8,73 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { X } from 'lucide-react';
+import { X, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface NodeEditorProps {
   selectedNode: Node | null;
   onNodeDataChange: (nodeId: string, newData: any) => void;
   closeEditor: () => void;
+  startConnecting: () => void;
 }
 
-export function NodeEditor({ selectedNode, onNodeDataChange, closeEditor }: NodeEditorProps) {
+export function NodeEditor({ selectedNode, onNodeDataChange, closeEditor, startConnecting }: NodeEditorProps) {
   const [formData, setFormData] = useState(selectedNode?.data);
 
   useEffect(() => {
-    setFormData(selectedNode?.data);
+    if (selectedNode) {
+      setFormData(selectedNode.data);
+    }
   }, [selectedNode]);
-
-  if (!selectedNode || !formData) {
-    return (
-        <div className={cn("w-0 md:w-96 h-full bg-card border-l border-border transition-all duration-300 ease-in-out")}>
-        </div>
-    );
-  }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    const newFormData = { ...formData, [name]: value };
+    setFormData(newFormData);
+    if(selectedNode) {
+        onNodeDataChange(selectedNode.id, newFormData);
+    }
   };
   
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: parseFloat(value) || 0 });
+    const newFormData = { ...formData, [name]: parseFloat(value) || 0 };
+    setFormData(newFormData);
+    if(selectedNode) {
+        onNodeDataChange(selectedNode.id, newFormData);
+    }
   };
 
   const handleFrequencyChange = (value: string) => {
-    setFormData({ ...formData, frequency: value });
-  };
-
-  const handleSaveChanges = () => {
-    onNodeDataChange(selectedNode.id, formData);
+    const newFormData = { ...formData, frequency: value };
+    setFormData(newFormData);
+    if(selectedNode) {
+        onNodeDataChange(selectedNode.id, newFormData);
+    }
   };
   
   const handleKeyDown = (e: React.KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
-          e.preventDefault();
-          handleSaveChanges();
+      if (e.key === 'Escape') {
+          closeEditor();
       }
   }
 
+  if (!selectedNode || !formData) {
+    return (
+      <div className="w-0" style={{ transition: 'width 300ms ease-in-out' }}></div>
+    );
+  }
+
   return (
-    <div className={cn("w-full md:w-96 h-full bg-card border-l border-border transition-all duration-300 ease-in-out p-4 flex flex-col", selectedNode ? 'w-96' : 'w-0 p-0')} onKeyDown={handleKeyDown}>
-      <CardHeader className="flex flex-row items-center justify-between p-2">
+    <div 
+        className="w-96 h-full bg-card border-l border-border p-4 flex flex-col shadow-2xl" 
+        style={{ transition: 'width 300ms ease-in-out' }}
+        onKeyDown={handleKeyDown}
+    >
+      <CardHeader className="flex flex-row items-start justify-between p-2">
         <div>
             <CardTitle>Edit Node</CardTitle>
-            <CardDescription>Update the node's details.</CardDescription>
+            <CardDescription>Update details for "{selectedNode.data.title}"</CardDescription>
         </div>
         <Button variant="ghost" size="icon" onClick={closeEditor}>
             <X className="h-4 w-4" />
@@ -117,9 +130,10 @@ export function NodeEditor({ selectedNode, onNodeDataChange, closeEditor }: Node
           />
         </div>
       </CardContent>
-      <div className="p-2">
-        <Button onClick={handleSaveChanges} className="w-full">
-          Save Changes (Ctrl+S)
+      <div className="p-2 space-y-2">
+        <Button onClick={startConnecting} className="w-full">
+            <Zap className="mr-2 h-4 w-4" />
+            Connect to another node
         </Button>
       </div>
     </div>

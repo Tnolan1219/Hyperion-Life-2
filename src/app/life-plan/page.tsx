@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import ReactFlow, {
   ReactFlowProvider,
   useNodesState,
@@ -12,8 +12,10 @@ import ReactFlow, {
   Edge,
   Node,
   useReactFlow,
+  Panel,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
+import { lifePlanTemplates } from '@/lib/life-plan-templates';
 
 import {
   LifeEventNode,
@@ -30,47 +32,21 @@ import {
   Heart,
   Flag,
   PlusCircle,
+  Zap,
+  ZoomIn,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { NodeEditor } from '@/components/life-plan/NodeEditor';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { cn } from '@/lib/utils';
 
-const initialNodes: Node[] = [
-  {
-    id: '1',
-    type: 'career',
-    position: { x: 250, y: 50 },
-    data: {
-      title: 'First Job',
-      amount: 50000,
-      frequency: 'yearly',
-      notes: 'Starting salary as a software engineer.',
-    },
-  },
-  {
-    id: '2',
-    type: 'financial',
-    position: { x: 450, y: 250 },
-    data: {
-      title: 'Emergency Fund',
-      amount: -10000,
-      frequency: 'one-time',
-      notes: 'Initial savings for a 3-month emergency fund.',
-    },
-  },
-  {
-    id: '3',
-    type: 'goal',
-    position: { x: 650, y: 50 },
-    data: {
-      title: 'Buy a House',
-      amount: -50000,
-      frequency: 'one-time',
-      notes: 'Down payment for a starter home.',
-    },
-  },
-];
-
-const initialEdges: Edge[] = [];
+const initialNodes: Node[] = lifePlanTemplates.default.nodes;
+const initialEdges: Edge[] = lifePlanTemplates.default.edges;
 
 const nodeTypes = {
   lifeEvent: LifeEventNode,
@@ -92,10 +68,35 @@ function LifePlanCanvas() {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
-  const { screenToFlowPosition } = useReactFlow();
+  const { screenToFlowPosition, fitView } = useReactFlow();
+
+  const [connectingNode, setConnectingNode] = useState<string | null>(null);
+
+  const [netWorth, setNetWorth] = useState(0);
+  const [annualIncome, setAnnualIncome] = useState(0);
+
+  useEffect(() => {
+    let totalWorth = 0;
+    let totalIncome = 0;
+    nodes.forEach(node => {
+      const amount = node.data.amount || 0;
+      if (node.data.frequency === 'one-time') {
+        totalWorth += amount;
+      } else if (node.data.frequency === 'yearly') {
+        totalIncome += amount;
+      }
+    });
+    setNetWorth(totalWorth);
+    setAnnualIncome(totalIncome);
+  }, [nodes]);
+
+  useEffect(() => {
+    fitView({ duration: 300 });
+  }, [fitView, nodes]);
 
   const onConnect = useCallback(
-    (params: Connection | Edge) =>
+    (params: Connection | Edge) => {
+      setConnectingNode(null);
       setEdges(eds =>
         addEdge(
           {
@@ -106,7 +107,8 @@ function LifePlanCanvas() {
           },
           eds
         )
-      ),
+      );
+    },
     [setEdges]
   );
 
@@ -115,13 +117,11 @@ function LifePlanCanvas() {
       id: `node_${+new Date()}`,
       type,
       position: screenToFlowPosition({
-        x: window.innerWidth / 2 - 100,
+        x: window.innerWidth / 2.5,
         y: window.innerHeight / 3,
       }),
       data: {
-        title: `New ${
-          type.charAt(0).toUpperCase() + type.slice(1)
-        }`,
+        title: `New ${type.charAt(0).toUpperCase() + type.slice(1)}`,
         amount: 0,
         frequency: 'one-time',
         notes: '',
@@ -130,90 +130,155 @@ function LifePlanCanvas() {
     setNodes(nds => nds.concat(newNode));
     setSelectedNode(newNode);
   };
-  
-  const onNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
-    setSelectedNode(node);
-  }, []);
+
+  const onNodeClick = useCallback(
+    (event: React.MouseEvent, node: Node) => {
+      if (connectingNode) {
+        onConnect({ source: connectingNode, target: node.id, sourceHandle: null, targetHandle: null });
+      } else {
+        setSelectedNode(node);
+      }
+    },
+    [connectingNode, onConnect]
+  );
 
   const onPaneClick = useCallback(() => {
     setSelectedNode(null);
+    setConnectingNode(null);
   }, []);
 
   const onNodeDataChange = (nodeId: string, newData: any) => {
-    setNodes(nds =>
-      nds.map(node =>
-        node.id === nodeId ? { ...node, data: { ...node.data, ...newData } } : node
-      )
-    );
+    let newNodes: Node[] = [];
+    setNodes(nds => {
+      newNodes = nds.map(node =>
+        node.id === nodeId
+          ? { ...node, data: { ...node.data, ...newData } }
+          : node
+      );
+      return newNodes;
+    });
+
     if (selectedNode && selectedNode.id === nodeId) {
-      setSelectedNode(prev => prev ? {...prev, data: {...prev.data, ...newData}} : null);
+      setSelectedNode(prev =>
+        prev ? { ...prev, data: { ...prev.data, ...newData } } : null
+      );
     }
   };
+  
+  const handleLoadTemplate = (templateName: keyof typeof lifePlanTemplates) => {
+    const template = lifePlanTemplates[templateName];
+    setNodes(template.nodes);
+    setEdges(template.edges);
+    setSelectedNode(null);
+    setTimeout(() => fitView({duration: 500}), 100);
+  }
 
   return (
-    <div className="w-full h-[85vh] rounded-lg overflow-hidden relative flex">
-      <div className="flex-grow">
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          onNodeClick={onNodeClick}
-          onPaneClick={onPaneClick}
-          nodeTypes={nodeTypes}
-          fitView
-          className="bg-card/30"
-        >
-          <Background gap={24} size={1} color="hsl(var(--border))" />
-          <Controls className="react-flow-controls" />
-          <MiniMap
-            nodeColor={node => {
-              switch (node.type) {
-                case 'career':
-                  return '#fb923c';
-                case 'education':
-                  return '#60a5fa';
-                case 'financial':
-                  return '#4ade80';
-                case 'lifeEvent':
-                  return '#f472b6';
-                case 'goal':
-                  return '#c084fc';
-                default:
-                  return '#888';
-              }
-            }}
-          />
-        </ReactFlow>
-      </div>
+    <div className="w-full grow rounded-lg overflow-hidden relative flex">
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onConnect={onConnect}
+        onNodeClick={onNodeClick}
+        onPaneClick={onPaneClick}
+        nodeTypes={nodeTypes}
+        fitView
+        className={cn('bg-card/30', connectingNode && 'cursor-crosshair')}
+        proOptions={{ hideAttribution: true }}
+      >
+        <Background gap={24} size={1} color="hsl(var(--border))" />
+        <Controls className="react-flow-controls" position='bottom-left'>
+            <button onClick={() => fitView({ duration: 500 })}>
+                <ZoomIn />
+            </button>
+        </Controls>
+        <MiniMap
+          nodeColor={node => {
+            switch (node.type) {
+              case 'career':
+                return '#fb923c';
+              case 'education':
+                return '#60a5fa';
+              case 'financial':
+                return '#4ade80';
+              case 'lifeEvent':
+                return '#f472b6';
+              case 'goal':
+                return '#c084fc';
+              default:
+                return '#888';
+            }
+          }}
+        />
+        <Panel position="top-left">
+          <div className="flex gap-2">
+            <Card className="glass">
+              <CardHeader className="p-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <PlusCircle className="h-5 w-5" />
+                  Add to Plan
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-3 pt-0 grid grid-cols-5 gap-2">
+                {nodeMenu.map(({ type, label, icon: Icon, color }) => (
+                  <Button
+                    key={type}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => addNode(type)}
+                    className="flex flex-col h-16 w-16 gap-1 border-border/60 hover:border-primary"
+                  >
+                    <Icon className={`h-5 w-5 text-${color}-400`} />
+                    <span className="text-xs">{label}</span>
+                  </Button>
+                ))}
+              </CardContent>
+            </Card>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="glass h-full">
+                  <Zap className="mr-2 h-4 w-4" /> Templates
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onClick={() => handleLoadTemplate('default')}>
+                  Standard Career Path
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleLoadTemplate('earlyRetirement')}>
+                  Early Retirement (FIRE)
+                </DropdownMenuItem>
+                 <DropdownMenuItem onClick={() => handleLoadTemplate('startup')}>
+                  Startup Founder
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </Panel>
+         <Panel position="bottom-center">
+            <Card className="glass py-2 px-4 flex items-center gap-6">
+                <div className="text-center">
+                    <p className="text-xs text-muted-foreground">Projected Net Worth</p>
+                    <p className="text-lg font-bold text-green-400">{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', notation: 'compact' }).format(netWorth)}</p>
+                </div>
+                <div className="text-center">
+                    <p className="text-xs text-muted-foreground">Est. Annual Income</p>
+                    <p className="text-lg font-bold">{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', notation: 'compact' }).format(annualIncome)}/yr</p>
+                </div>
+            </Card>
+        </Panel>
+      </ReactFlow>
 
-      <NodeEditor selectedNode={selectedNode} onNodeDataChange={onNodeDataChange} closeEditor={() => setSelectedNode(null)}/>
-
-      <div className="absolute top-4 left-4 z-10">
-        <Card className="glass">
-          <CardHeader className="p-4">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <PlusCircle className="h-5 w-5" />
-              Add to Plan
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-4 pt-0 grid grid-cols-3 gap-2">
-            {nodeMenu.map(({ type, label, icon: Icon, color }) => (
-              <Button
-                key={type}
-                variant="outline"
-                size="sm"
-                onClick={() => addNode(type)}
-                className="flex flex-col h-16 gap-1 border-border/60 hover:border-primary"
-              >
-                <Icon className={`h-5 w-5 text-${color}-400`} />
-                <span className="text-xs">{label}</span>
-              </Button>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
+      <NodeEditor
+        selectedNode={selectedNode}
+        onNodeDataChange={onNodeDataChange}
+        closeEditor={() => setSelectedNode(null)}
+        startConnecting={() => {
+            if (selectedNode) setConnectingNode(selectedNode.id);
+            setSelectedNode(null);
+        }}
+      />
 
       <style jsx global>{`
         .react-flow__edge-path {
@@ -242,15 +307,13 @@ function LifePlanCanvas() {
 
 export default function LifePlanPage() {
   return (
-    <div className="space-y-8">
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-4xl font-bold">Life Plan</h1>
-          <p className="text-muted-foreground mt-2">
-            Visualize and map out your financial future. Drag, drop, and connect
-            the dots.
-          </p>
-        </div>
+    <div className="h-[calc(100vh-120px)] md:h-[calc(100vh-80px)] flex flex-col gap-8">
+      <div className="flex-shrink-0">
+        <h1 className="text-4xl font-bold">Life Plan</h1>
+        <p className="text-muted-foreground mt-2">
+          Visualize and map out your financial future. Drag, drop, and connect
+          the dots.
+        </p>
       </div>
       <ReactFlowProvider>
         <LifePlanCanvas />
