@@ -384,6 +384,7 @@ function LifePlanCanvas() {
         minZoom={0.1}
         connectionMode='loose'
         connectionRadius={50}
+        connectOnClick={true}
       >
         <div className="absolute top-4 right-4 z-10 flex gap-2">
             <DropdownMenu>
@@ -498,7 +499,7 @@ export default function LifePlanPage() {
   };
   
   return (
-    <div className="h-[calc(100vh-96px)] flex flex-col gap-8">
+    <div className="flex flex-col gap-8">
       <div className="flex-shrink-0 px-4 md:px-8">
         <h1 className="text-4xl font-bold">Life Plan</h1>
         <p className="text-muted-foreground mt-2">
@@ -506,7 +507,7 @@ export default function LifePlanPage() {
           the dots.
         </p>
       </div>
-      <div className="flex-grow">
+      <div className="h-[calc(100vh-240px)]">
         <ReactFlowProvider>
             <LifePlanCanvas />
         </ReactFlowProvider>
