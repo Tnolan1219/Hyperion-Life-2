@@ -69,11 +69,11 @@ export function NodeEditor({ selectedNode, onNodeDataChange, closeEditor, startC
 
   return (
     <div 
-        className="w-96 h-full bg-card border-l border-border p-4 flex flex-col shadow-2xl" 
+        className="w-96 h-full glass !rounded-3xl !border-l flex flex-col" 
         style={{ transition: 'width 300ms ease-in-out' }}
         onKeyDown={handleKeyDown}
     >
-      <CardHeader className="flex flex-row items-start justify-between p-2">
+      <CardHeader className="flex flex-row items-start justify-between p-4">
         <div>
             <CardTitle>Edit Node</CardTitle>
             <CardDescription>Update details for "{selectedNode.data.title}"</CardDescription>
@@ -82,7 +82,7 @@ export function NodeEditor({ selectedNode, onNodeDataChange, closeEditor, startC
             <X className="h-4 w-4" />
         </Button>
       </CardHeader>
-      <CardContent className="space-y-4 flex-grow p-2 overflow-y-auto">
+      <CardContent className="space-y-4 flex-grow p-4 overflow-y-auto">
         <div className="space-y-2">
           <Label htmlFor="title">Title</Label>
           <Input
@@ -132,7 +132,7 @@ export function NodeEditor({ selectedNode, onNodeDataChange, closeEditor, startC
           />
         </div>
       </CardContent>
-      <div className="p-2 space-y-2 mt-auto">
+      <div className="p-4 space-y-2 mt-auto">
         <Separator className="my-2" />
         <Button onClick={startConnecting} className="w-full" variant="outline">
             <Zap className="mr-2 h-4 w-4" />

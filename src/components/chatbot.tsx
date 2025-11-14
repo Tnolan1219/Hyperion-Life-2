@@ -74,7 +74,7 @@ export function Chatbot() {
       <div className="fixed bottom-6 right-6 z-50">
         <Button
           size="icon"
-          className="rounded-full w-16 h-16 bg-primary hover:bg-primary/90 shadow-lg"
+          className="rounded-full w-16 h-16 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/40"
           onClick={toggleChat}
         >
           {isOpen ? <X className="h-8 w-8" /> : <MessageCircle className="h-8 w-8" />}
@@ -83,7 +83,7 @@ export function Chatbot() {
 
       {isOpen && (
         <div className="fixed bottom-24 right-6 z-50 w-full max-w-sm">
-          <Card className="flex flex-col h-[60vh] bg-card border-border/60 shadow-2xl">
+          <Card className="flex flex-col h-[60vh] glass">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Bot className="text-primary" />
@@ -106,23 +106,23 @@ export function Chatbot() {
                     >
                       {message.role === 'model' && (
                         <Avatar className="w-8 h-8 border-2 border-primary">
-                          <AvatarFallback>
+                          <AvatarFallback className="bg-primary/20">
                             <Bot className="w-5 h-5 text-primary" />
                           </AvatarFallback>
                         </Avatar>
                       )}
                       <div
                         className={cn(
-                          'rounded-lg px-4 py-2 max-w-[80%] text-sm',
+                          'rounded-xl px-4 py-2 max-w-[80%] text-sm',
                           message.role === 'user'
                             ? 'bg-primary text-primary-foreground'
-                            : 'bg-muted'
+                            : 'bg-muted/60'
                         )}
                       >
                         <p>{message.content}</p>
                       </div>
                        {message.role === 'user' && (
-                        <Avatar className="w-8 h-8">
+                        <Avatar className="w-8 h-8 bg-muted/80">
                            <AvatarFallback>
                             <User className="w-5 h-5" />
                           </AvatarFallback>
@@ -133,11 +133,11 @@ export function Chatbot() {
                   {isLoading && (
                     <div className="flex items-start gap-3">
                        <Avatar className="w-8 h-8 border-2 border-primary">
-                          <AvatarFallback>
+                           <AvatarFallback className="bg-primary/20">
                             <Bot className="w-5 h-5 text-primary" />
                           </AvatarFallback>
                         </Avatar>
-                      <div className="bg-muted rounded-lg px-4 py-3">
+                      <div className="bg-muted/60 rounded-lg px-4 py-3">
                         <div className="flex items-center gap-2">
                             <span className="h-2 w-2 bg-primary rounded-full animate-pulse delay-0"></span>
                             <span className="h-2 w-2 bg-primary rounded-full animate-pulse delay-150"></span>
