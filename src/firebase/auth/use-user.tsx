@@ -42,7 +42,3 @@ export const useUser = (): UserContextType => {
   }
   return context;
 };
-
-export const useAuth = (): Auth | null => {
-    return useFirebaseAuth();
-};

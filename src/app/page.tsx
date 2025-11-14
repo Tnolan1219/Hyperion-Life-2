@@ -3,16 +3,12 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import {
-  Sparkles,
-  TrendingUp,
-  Layout,
-  ShieldCheck,
-  LogOut,
-  User,
   BrainCircuit,
   DollarSign,
-  Landmark,
   Goal,
+  Landmark,
+  LogOut,
+  User,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -22,16 +18,16 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { useAuth, useUser } from '@/firebase/auth/use-user';
+import { useAuth, useUser } from '@/firebase';
 import { initiateAnonymousSignIn } from '@/firebase/non-blocking-login';
-import { collection, query, where } from 'firebase/firestore';
+import { collection, query } from 'firebase/firestore';
 import { useCollection } from '@/firebase/firestore/use-collection';
-import { firestore } from '@/firebase';
 
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from 'recharts';
-import { getAuth } from 'firebase/auth';
+import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from 'recharts';
+import { Auth } from 'firebase/auth';
 import { useMemoFirebase } from '@/hooks/use-memo-firebase';
 import { useFirestore } from '@/firebase';
+import { Logo } from '@/components/icons/logo';
 
 type Asset = {
   type: string;
@@ -70,51 +66,8 @@ const Header = () => {
     >
       <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className="text-primary"
-          >
-            <path
-              d="M12 2L2 7V17L12 22L22 17V7L12 2Z"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M2 7L12 12"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M12 22V12"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M22 7L12 12"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M17 4.5L7 9.5"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-          <span className="text-xl font-bold">StockMind AI</span>
+          <Logo className="text-primary h-6 w-6" />
+          <span className="text-xl font-bold">Base 44</span>
         </div>
         {user && (
           <nav className="hidden md:flex items-center gap-2 text-sm">
@@ -200,7 +153,6 @@ const Dashboard = () => {
     [user?.uid, firestore]
   );
   const { data: goals } = useCollection<Goal>(goalsQuery);
-
 
   const totalAssets = useMemo(
     () => assets?.reduce((sum, asset) => sum + asset.value, 0) || 0,
@@ -301,9 +253,7 @@ const Dashboard = () => {
   );
 };
 
-const SignIn = () => {
-  const auth = getAuth();
-  
+const SignIn = ({ auth }: { auth: Auth | null }) => {
   const handleAnonymousSignIn = async () => {
     if (auth) {
       try {
@@ -318,7 +268,7 @@ const SignIn = () => {
     <div className="min-h-screen gradient-hero flex items-center justify-center">
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Welcome to StockMind AI</CardTitle>
+          <CardTitle className="text-2xl">Welcome to Base 44</CardTitle>
           <CardDescription>
             Sign in to continue to your dashboard
           </CardDescription>
@@ -339,6 +289,7 @@ const SignIn = () => {
 
 export default function AppPage() {
   const { user, isLoading } = useUser();
+  const auth = useAuth();
 
   if (isLoading) {
     return (
@@ -352,9 +303,8 @@ export default function AppPage() {
     <div className="min-h-screen bg-bg">
       <Header />
       <main className="overflow-x-hidden">
-        {user ? <Dashboard /> : <SignIn />}
+        {user ? <Dashboard /> : <SignIn auth={auth} />}
       </main>
     </div>
   );
 }
- 

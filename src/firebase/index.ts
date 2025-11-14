@@ -1,10 +1,12 @@
+'use client';
+
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { firebaseConfig } from './config';
 import { useCollection } from './firestore/use-collection';
 import { useDoc } from './firestore/use-doc';
-import { useUser, useAuth as useFirebaseAuthHook } from './auth/use-user';
+import { useUser } from './auth/use-user';
 import {
   FirebaseProvider,
   useFirebase,
@@ -15,6 +17,7 @@ import {
 
 let firebaseApp: FirebaseApp;
 
+// This ensures we only initialize Firebase once.
 if (getApps().length === 0) {
   firebaseApp = initializeApp(firebaseConfig);
 } else {
@@ -35,6 +38,5 @@ export {
   useFirebase,
   useFirebaseApp,
   useAuth,
-  useFirebaseAuthHook,
   useFirestore,
 };
