@@ -14,7 +14,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useUser } from '@/firebase';
 import { Header } from '@/components/landing/header';
-import { Chatbot } from '@/components/chatbot';
+import { AiChatBox } from '@/components/dashboard/ai-chat-box';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 
 const navItems = [
@@ -97,7 +97,8 @@ function NavLink({
               'group flex items-center justify-center rounded-2xl h-14 w-14 my-2 text-muted-foreground transition-all duration-300 relative glass',
               'transform-gpu hover:scale-[1.1]',
                colors.hoverText,
-              isActive ? `${colors.bg} ${colors.text} font-semibold ${colors.hoverBg}` : `${colors.hoverBg}`
+              isActive ? `${colors.bg} ${colors.text} font-semibold` : '',
+              `hover:${colors.bg}`
             )}
           >
             <div className={cn(
@@ -160,10 +161,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="flex flex-col">
         <Header />
         <main className="flex-1 overflow-y-auto p-4 pt-20 md:p-8 md:pt-8">{children}</main>
-        <Chatbot />
+        <AiChatBox />
       </div>
     </div>
   );
 }
-
-    

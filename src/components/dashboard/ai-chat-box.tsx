@@ -12,18 +12,16 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { MessageCircle, Send, X, Bot, User } from 'lucide-react';
-import { ScrollArea } from './ui/scroll-area';
-import { chat } from '@/ai/flows/chat';
-import { CandidateData, Part } from 'genkit';
+import { ScrollArea } from '../ui/scroll-area';
 import { cn } from '@/lib/utils';
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { Avatar, AvatarFallback } from '../ui/avatar';
 
 type Message = {
   role: 'user' | 'model';
   content: string;
 };
 
-export function Chatbot() {
+export function AiChatBox() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -38,24 +36,29 @@ export function Chatbot() {
     }
   }, [messages]);
 
-  const handleSendMessage = async (e: React.FormEvent) => {
+  const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
 
     const userMessage: Message = { role: 'user', content: input };
     setMessages(prev => [...prev, userMessage]);
+    const currentInput = input;
     setInput('');
     setIsLoading(true);
 
     try {
-      const history: CandidateData[] = messages.map(msg => ({
-        role: msg.role,
-        content: [{ text: msg.content } as Part],
-      }));
+      const response = await fetch('/api/openai-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: currentInput }),
+      });
 
-      const response = await chat({ prompt: input, history });
+      if (!response.ok) {
+        throw new Error('Failed to get response from server');
+      }
 
-      const modelMessage: Message = { role: 'model', content: response };
+      const data = await response.json();
+      const modelMessage: Message = { role: 'model', content: data.response };
       setMessages(prev => [...prev, modelMessage]);
     } catch (error) {
       console.error('Chatbot error:', error);
@@ -119,7 +122,8 @@ export function Chatbot() {
                             : 'bg-muted/60'
                         )}
                       >
-                        <p>{message.content}</p>
+                        {/* Using dangerouslySetInnerHTML to render HTML from the API */}
+                        <div className="prose prose-sm prose-invert" dangerouslySetInnerHTML={{ __html: message.content }} />
                       </div>
                        {message.role === 'user' && (
                         <Avatar className="w-8 h-8 bg-muted/80">
@@ -151,7 +155,7 @@ export function Chatbot() {
             </CardContent>
             <CardFooter>
               <form
-                onSubmit={handleSendMessage}
+                onSubmit={handleSend}
                 className="flex w-full items-center space-x-2"
               >
                 <Input
