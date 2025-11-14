@@ -18,9 +18,10 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { useAuth, useUser } from '@/firebase';
+import { useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { Header } from '@/components/landing/header';
+import { Chatbot } from '@/components/chatbot';
 
 const StatCard = ({
   title,
@@ -155,6 +156,7 @@ export default function DashboardPage() {
       <main>
         <Dashboard />
       </main>
+      <Chatbot />
     </div>
   );
 }
