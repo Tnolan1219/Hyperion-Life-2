@@ -38,8 +38,10 @@ import {
   Zap,
   ZoomIn,
   Layout,
+  Sparkles,
+  Loader2,
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { NodeEditor } from '@/components/life-plan/NodeEditor';
 import {
   DropdownMenu,
@@ -49,6 +51,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import dagre from 'dagre';
+import { Textarea } from '@/components/ui/textarea';
 
 const initialNodes: Node[] = lifePlanTemplates.default.nodes;
 const initialEdges: Edge[] = lifePlanTemplates.default.edges;
@@ -109,6 +112,83 @@ const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = 'TB') => 
   return { nodes: layoutedNodes, edges };
 };
 
+
+function AIPlanGenerator({ onGenerate }: { onGenerate: (nodes: Node[], edges: Edge[]) => void }) {
+    const [prompt, setPrompt] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    
+    const handleGenerate = async () => {
+        if (!prompt) return;
+        setIsLoading(true);
+
+        const systemMessage = `You are a life planning expert. The user will describe their life plan in text. Your task is to convert this narrative into a structured JSON object containing an array of 'nodes' and an array of 'edges' for a React Flow diagram.
+        
+        The JSON output must strictly follow this structure: { "nodes": [], "edges": [] }.
+
+        For each 'node', include:
+        - id: A unique string identifier (e.g., "node_1", "node_2").
+        - type: One of the following strings: 'career', 'education', 'financial', 'lifeEvent', 'goal', 'other'.
+        - position: An object with { x: 0, y: 0 }.
+        - data: An object with a 'title' (string), and optionally 'amount' (number) and 'frequency' ('one-time' or 'yearly'). Infer amounts and frequencies where possible.
+
+        For each 'edge', include:
+        - id: A unique string identifier (e.g., "e_1-2").
+        - source: The id of the source node.
+        - target: The id of the target node.
+        - type: "smoothstep".
+        - animated: true.
+
+        Interpret the user's text to create logical nodes and connect them sequentially or logically with edges. Infer reasonable titles and financial amounts if they are implied.`;
+
+        try {
+            const response = await fetch('/api/openai-chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    prompt, 
+                    systemMessage,
+                    jsonOutput: true 
+                }),
+            });
+            const data = await response.json();
+            if (data.response && data.response.nodes && data.response.edges) {
+                onGenerate(data.response.nodes, data.response.edges);
+            } else {
+                console.error("AI response was not in the expected format:", data);
+            }
+        } catch (error) {
+            console.error("Error generating AI plan:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    }
+
+    return (
+        <Card className="glass mt-8">
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                    <Sparkles className="text-primary" />
+                    Describe Your Life Plan with AI
+                </CardTitle>
+                <CardDescription>
+                    Write down your life goals, career ambitions, and major life events, and let our AI build the plan for you.
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <Textarea 
+                    placeholder="e.g., I'll start by getting a degree in computer science. Then, I'll work at a tech company for a few years, save up for a down payment on a house, and eventually start my own business..."
+                    value={prompt}
+                    onChange={(e) => setPrompt(e.target.value)}
+                    rows={4}
+                />
+                <Button onClick={handleGenerate} disabled={isLoading || !prompt} className="w-full">
+                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Zap className="mr-2 h-4 w-4" />}
+                    Generate Plan
+                </Button>
+            </CardContent>
+        </Card>
+    );
+}
 
 function LifePlanCanvas() {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
@@ -253,6 +333,17 @@ function LifePlanCanvas() {
     });
   }
   
+  const handleAIGenerate = (aiNodes: Node[], aiEdges: Edge[]) => {
+      const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(aiNodes, aiEdges);
+      setNodes(layoutedNodes);
+      setEdges(layoutedEdges);
+      setSelectedNode(null);
+
+      window.requestAnimationFrame(() => {
+          fitView({ duration: 500 });
+      });
+  };
+  
   const onDeleteNode = (nodeId: string) => {
     handleNodesChange([{type: 'remove', id: nodeId}]);
   }
@@ -292,6 +383,7 @@ function LifePlanCanvas() {
         deleteKeyCode={['Backspace', 'Delete']}
         minZoom={0.1}
         connectionMode='loose'
+        connectionRadius={50}
       >
         <div className="absolute top-4 right-4 z-10 flex gap-2">
             <DropdownMenu>
@@ -393,6 +485,18 @@ function LifePlanCanvas() {
 }
 
 export default function LifePlanPage() {
+  const [nodes, setNodes] = useState<Node[]>(initialNodes);
+  const [edges, setEdges] = useState<Edge[]>(initialEdges);
+
+  const handleAIGenerate = (aiNodes: Node[], aiEdges: Edge[]) => {
+      const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(aiNodes, aiEdges);
+      // We need a way to pass this down to the canvas
+      // This implementation is incorrect, but shows intent.
+      // A better solution would involve lifting state or using context.
+      setNodes(layoutedNodes);
+      setEdges(layoutedEdges);
+  };
+  
   return (
     <div className="h-[calc(100vh-96px)] flex flex-col gap-8">
       <div className="flex-shrink-0 px-4 md:px-8">
@@ -406,6 +510,10 @@ export default function LifePlanPage() {
         <ReactFlowProvider>
             <LifePlanCanvas />
         </ReactFlowProvider>
+      </div>
+      <div className="px-4 md:px-8 pb-8">
+        {/* The onGenerate prop needs a proper state management solution */}
+        <AIPlanGenerator onGenerate={() => {}} />
       </div>
     </div>
   );

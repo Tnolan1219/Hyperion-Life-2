@@ -12,7 +12,7 @@ const openai = new OpenAI({
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const {prompt} = body;
+    const {prompt, systemMessage, jsonOutput} = body;
 
     if (!prompt) {
       return NextResponse.json(
@@ -20,20 +20,22 @@ export async function POST(req: Request) {
         {status: 400}
       );
     }
+    
+    const messages: any[] = [
+        {
+          role: 'system',
+          content: systemMessage || 'You are a helpful financial assistant. Please provide concise answers in simple bullet points.',
+        },
+        {role: 'user', content: prompt},
+      ];
 
     // Create the chat completion request
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
-      messages: [
-        {
-          role: 'system',
-          content:
-            'You are a helpful financial assistant. Please provide concise answers in simple bullet points.',
-        },
-        {role: 'user', content: prompt},
-      ],
+      messages,
       temperature: 0.7,
-      max_tokens: 150,
+      max_tokens: 1000,
+      response_format: jsonOutput ? { type: "json_object" } : { type: "text" },
     });
 
     const aiResponse = completion.choices[0]?.message?.content;
@@ -44,6 +46,17 @@ export async function POST(req: Request) {
         {status: 500}
       );
     }
+    
+    if (jsonOutput) {
+        try {
+            const jsonResponse = JSON.parse(aiResponse);
+            return NextResponse.json({response: jsonResponse});
+        } catch (e) {
+            console.error('Failed to parse AI JSON response:', e);
+            return NextResponse.json({error: 'AI returned invalid JSON'}, {status: 500});
+        }
+    }
+
 
     // Convert markdown to HTML
     const htmlResponse = await marked.parse(aiResponse);

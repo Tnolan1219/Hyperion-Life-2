@@ -30,6 +30,9 @@ import {
   Activity,
   Percent,
   Info,
+  Sparkles,
+  Send,
+  Loader2,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -53,6 +56,9 @@ import { PredictiveControls } from '@/components/portfolio/forecasting/Controls'
 import { ProjectedGrowthChart } from '@/components/portfolio/forecasting/ProjectedGrowthChart';
 import { MonteCarloChart } from '@/components/portfolio/forecasting/MonteCarloChart';
 import { AiInsights } from '@/components/portfolio/forecasting/AiInsights';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { cn } from '@/lib/utils';
 
 
 export type Asset = {
@@ -191,6 +197,83 @@ const CharacteristicCard = ({ title, value, tooltip, icon: Icon }: { title: stri
     </Card>
 );
 
+const AIPortfolioAnalysis = ({ assets }: { assets: Asset[] }) => {
+    const [prompt, setPrompt] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    const [analysis, setAnalysis] = useState('');
+    
+    const handleAnalysis = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!prompt.trim() || assets.length === 0) return;
+        
+        setIsLoading(true);
+        setAnalysis('');
+
+        const assetSummary = assets.map(a => `${a.name} (${a.ticker}): ${a.balance} units, Sector: ${a.sector}`).join('\n');
+        const fullPrompt = `User's question: "${prompt}"\n\nCurrent Portfolio Holdings:\n${assetSummary}`;
+        
+        const systemMessage = "You are an expert financial analyst. Your task is to analyze the user's investment portfolio based on their question and the provided holdings. Provide clear, concise, and actionable insights. Respond in simple bullet points using markdown.";
+
+        try {
+            const response = await fetch('/api/openai-chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt: fullPrompt, systemMessage }),
+            });
+            const data = await response.json();
+            if (data.response) {
+                setAnalysis(data.response);
+            }
+        } catch (error) {
+            console.error("AI analysis error:", error);
+            setAnalysis("<p>Sorry, I encountered an error while analyzing your portfolio.</p>");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    return (
+        <Card className="glass mt-8">
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                    <Sparkles className="text-primary" />
+                    AI Portfolio Analysis
+                </CardTitle>
+                <CardDescription>
+                    Ask the AI to analyze your portfolio, check diversification, or suggest improvements.
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <form onSubmit={handleAnalysis} className="flex w-full items-center space-x-2">
+                    <Input
+                        placeholder="e.g., How is my tech sector exposure?"
+                        value={prompt}
+                        onChange={(e) => setPrompt(e.target.value)}
+                        disabled={isLoading}
+                    />
+                    <Button type="submit" size="icon" disabled={isLoading || !prompt.trim()}>
+                        <Send className="h-4 w-4" />
+                    </Button>
+                </form>
+
+                {(isLoading || analysis) && (
+                    <div className="pt-4">
+                        {isLoading && (
+                            <div className="flex items-center gap-3 text-muted-foreground">
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                                <span>Analyzing your portfolio...</span>
+                            </div>
+                        )}
+                        {analysis && (
+                            <div className="prose prose-sm prose-invert max-w-full rounded-lg bg-muted/30 p-4" dangerouslySetInnerHTML={{ __html: analysis }} />
+                        )}
+                    </div>
+                )}
+            </CardContent>
+        </Card>
+    );
+};
+
 const HoldingsAnalysisSection = () => {
     const { user } = useUser();
     const firestore = useFirestore();
@@ -310,13 +393,14 @@ const HoldingsAnalysisSection = () => {
                     </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {processedAssets.map(asset => (
+                        {(processedAssets || []).map(asset => (
                             <AssetRow key={asset.id} asset={asset} totalValue={totalValue} />
                         ))}
                     </TableBody>
                 </Table>
                 </CardContent>
             </Card>
+            <AIPortfolioAnalysis assets={assets || []} />
         </div>
     )
 }
@@ -436,5 +520,3 @@ export default function NetWorthPage() {
     </div>
   );
 }
-
-    
