@@ -1,12 +1,14 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React from 'react';
 import {
-  BrainCircuit,
-  DollarSign,
-  Goal,
-  Landmark,
-  User,
+  Clock,
+  BarChart3,
+  Zap,
+  Target,
+  Info,
+  TrendingUp,
+  LineChart,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -16,243 +18,115 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { useAuth, useUser, useFirestore } from '@/firebase';
-import { collection, query } from 'firebase/firestore';
-import { useCollection } from '@/firebase/firestore/use-collection';
-
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, PieChart, Pie, Cell } from 'recharts';
-import { useMemoFirebase } from '@/hooks/use-memo-firebase';
+import { useAuth, useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { Header } from '@/components/landing/header';
-
-type Asset = {
-  type: string;
-  value: number;
-};
-type Debt = {
-  type: string;
-  balance: number;
-};
-type GoalType = {
-  goalType: string;
-  targetAmount: number;
-  progressAmount: number;
-};
 
 const StatCard = ({
   title,
   value,
   icon,
   description,
+  change,
+  changeColor,
 }: {
   title: string;
   value: string;
   icon: React.ReactNode;
-  description?: string;
+  description: string;
+  change?: string;
+  changeColor?: string;
 }) => (
-  <Card className="glass">
-    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-      <CardTitle className="text-sm font-medium">{title}</CardTitle>
-      {icon}
+  <Card className="bg-card border-border/60">
+    <CardHeader className="pb-2">
+      <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          {icon}
+        </div>
+        {title}
+      </CardTitle>
     </CardHeader>
     <CardContent>
-      <div className="text-2xl font-bold">{value}</div>
-      {description && (
-        <p className="text-xs text-muted-foreground">{description}</p>
+      <div className="text-3xl font-bold">{value}</div>
+      {change && (
+        <p className="text-xs text-green-400 flex items-center gap-1 mt-1">
+          <TrendingUp className="h-4 w-4" />
+          {change}
+        </p>
       )}
+      <p className="text-sm text-muted-foreground mt-1">{description}</p>
     </CardContent>
   </Card>
 );
 
 const Dashboard = () => {
   const { user } = useUser();
-  const firestore = useFirestore();
-
-  const assetsQuery = useMemoFirebase(
-    () =>
-      user && firestore
-        ? query(collection(firestore, 'users', user.uid, 'assets'))
-        : null,
-    [user?.uid, firestore]
-  );
-  const { data: assets } = useCollection<Asset>(assetsQuery);
-
-  const debtsQuery = useMemoFirebase(
-    () =>
-      user && firestore
-        ? query(collection(firestore, 'users', user.uid, 'debts'))
-        : null,
-    [user?.uid, firestore]
-  );
-  const { data: debts } = useCollection<Debt>(debtsQuery);
-
-  const goalsQuery = useMemoFirebase(
-    () =>
-      user && firestore
-        ? query(collection(firestore, 'users', user.uid, 'goals'))
-        : null,
-    [user?.uid, firestore]
-  );
-  const { data: goals } = useCollection<GoalType>(goalsQuery);
-
-  const totalAssets = useMemo(
-    () => assets?.reduce((sum, asset) => sum + asset.value, 0) || 0,
-    [assets]
-  );
-  const totalDebts = useMemo(
-    () => debts?.reduce((sum, debt) => sum + debt.balance, 0) || 0,
-    [debts]
-  );
-  const netWorth = totalAssets - totalDebts;
-
-  const formatCurrency = (value: number) =>
-    new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(value);
-
-  const assetAllocation = useMemo(() => {
-    const allocation: { [key: string]: number } = {};
-    assets?.forEach(asset => {
-      if (allocation[asset.type]) {
-        allocation[asset.type] += asset.value;
-      } else {
-        allocation[asset.type] = asset.value;
-      }
-    });
-    return Object.entries(allocation).map(([name, value]) => ({ name, value }));
-  }, [assets]);
-  
-  const debtToAssetsData = [
-    { name: 'Assets', value: totalAssets, fill: 'hsl(var(--primary))' },
-    { name: 'Debts', value: totalDebts, fill: 'hsl(var(--destructive))' },
-  ];
-
-  const COLORS = ['hsl(var(--primary))', '#00C49F', '#FFBB28', '#FF8042'];
 
   return (
-    <div className="pt-24 pb-16 space-y-8">
-      <div className="max-w-7xl mx-auto px-4">
-        <h1 className="text-3xl font-bold mb-6">
-          Welcome back, {user?.displayName || 'Investor'}
-        </h1>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <StatCard
-            title="Net Worth"
-            value={formatCurrency(netWorth)}
-            description="Total assets minus total debts"
-            icon={<User className="h-4 w-4 text-muted-foreground" />}
-          />
-          <StatCard
-            title="Total Assets"
-            value={formatCurrency(totalAssets)}
-            description={`${assets?.length || 0} assets tracked`}
-            icon={<Landmark className="h-4 w-4 text-muted-foreground" />}
-          />
-          <StatCard
-            title="Total Debts"
-            value={formatCurrency(totalDebts)}
-            description={`${debts?.length || 0} debts tracked`}
-            icon={<DollarSign className="h-4 w-4 text-muted-foreground" />}
-          />
-          <StatCard
-            title="Goals"
-            value={`${goals?.length || 0} Active`}
-            description="On track to meet your targets"
-            icon={<Goal className="h-4 w-4 text-muted-foreground" />}
-          />
-        </div>
-        <div className="grid md:grid-cols-3 gap-8 mt-8">
-          <Card className="glass md:col-span-2">
-            <CardHeader>
-              <CardTitle>Asset Allocation</CardTitle>
-              <CardDescription>
-                How your assets are distributed across different classes.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie data={assetAllocation} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} fill="hsl(var(--primary))" label>
-                    {assetAllocation.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                </PieChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-          <Card className="glass">
-            <CardHeader>
-              <CardTitle>Debt vs. Assets</CardTitle>
-              <CardDescription>Your current financial leverage.</CardDescription>
-            </CardHeader>
-            <CardContent>
-               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={debtToAssetsData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                  <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
-                  <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${Number(value) / 1000}k`} />
-                  <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                    {debtToAssetsData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.fill} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </div>
-         <Card className="glass mt-8">
-            <CardHeader>
-              <CardTitle>AI Financial Coach</CardTitle>
-              <CardDescription>
-                Your personalized financial guide.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col items-center justify-center text-center h-[200px]">
-                <BrainCircuit className="w-12 h-12 text-primary mb-4" />
-                <p className="text-muted-foreground mb-4">Ready to optimize your finances? Start a session with your AI coach.</p>
-                <Button>Start Coaching Session</Button>
-            </CardContent>
-          </Card>
-      </div>
-    </div>
-  );
-};
-
-const SignInPrompt = () => {
-  const auth = useAuth();
-  const handleAnonymousSignIn = async () => {
-    if (auth) {
-      try {
-        await (await import('@/firebase/non-blocking-login')).initiateAnonymousSignIn(auth);
-      } catch (error) {
-        console.error('Anonymous sign-in failed', error);
-      }
-    }
-  };
-
-  return (
-    <div className="min-h-screen flex items-center justify-center">
-      <Card className="w-full max-w-sm glass">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Welcome to Base 44</CardTitle>
-          <CardDescription>
-            Sign in to continue to your dashboard
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-4">
-          <Button onClick={handleAnonymousSignIn} className="w-full">
-            Sign In As Guest
-          </Button>
-          <p className="text-xs text-muted-foreground text-center">
-            By signing in, you agree to our Terms of Service. For this demo, we'll
-            sign you in anonymously.
+    <div className="pt-24 pb-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold flex items-center gap-2">
+            Welcome back, {user?.displayName || 'Thomas'}
+            <span className="text-3xl">👋</span>
+          </h1>
+          <p className="text-muted-foreground mt-2">
+            Here's your portfolio overview
           </p>
-        </CardContent>
-      </Card>
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          <StatCard
+            title="Portfolio Value"
+            value="$1512.06"
+            description="+$0.00 (0.00%)"
+            change="+$0.00 (0.00%)"
+            icon={<Clock className="h-5 w-5" />}
+          />
+          <StatCard
+            title="Holdings"
+            value="2"
+            description="Active positions"
+            icon={<BarChart3 className="h-5 w-5" />}
+          />
+          <StatCard
+            title="Top Mover"
+            value="QQQ"
+            description="+1.43%"
+            change="+1.43%"
+            icon={<Zap className="h-5 w-5" />}
+          />
+          <StatCard
+            title="Experience"
+            value="Intermediate"
+            description="Investment level"
+            icon={<Target className="h-5 w-5" />}
+          />
+        </div>
+
+        <Card className="bg-card border-border/60 mt-8">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-3">
+              <span className="text-primary">
+                <LineChart className="h-5 w-5" />
+              </span>
+              Daily Update
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p>
+              Your portfolio is actively tracking market movements. Review your
+              holdings regularly to stay informed.
+            </p>
+            <div className="flex items-center gap-2 text-muted-foreground text-sm mt-4">
+              <Info className="h-4 w-4" />
+              <span>Daily insight</span>
+              <span className="text-muted-foreground/50">•</span>
+              <span>Refreshes at midnight</span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
@@ -274,9 +148,9 @@ export default function DashboardPage() {
       </div>
     );
   }
-  
+
   return (
-    <div className="min-h-screen animated-background">
+    <div className="min-h-screen bg-background">
       <Header />
       <main>
         <Dashboard />
