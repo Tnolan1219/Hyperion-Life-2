@@ -1,43 +1,20 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { getFirebaseAdmin } from '@/firebase/server-init';
-import { cookies } from 'next/headers';
 
-async function getAuthenticatedUser(request: NextRequest) {
-  const sessionCookie = request.cookies.get('session')?.value;
-  if (!sessionCookie) {
-    return null;
-  }
-  try {
-    const admin = await getFirebaseAdmin();
-    const decodedIdToken = await admin.auth().verifySessionCookie(sessionCookie, true);
-    return decodedIdToken;
-  } catch (error) {
-    return null;
-  }
-}
-
-export async function middleware(request: NextRequest) {
-  const user = await getAuthenticatedUser(request);
-
-  const { pathname } = request.nextUrl;
-
-  const isAuthPage = pathname.startsWith('/login');
-
-  if (isAuthPage) {
-    if (user) {
-      return NextResponse.redirect(new URL('/', request.url));
-    }
-    return NextResponse.next();
-  }
-
-  if (!user) {
-    return NextResponse.redirect(new URL('/login', request.url));
-  }
-
+// NOTE: Middleware is not currently used for auth protection as all auth
+// is handled on the client-side. This file is a placeholder for if/when
+// server-side auth protection is added.
+export function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/', '/assets', '/debts', '/coaching', '/news', '/settings', '/login'],
+  /*
+   * Match all request paths except for the ones starting with:
+   * - api (API routes)
+   * - _next/static (static files)
+   * - _next/image (image optimization files)
+   * - favicon.ico (favicon file)
+   */
+  matcher: '/((?!api|_next/static|_next/image|favicon.ico).*)',
 };
