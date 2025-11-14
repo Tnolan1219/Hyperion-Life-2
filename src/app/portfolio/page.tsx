@@ -38,54 +38,23 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useCollection, useUser, useFirestore } from '@/firebase';
+import { collection, doc } from 'firebase/firestore';
+import React, { useMemo } from 'react';
+import { deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { PortfolioDialog } from '@/components/portfolio/PortfolioDialog';
+import { Skeleton } from '@/components/ui/skeleton';
 
-const exampleHoldings = [
-  {
-    ticker: 'AAPL',
-    name: 'Apple Inc.',
-    balance: 25.5,
-    price: 189.98,
-    value: 4844.49,
-    change24h: 1.25,
-    allocation: 21.3,
-  },
-  {
-    ticker: 'MSFT',
-    name: 'Microsoft Corp.',
-    balance: 15.2,
-    price: 335.94,
-    value: 5106.29,
-    change24h: -0.42,
-    allocation: 22.5,
-  },
-  {
-    ticker: 'GOOGL',
-    name: 'Alphabet Inc.',
-    balance: 10,
-    price: 136.5,
-    value: 1365.0,
-    change24h: 2.1,
-    allocation: 6.0,
-  },
-  {
-    ticker: 'BTC',
-    name: 'Bitcoin',
-    balance: 0.2,
-    price: 34500.0,
-    value: 6900.0,
-    change24h: 5.8,
-    allocation: 30.4,
-  },
-  {
-    ticker: 'ETH',
-    name: 'Ethereum',
-    balance: 2.5,
-    price: 1850.0,
-    value: 4500.0,
-    change24h: 3.5,
-    allocation: 19.8,
-  },
-];
+export type Asset = {
+  id?: string;
+  type: 'Stock' | 'Crypto';
+  ticker: string;
+  name: string;
+  balance: number;
+  userId?: string;
+  price?: number; // Price will be fetched from an API in a future step
+};
+
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('en-US', {
@@ -93,9 +62,126 @@ const formatCurrency = (value: number) =>
     currency: 'USD',
   }).format(value);
 
-export default function PortfolioPage() {
-  const totalValue = exampleHoldings.reduce((acc, h) => acc + h.value, 0);
+const AssetRow = ({ asset, totalValue }: { asset: Asset, totalValue: number }) => {
+    const [isDialogOpen, setIsDialogOpen] = React.useState(false);
+    const firestore = useFirestore();
+    const { user } = useUser();
 
+    // Mock data for display until API is integrated
+    const price = asset.price || (asset.type === 'Stock' ? Math.random() * 500 : Math.random() * 70000);
+    const value = asset.balance * price;
+    const change24h = (Math.random() - 0.5) * 10;
+    const allocation = totalValue > 0 ? (value / totalValue) * 100 : 0;
+
+    const handleDelete = () => {
+        if (firestore && user && asset.id) {
+            const assetDocRef = doc(firestore, `users/${user.uid}/assets`, asset.id);
+            deleteDocumentNonBlocking(assetDocRef);
+        }
+    }
+    
+    return (
+        <>
+        <TableRow key={asset.id} className="transition-colors hover:bg-muted/40">
+          <TableCell>
+            <div className="font-medium">{asset.ticker}</div>
+            <div className="text-sm text-muted-foreground">
+              {asset.name}
+            </div>
+          </TableCell>
+          <TableCell>
+            <div>{asset.balance}</div>
+            <div className="text-sm text-muted-foreground">
+              {formatCurrency(value)}
+            </div>
+          </TableCell>
+          <TableCell>{formatCurrency(price)}</TableCell>
+          <TableCell
+            className={
+              change24h > 0
+                ? 'text-green-400'
+                : 'text-red-400'
+            }
+          >
+            <div className="flex items-center">
+              {change24h > 0 ? (
+                <ArrowUp className="h-3 w-3 mr-1" />
+              ) : (
+                <ArrowDown className="h-3 w-3 mr-1" />
+              )}
+              {change24h.toFixed(2)}%
+            </div>
+          </TableCell>
+          <TableCell className="text-right">
+            <div className="font-medium">
+              {allocation.toFixed(1)}%
+            </div>
+          </TableCell>
+          <TableCell className="text-right">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-8 w-8 p-0">
+                  <span className="sr-only">Open menu</span>
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setIsDialogOpen(true)}>Edit</DropdownMenuItem>
+                <DropdownMenuItem onClick={handleDelete} className="text-red-500">
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </TableCell>
+        </TableRow>
+        <PortfolioDialog isOpen={isDialogOpen} setIsOpen={setIsDialogOpen} asset={asset} />
+        </>
+    )
+}
+
+const LoadingSkeleton = () => (
+    <Card className="bg-card/60 border-border/60">
+        <CardHeader>
+            <Skeleton className="h-6 w-1/4 mb-2" />
+            <Skeleton className="h-4 w-1/2" />
+        </CardHeader>
+        <CardContent>
+            <div className="space-y-4">
+                {[...Array(3)].map((_, i) => (
+                    <div key={i} className="flex justify-between items-center">
+                        <div className="w-1/4"><Skeleton className="h-5 w-full" /></div>
+                        <div className="w-1/4"><Skeleton className="h-5 w-full" /></div>
+                        <div className="w-1/4"><Skeleton className="h-5 w-full" /></div>
+                        <div className="w-1/6"><Skeleton className="h-5 w-full" /></div>
+                    </div>
+                ))}
+            </div>
+        </CardContent>
+    </Card>
+);
+
+export default function PortfolioPage() {
+  const [isDialogOpen, setIsDialogOpen] = React.useState(false);
+  const { user } = useUser();
+  const firestore = useFirestore();
+
+  const assetsCollection = useMemo(() => {
+    if (firestore && user) {
+      return collection(firestore, `users/${user.uid}/assets`);
+    }
+    return null;
+  }, [firestore, user]);
+
+  const { data: assets, isLoading } = useCollection<Asset>(assetsCollection);
+  
+  const totalValue = useMemo(() => {
+    if (!assets) return 0;
+    return assets.reduce((acc, asset) => {
+        const price = asset.price || (asset.type === 'Stock' ? Math.random() * 500 : Math.random() * 70000);
+        return acc + (asset.balance * price);
+    }, 0);
+  }, [assets]);
+  
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-center mb-8">
@@ -110,7 +196,7 @@ export default function PortfolioPage() {
             <RefreshCw className="mr-2 h-4 w-4" />
             Refresh Data
           </Button>
-          <Button>
+          <Button onClick={() => setIsDialogOpen(true)}>
             <PlusCircle className="mr-2 h-4 w-4" />
             Add Position
           </Button>
@@ -171,85 +257,38 @@ export default function PortfolioPage() {
               </CardContent>
             </Card>
           </div>
-          <Card className="bg-card/60 border-border/60 hover:border-primary/60 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10">
-            <CardHeader>
-              <CardTitle>Positions</CardTitle>
-              <CardDescription>
-                Your individual investment holdings.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow className="hover:bg-transparent">
-                    <TableHead className="w-[150px]">Asset</TableHead>
-                    <TableHead>Balance</TableHead>
-                    <TableHead>Price</TableHead>
-                    <TableHead>24h</TableHead>
-                    <TableHead className="text-right">Allocation</TableHead>
-                    <TableHead className="w-[50px] text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {exampleHoldings.map(holding => (
-                    <TableRow key={holding.ticker} className="transition-colors hover:bg-muted/40">
-                      <TableCell>
-                        <div className="font-medium">{holding.ticker}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {holding.name}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div>{holding.balance}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {formatCurrency(holding.value)}
-                        </div>
-                      </TableCell>
-                      <TableCell>{formatCurrency(holding.price)}</TableCell>
-                      <TableCell
-                        className={
-                          holding.change24h > 0
-                            ? 'text-green-400'
-                            : 'text-red-400'
-                        }
-                      >
-                        <div className="flex items-center">
-                          {holding.change24h > 0 ? (
-                            <ArrowUp className="h-3 w-3 mr-1" />
-                          ) : (
-                            <ArrowDown className="h-3 w-3 mr-1" />
-                          )}
-                          {holding.change24h.toFixed(2)}%
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="font-medium">
-                          {holding.allocation.toFixed(1)}%
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
-                              <span className="sr-only">Open menu</span>
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem>View Details</DropdownMenuItem>
-                            <DropdownMenuItem>Edit</DropdownMenuItem>
-                            <DropdownMenuItem className="text-red-500">
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+
+          {isLoading && <LoadingSkeleton />}
+
+          {!isLoading && assets && (
+             <Card className="bg-card/60 border-border/60 hover:border-primary/60 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10">
+                <CardHeader>
+                  <CardTitle>Positions</CardTitle>
+                  <CardDescription>
+                    Your individual investment holdings.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="hover:bg-transparent">
+                        <TableHead className="w-[150px]">Asset</TableHead>
+                        <TableHead>Balance</TableHead>
+                        <TableHead>Price</TableHead>
+                        <TableHead>24h</TableHead>
+                        <TableHead className="text-right">Allocation</TableHead>
+                        <TableHead className="w-[50px] text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {assets.map(asset => (
+                            <AssetRow key={asset.id} asset={asset} totalValue={totalValue} />
+                        ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+          )}
         </TabsContent>
         <TabsContent value="overview">
            <Card className="min-h-[60vh] flex flex-col items-center justify-center bg-card/60 border-border/60 border-dashed">
@@ -270,6 +309,9 @@ export default function PortfolioPage() {
           </Card>
         </TabsContent>
       </Tabs>
+      <PortfolioDialog isOpen={isDialogOpen} setIsOpen={setIsDialogOpen} />
     </div>
   );
 }
+
+    
