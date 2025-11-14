@@ -45,6 +45,9 @@ const assetSchema = z.object({
   averageCost: z.coerce.number().optional(),
   sector: z.string().optional(),
   notes: z.string().optional(),
+  peRatio: z.coerce.number().optional(),
+  dividendYield: z.coerce.number().optional(),
+  beta: z.coerce.number().optional(),
 });
 
 type AssetFormData = z.infer<typeof assetSchema>;
@@ -59,6 +62,9 @@ export type Asset = {
   sector?: string;
   notes?: string;
   userId?: string;
+  peRatio?: number;
+  dividendYield?: number;
+  beta?: number;
 };
 
 interface PortfolioDialogProps {
@@ -81,6 +87,9 @@ export function PortfolioDialog({ isOpen, setIsOpen, asset }: PortfolioDialogPro
       averageCost: asset?.averageCost || 0,
       sector: asset?.sector || '',
       notes: asset?.notes || '',
+      peRatio: asset?.peRatio || 0,
+      dividendYield: asset?.dividendYield || 0,
+      beta: asset?.beta || 0,
     },
   });
 
@@ -93,6 +102,9 @@ export function PortfolioDialog({ isOpen, setIsOpen, asset }: PortfolioDialogPro
       averageCost: asset?.averageCost || 0,
       sector: asset?.sector || '',
       notes: asset?.notes || '',
+      peRatio: asset?.peRatio || 0,
+      dividendYield: asset?.dividendYield || 0,
+      beta: asset?.beta || 0,
     });
   }, [asset, form]);
 
@@ -122,7 +134,7 @@ export function PortfolioDialog({ isOpen, setIsOpen, asset }: PortfolioDialogPro
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 max-h-[70vh] overflow-y-auto pr-6">
             <div className="grid grid-cols-2 gap-4">
                 <FormField
                 control={form.control}
@@ -224,6 +236,49 @@ export function PortfolioDialog({ isOpen, setIsOpen, asset }: PortfolioDialogPro
               )}
             />
 
+            <div className="grid grid-cols-3 gap-4">
+               <FormField
+                control={form.control}
+                name="peRatio"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>P/E Ratio</FormLabel>
+                    <FormControl>
+                        <Input type="number" step="any" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                <FormField
+                control={form.control}
+                name="dividendYield"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Dividend Yield (%)</FormLabel>
+                    <FormControl>
+                        <Input type="number" step="any" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                 <FormField
+                control={form.control}
+                name="beta"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Beta</FormLabel>
+                    <FormControl>
+                        <Input type="number" step="any" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+            </div>
+
+
              <FormField
               control={form.control}
               name="notes"
@@ -238,7 +293,7 @@ export function PortfolioDialog({ isOpen, setIsOpen, asset }: PortfolioDialogPro
               )}
             />
 
-            <DialogFooter>
+            <DialogFooter className="pt-4">
               <Button type="button" variant="ghost" onClick={() => setIsOpen(false)}>
                 Cancel
               </Button>
@@ -250,5 +305,3 @@ export function PortfolioDialog({ isOpen, setIsOpen, asset }: PortfolioDialogPro
     </Dialog>
   );
 }
-
-    

@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   Home,
   Map,
-  AreaChart,
+  Wallet,
   BrainCircuit,
   Star,
   Settings,
@@ -16,14 +16,11 @@ import { useUser } from '@/firebase';
 import { Header } from '@/components/landing/header';
 import { Chatbot } from '@/components/chatbot';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
-import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
-import { Button } from './ui/button';
-import { Menu } from 'lucide-react';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: Home, color: 'sky' },
   { href: '/life-plan', label: 'Life Plan', icon: Map, color: 'violet' },
-  { href: '/portfolio', label: 'Portfolio', icon: AreaChart, color: 'amber' },
+  { href: '/portfolio', label: 'Net Worth', icon: Wallet, color: 'amber' },
   { href: '/ai-coach', label: 'AI Coach', icon: BrainCircuit, color: 'cyan' },
   { href: '/goals', label: 'Goals', icon: Star, color: 'rose' },
   { href: '/settings', label: 'Settings', icon: Settings, color: 'slate' },
@@ -97,9 +94,10 @@ function NavLink({
           <Link
             href={href}
             className={cn(
-              'group flex items-center justify-center rounded-2xl h-12 w-12 my-2 text-muted-foreground transition-all duration-300 relative',
-              'transform-gpu hover:scale-[1.05]',
-              isActive ? `${colors.bg} ${colors.text} font-semibold` : `hover:bg-accent/50 ${colors.hoverBg}`
+              'group flex items-center justify-center rounded-2xl h-14 w-14 my-2 text-muted-foreground transition-all duration-300 relative glass',
+              'transform-gpu hover:scale-[1.1]',
+               colors.hoverText,
+              isActive ? `${colors.bg} ${colors.text} font-semibold ${colors.hoverBg}` : `${colors.hoverBg}`
             )}
           >
             <div className={cn(

@@ -17,12 +17,6 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@/components/ui/tabs';
-import {
   ArrowUp,
   ArrowDown,
   PlusCircle,
@@ -30,10 +24,12 @@ import {
   RefreshCw,
   DollarSign,
   TrendingUp,
-  BrainCircuit,
-  Star,
-  AreaChart,
-  Wand2,
+  Wallet,
+  PiggyBank,
+  Scale,
+  Activity,
+  Percent,
+  Info,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -50,10 +46,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { PortfolioValueChart } from '@/components/portfolio/charts/PortfolioValueChart';
 import { AssetAllocationChart } from '@/components/portfolio/charts/AssetAllocationChart';
 import { SectorDiversificationChart } from '@/components/portfolio/charts/SectorDiversificationChart';
-import { PredictiveControls } from '@/components/portfolio/forecasting/Controls';
-import { ProjectedGrowthChart } from '@/components/portfolio/forecasting/ProjectedGrowthChart';
-import { MonteCarloChart } from '@/components/portfolio/forecasting/MonteCarloChart';
-import { AiInsights } from '@/components/portfolio/forecasting/AiInsights';
+import { CashFlowChart } from '@/components/portfolio/CashFlowChart';
+import { BudgetTracker } from '@/components/portfolio/BudgetTracker';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 
 export type Asset = {
@@ -67,6 +62,9 @@ export type Asset = {
   notes?: string;
   userId?: string;
   price?: number; // Price will be fetched from an API in a future step
+  peRatio?: number;
+  dividendYield?: number;
+  beta?: number;
 };
 
 
@@ -165,7 +163,31 @@ const AssetRow = ({ asset, totalValue }: { asset: Asset, totalValue: number }) =
     )
 }
 
-const HoldingsAnalysisTab = () => {
+const CharacteristicCard = ({ title, value, tooltip, icon: Icon }: { title: string, value: string, tooltip: string, icon: React.ElementType }) => (
+    <Card>
+        <CardHeader className="pb-2 flex flex-row items-center justify-between">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                {title}
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger>
+                            <Info className="h-3 w-3" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>{tooltip}</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
+            </CardTitle>
+            <Icon className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+            <p className="text-2xl font-bold">{value}</p>
+        </CardContent>
+    </Card>
+);
+
+const HoldingsAnalysisSection = () => {
     const { user } = useUser();
     const firestore = useFirestore();
 
@@ -200,6 +222,23 @@ const HoldingsAnalysisTab = () => {
             processedAssets: processed,
         };
     }, [assets]);
+    
+     const portfolioCharacteristics = useMemo(() => {
+        if (!processedAssets || processedAssets.length === 0) {
+            return { peRatio: 0, dividendYield: 0, beta: 0 };
+        }
+
+        const totalPE = processedAssets.reduce((acc, asset) => acc + (asset.peRatio || 0) * asset.value, 0);
+        const totalDividend = processedAssets.reduce((acc, asset) => acc + ((asset.dividendYield || 0) / 100) * asset.value, 0);
+        const totalBeta = processedAssets.reduce((acc, asset) => acc + (asset.beta || 0) * asset.value, 0);
+        
+        return {
+            peRatio: totalValue > 0 ? totalPE / totalValue : 0,
+            dividendYield: totalValue > 0 ? (totalDividend / totalValue) * 100 : 0,
+            beta: totalValue > 0 ? totalBeta / totalValue : 0,
+        };
+    }, [processedAssets, totalValue]);
+
 
     if (isLoading) {
         return (
@@ -218,12 +257,12 @@ const HoldingsAnalysisTab = () => {
     }
     
     return (
-        <div className="space-y-6">
+        <div className="space-y-8">
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Total Value</CardTitle>
-                    <DollarSign className="h-4 w-4 text-muted-foreground" />
+                    <CardTitle className="text-sm font-medium">Total Portfolio Value</CardTitle>
+                    <Wallet className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
                     <div className="text-2xl font-bold">{formatCurrency(totalValue)}</div>
@@ -243,7 +282,7 @@ const HoldingsAnalysisTab = () => {
                 <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">24h Change</CardTitle>
-                    <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                    <Activity className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
                     <div className="text-2xl font-bold text-green-400">+{formatCurrency(482.19)} (+2.15%)</div>
@@ -252,7 +291,7 @@ const HoldingsAnalysisTab = () => {
                 </Card>
             </div>
             
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
                 <div className="xl:col-span-1">
                     <AssetAllocationChart assets={processedAssets} />
                 </div>
@@ -261,10 +300,34 @@ const HoldingsAnalysisTab = () => {
                 </div>
             </div>
 
+            <div>
+                <h2 className="text-2xl font-bold mb-4">Portfolio Characteristics</h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <CharacteristicCard
+                        title="P/E Ratio"
+                        value={portfolioCharacteristics.peRatio.toFixed(2)}
+                        tooltip="Price-to-Earnings Ratio: a measure of the company's value."
+                        icon={Scale}
+                    />
+                    <CharacteristicCard
+                        title="Dividend Yield"
+                        value={`${portfolioCharacteristics.dividendYield.toFixed(2)}%`}
+                        tooltip="Annual dividend income relative to share price."
+                        icon={Percent}
+                    />
+                    <CharacteristicCard
+                        title="Beta"
+                        value={portfolioCharacteristics.beta.toFixed(2)}
+                        tooltip="A measure of the portfolio's volatility in relation to the market."
+                        icon={Activity}
+                    />
+                </div>
+            </div>
+
             <Card>
                 <CardHeader>
-                <CardTitle>Positions</CardTitle>
-                <CardDescription>Your individual investment holdings.</CardDescription>
+                <CardTitle>Investment Holdings</CardTitle>
+                <CardDescription>Your individual investment positions.</CardDescription>
                 </CardHeader>
                 <CardContent>
                 <Table>
@@ -292,17 +355,16 @@ const HoldingsAnalysisTab = () => {
     )
 }
 
-export default function PortfolioPage() {
+export default function NetWorthPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("analysis");
 
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-4xl font-bold">Portfolio</h1>
+          <h1 className="text-4xl font-bold">Net Worth</h1>
           <p className="text-muted-foreground mt-2">
-            Analyze and manage your investments.
+            A comprehensive overview of your financial landscape.
           </p>
         </div>
         <div className="flex gap-2">
@@ -316,83 +378,61 @@ export default function PortfolioPage() {
           </Button>
         </div>
       </div>
+      
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+        <Card>
+            <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                <CardTitle className="text-sm font-medium">Monthly Cash Flow</CardTitle>
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+                <p className="text-2xl font-bold text-green-400">+$1,850.75</p>
+                <p className="text-xs text-muted-foreground">Income minus expenses this month</p>
+            </CardContent>
+        </Card>
+        <Card>
+            <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                <CardTitle className="text-sm font-medium">Budget vs. Actual</CardTitle>
+                <Scale className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+                <p className="text-2xl font-bold">$2,150 / $3,000</p>
+                <p className="text-xs text-muted-foreground">71% of monthly budget spent</p>
+            </CardContent>
+        </Card>
+        <Card>
+            <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                <CardTitle className="text-sm font-medium">Monthly Investments</CardTitle>
+                <PiggyBank className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+                <p className="text-2xl font-bold">+$750.00</p>
+                <p className="text-xs text-muted-foreground">Contributions to investment accounts</p>
+            </CardContent>
+        </Card>
+         <Card>
+            <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                <CardTitle className="text-sm font-medium">Net Worth</CardTitle>
+                <Wallet className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+                <p className="text-2xl font-bold">$124,812</p>
+                <p className="text-xs text-muted-foreground">+3.2% this month</p>
+            </CardContent>
+        </Card>
+      </div>
 
-      <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5 max-w-2xl mb-6">
-          <TabsTrigger value="overview"><AreaChart className="w-4 h-4 mr-2"/>Overview</TabsTrigger>
-          <TabsTrigger value="analysis">Holdings Analysis</TabsTrigger>
-          <TabsTrigger value="predictive"><Wand2 className="w-4 h-4 mr-2" />Predictive Modeling</TabsTrigger>
-          <TabsTrigger value="insights"><BrainCircuit className="w-4 h-4 mr-2" />AI Insights</TabsTrigger>
-          <TabsTrigger value="watchlist"><Star className="w-4 h-4 mr-2" />Watchlist</TabsTrigger>
-        </TabsList>
-        
-        {activeTab === "overview" && (
-            <TabsContent value="overview">
-                <PortfolioValueChart />
-            </TabsContent>
-        )}
-
-        {activeTab === "analysis" && (
-            <TabsContent value="analysis">
-                <HoldingsAnalysisTab />
-            </TabsContent>
-        )}
-        
-        {activeTab === "predictive" && (
-            <TabsContent value="predictive" className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-1 space-y-6">
-                    <PredictiveControls />
-                </div>
-                <div className="lg:col-span-2 space-y-6">
-                    <ProjectedGrowthChart />
-                    <MonteCarloChart />
-                    <AiInsights />
-                </div>
-            </TabsContent>
-        )}
-
-         {activeTab === "insights" && (
-            <TabsContent value="insights">
-                <Card className="min-h-[60vh] flex flex-col items-center justify-center bg-card/60 border-border/60 border-dashed">
-                    <CardHeader className="text-center">
-                    <div className="inline-flex items-center justify-center p-3 mb-4 bg-primary/10 rounded-full">
-                        <BrainCircuit className="h-12 w-12 text-primary" />
-                    </div>
-                    <CardTitle className="text-2xl font-bold">AI Insights Coming Soon</CardTitle>
-                    <CardDescription className="text-muted-foreground">
-                        Get AI-powered recommendations and analysis.
-                    </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                    <p className="max-w-md text-center text-muted-foreground">
-                        This area will feature rebalancing suggestions, tax-loss harvesting tips, and goal alignment analysis.
-                    </p>
-                    </CardContent>
-                </Card>
-            </TabsContent>
-         )}
-
-         {activeTab === "watchlist" && (
-            <TabsContent value="watchlist">
-                <Card className="min-h-[60vh] flex flex-col items-center justify-center bg-card/60 border-border/60 border-dashed">
-                    <CardHeader className="text-center">
-                    <div className="inline-flex items-center justify-center p-3 mb-4 bg-primary/10 rounded-full">
-                        <Star className="h-12 w-12 text-primary" />
-                    </div >
-                    <CardTitle className="text-2xl font-bold">Watchlist Coming Soon</CardTitle>
-                    <CardDescription className="text-muted-foreground">
-                        Track assets you're interested in.
-                    </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                    <p className="max-w-md text-center text-muted-foreground">
-                        You'll be able to add tickers, view trends, and set price alerts right here.
-                    </p>
-                    </CardContent>
-                </Card>
-            </TabsContent>
-         )}
-      </Tabs>
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+        <div className="lg:col-span-2">
+            <BudgetTracker />
+        </div>
+        <div className="lg:col-span-3">
+            <CashFlowChart />
+        </div>
+      </div>
+      
+      <HoldingsAnalysisSection />
+      
       <PortfolioDialog isOpen={isDialogOpen} setIsOpen={setIsDialogOpen} />
     </div>
   );
