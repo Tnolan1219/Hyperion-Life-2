@@ -104,8 +104,8 @@ function NavLink({
     >
       <div className={cn(
         "absolute left-0 top-1/2 -translate-y-1/2 h-0 w-1 bg-gradient-to-b from-transparent via-current to-transparent rounded-r-full transition-all duration-500 opacity-0 group-hover:opacity-100",
-        isActive ? 'h-full opacity-100 shadow-lg' : 'h-0',
-        isActive && colors.shadow
+        isActive ? 'h-3/4 opacity-100' : 'h-0',
+        isActive && `shadow-lg ${colors.shadow}`
       )} />
       <Icon className={cn("h-5 w-5 transition-transform duration-300 group-hover:scale-110", isCollapsed ? "mx-auto" : "", isActive && colors.text)} />
       {!isCollapsed && <span className="truncate">{label}</span>}
@@ -149,10 +149,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         isCollapsed ? "md:grid-cols-[72px_1fr]" : "md:grid-cols-[240px_1fr]"
     )}>
       <aside className="hidden md:block p-2">
-        <div className="flex h-full max-h-screen flex-col gap-2 relative glass rounded-xl border-border/20">
+        <div className="flex h-full max-h-screen flex-col gap-2 relative glass rounded-xl">
           <div className="flex h-14 items-center border-b border-border/20 px-4 lg:h-[60px] lg:px-6">
             <Link href="/" className="flex items-center gap-3 font-semibold text-foreground transition-opacity duration-300">
-              <span className="text-cyan-400">
+              <span className="text-primary">
                 <BrainCircuit className="h-6 w-6" />
               </span>
               {!isCollapsed && <span className="transition-opacity delay-200 duration-300">Base 44</span>}

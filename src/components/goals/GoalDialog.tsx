@@ -107,7 +107,7 @@ export function GoalDialog({ isOpen, setIsOpen, goal }: GoalDialogProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md glass">
         <DialogHeader>
           <DialogTitle>{goal ? 'Edit Goal' : 'Create New Goal'}</DialogTitle>
           <DialogDescription>

@@ -22,10 +22,10 @@ const SignInPrompt = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center animated-background px-4">
-      <Card className="w-full max-w-sm bg-card border-none shadow-2xl shadow-primary/10">
+      <Card className="w-full max-w-sm glass">
         <CardHeader className="text-center">
-          <CardTitle className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-purple-400 py-2">
-            FinancePro
+          <CardTitle className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary py-2">
+            Base 44
           </CardTitle>
           <CardDescription className="text-muted-foreground pt-2">
             Your AI-powered financial co-pilot.

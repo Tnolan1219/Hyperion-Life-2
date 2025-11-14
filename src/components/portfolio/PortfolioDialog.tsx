@@ -112,7 +112,7 @@ export function PortfolioDialog({ isOpen, setIsOpen, asset }: PortfolioDialogPro
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-xl">
+      <DialogContent className="sm:max-w-xl glass">
         <DialogHeader>
           <DialogTitle>{asset ? 'Edit Asset' : 'Add New Asset'}</DialogTitle>
           <DialogDescription>

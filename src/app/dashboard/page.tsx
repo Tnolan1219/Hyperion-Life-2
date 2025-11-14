@@ -49,7 +49,7 @@ const StatCard = ({
   icon: React.ReactNode;
   description: string;
 }) => (
-  <Card>
+  <Card className="hover:border-primary/50 hover:-translate-y-1">
     <CardHeader className="pb-2 flex flex-row items-center justify-between">
       <CardTitle className="text-sm font-medium text-muted-foreground">
         {title}
@@ -98,40 +98,41 @@ const getGreeting = () => {
 
 const GoalInFocus = ({ goal }: { goal: Goal }) => {
     const progress = goal.targetAmount > 0 ? (goal.currentAmount / goal.targetAmount) * 100 : 0;
-    const radius = 60;
-    const circumference = 2 * Math.PI * radius;
-    const strokeDashoffset = circumference - (progress / 100) * circumference;
 
     return (
-        <Card className="h-full flex flex-col">
+        <Card className="h-full flex flex-col hover:border-primary/50 hover:-translate-y-1">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">Goal In Focus</CardTitle>
                 <CardDescription>Your top priority goal right now.</CardDescription>
             </CardHeader>
             <CardContent className="flex-grow flex flex-col items-center justify-center text-center">
                 <div className="relative h-40 w-40">
-                    <svg className="h-full w-full" viewBox="0 0 140 140">
+                   <svg className="h-full w-full -rotate-90" viewBox="0 0 120 120">
                         <circle
-                            cx="70"
-                            cy="70"
-                            r={radius}
+                            cx="60"
+                            cy="60"
+                            r="54"
                             fill="none"
-                            stroke="hsl(var(--secondary))"
+                            stroke="hsl(var(--primary) / 0.1)"
                             strokeWidth="12"
                         />
                         <circle
-                            cx="70"
-                            cy="70"
-                            r={radius}
+                            cx="60"
+                            cy="60"
+                            r="54"
                             fill="none"
-                            stroke="hsl(var(--primary))"
+                            stroke="url(#goal-gradient)"
                             strokeWidth="12"
-                            strokeDasharray={circumference}
-                            strokeDashoffset={strokeDashoffset}
+                            strokeDasharray={`${(progress / 100) * 339.29} 339.29`}
                             strokeLinecap="round"
-                            transform="rotate(-90 70 70)"
                             className="transition-all duration-1000 ease-in-out"
                         />
+                         <defs>
+                            <linearGradient id="goal-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" stopColor="hsl(var(--secondary))" />
+                                <stop offset="100%" stopColor="hsl(var(--primary))" />
+                            </linearGradient>
+                        </defs>
                     </svg>
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
                         <span className="text-3xl font-bold text-primary">{progress.toFixed(0)}%</span>
@@ -170,7 +171,6 @@ export default function Dashboard() {
 
   const goalInFocus = useMemo(() => {
     if (!goals || goals.length === 0) return null;
-    // Simple logic: return the goal with the nearest target date, or the first one.
     return [...goals].sort((a, b) => {
         if (a.targetDate && b.targetDate) return new Date(a.targetDate).getTime() - new Date(b.targetDate).getTime();
         if (a.targetDate) return -1;
@@ -221,7 +221,7 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        <Card className="col-span-1 lg:col-span-3">
+        <Card className="col-span-1 lg:col-span-3 hover:border-primary/50 hover:-translate-y-1">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               Net Worth Over Time
@@ -275,7 +275,7 @@ export default function Dashboard() {
             {goalInFocus ? (
                 <GoalInFocus goal={goalInFocus} />
             ) : (
-                 <Card className="h-full flex flex-col items-center justify-center text-center">
+                 <Card className="h-full flex flex-col items-center justify-center text-center hover:border-primary/50 hover:-translate-y-1">
                      <CardHeader>
                         <div className="flex items-center justify-center h-16 w-16 bg-primary/10 rounded-full mx-auto mb-4">
                             <Target className="h-8 w-8 text-primary" />

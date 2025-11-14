@@ -74,13 +74,12 @@ export const Header = () => {
   const { theme, setTheme } = useTheme();
   const pathname = usePathname();
   
-  // Hide header on the landing page if user is not logged in
   if (!user && pathname === '/') {
     return null;
   }
 
   return (
-    <header className="sticky top-0 z-40 flex h-14 items-center gap-4 border-b bg-transparent px-4 backdrop-blur-lg lg:h-[60px] lg:px-6">
+    <header className="sticky top-0 z-40 flex h-14 items-center gap-4 border-b border-border/20 bg-transparent px-4 backdrop-blur-lg lg:h-[60px] lg:px-6">
       <Sheet>
         <SheetTrigger asChild>
           <Button variant="outline" size="icon" className="shrink-0 md:hidden">
@@ -88,7 +87,7 @@ export const Header = () => {
             <span className="sr-only">Toggle navigation menu</span>
           </Button>
         </SheetTrigger>
-        <SheetContent side="left" className="flex flex-col">
+        <SheetContent side="left" className="flex flex-col glass !border-r-0">
           <nav className="grid gap-2 text-lg font-medium">
             <Link
               href="#"

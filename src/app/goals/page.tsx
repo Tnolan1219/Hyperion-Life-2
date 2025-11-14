@@ -79,7 +79,7 @@ const GoalCard = ({ goal }: { goal: Goal }) => {
                 <CardDescription className="mt-1">{goal.category}</CardDescription>
             </div>
           </div>
-          {daysLeft !== null && (
+          {daysLeft !== null && daysLeft >= 0 && (
              <div className="text-sm text-muted-foreground text-right">
                 <p className="font-semibold">{daysLeft}</p>
                 <p className="text-xs">days left</p>
@@ -102,7 +102,7 @@ const GoalCard = ({ goal }: { goal: Goal }) => {
             }).format(goal.targetAmount)}
           </span>
         </div>
-        <Progress value={progress} className="h-3" />
+        <Progress value={progress} />
         <p className="mt-2 text-xs text-muted-foreground">{progress.toFixed(0)}% complete</p>
       </CardContent>
       <CardFooter className="flex justify-end gap-2">
