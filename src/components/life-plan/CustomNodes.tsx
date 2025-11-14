@@ -1,3 +1,4 @@
+
 'use client';
 import React from 'react';
 import { Handle, Position } from 'reactflow';
@@ -63,7 +64,7 @@ const CustomNode = ({ data, type, selected }: CustomNodeProps) => {
         selected && 'border-primary shadow-lg shadow-primary/20'
       )}
     >
-      <Handle type="target" position={Position.Top} className="!bg-primary/50" />
+      <Handle type="target" position={Position.Top} className="!bg-primary/50" isConnectable={true} />
       <CardHeader className="p-3">
         <div className="flex items-center gap-2">
           <div
@@ -89,6 +90,7 @@ const CustomNode = ({ data, type, selected }: CustomNodeProps) => {
         type="source"
         position={Position.Bottom}
         className="!bg-primary/50"
+        isConnectable={true}
       />
     </Card>
   );
@@ -105,3 +107,5 @@ export const EducationNode = (props: any) => (
 );
 export const CareerNode = (props: any) => <CustomNode {...props} type="career" />;
 export const GoalNode = (props: any) => <CustomNode {...props} type="goal" />;
+
+    

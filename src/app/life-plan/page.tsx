@@ -1,3 +1,4 @@
+
 'use client';
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import ReactFlow, {
@@ -110,7 +111,7 @@ function LifePlanCanvas() {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
-  const { screenToFlowPosition, fitView, setCenter } = useReactFlow();
+  const { screenToFlowPosition, fitView, setCenter, getViewport } = useReactFlow();
 
   const [connectingNodeId, setConnectingNodeId] = useState<string | null>(null);
 
@@ -180,13 +181,17 @@ function LifePlanCanvas() {
   );
 
   const addNode = (type: string, label: string) => {
+    const { x, y, zoom } = getViewport();
+    const centerX = -x / zoom + window.innerWidth / (2 * zoom);
+    const centerY = -y / zoom + window.innerHeight / (2 * zoom);
+
     const newNode: Node = {
       id: `node_${+new Date()}`,
       type,
-      position: screenToFlowPosition({
-        x: window.innerWidth / 2 - 300,
-        y: 200,
-      }),
+      position: {
+        x: centerX - nodeWidth / 2,
+        y: centerY - nodeHeight / 2,
+      },
       data: {
         title: label,
         amount: 0,
@@ -200,7 +205,7 @@ function LifePlanCanvas() {
 
   const onNodeClick = useCallback(
     (event: React.MouseEvent, node: Node) => {
-      if (connectingNodeId) {
+      if (connectingNodeId && connectingNodeId !== node.id) {
         onConnect({ source: connectingNodeId, target: node.id, sourceHandle: null, targetHandle: null });
       } else {
         setSelectedNode(node);
@@ -269,6 +274,21 @@ function LifePlanCanvas() {
 
   return (
     <div className="w-full h-full rounded-lg overflow-hidden relative flex">
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        onNodesChange={handleNodesChange}
+        onEdgesChange={onEdgesChange}
+        onConnect={onConnect}
+        onNodeClick={onNodeClick}
+        onPaneClick={onPaneClick}
+        nodeTypes={nodeTypes}
+        fitView
+        className={cn('bg-card/30', connectingNodeId && 'cursor-crosshair')}
+        proOptions={{ hideAttribution: true }}
+        deleteKeyCode={['Backspace', 'Delete']}
+        minZoom={0.1}
+      >
         <div className="absolute top-4 left-4 z-10 flex gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -305,21 +325,6 @@ function LifePlanCanvas() {
               </DropdownMenuContent>
             </DropdownMenu>
         </div>
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={handleNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        onNodeClick={onNodeClick}
-        onPaneClick={onPaneClick}
-        nodeTypes={nodeTypes}
-        fitView
-        className={cn('bg-card/30', connectingNodeId && 'cursor-crosshair')}
-        proOptions={{ hideAttribution: true }}
-        deleteKeyCode={['Backspace', 'Delete']}
-        minZoom={0.1}
-      >
         <Background gap={24} size={1} color="hsl(var(--border))" />
         <Controls className="react-flow-controls" position='bottom-left'>
             <button onClick={() => fitView({ duration: 500 })}>
@@ -385,7 +390,7 @@ function LifePlanCanvas() {
 
 export default function LifePlanPage() {
   return (
-    <div className="h-[calc(100vh-80px)] flex flex-col gap-8">
+    <div className="h-[calc(100vh-96px)] flex flex-col gap-8">
       <div className="flex-shrink-0 px-4 md:px-8">
         <h1 className="text-4xl font-bold">Life Plan</h1>
         <p className="text-muted-foreground mt-2">
@@ -401,3 +406,5 @@ export default function LifePlanPage() {
     </div>
   );
 }
+
+    
