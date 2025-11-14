@@ -1,4 +1,3 @@
-
 'use client';
 
 import React from 'react';
@@ -33,11 +32,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Calendar as CalendarIcon } from 'lucide-react';
-import { useUser, useFirestore } from '@/firebase';
-import {
-  addDocumentNonBlocking,
-  updateDocumentNonBlocking,
-} from '@/firebase/non-blocking-updates';
+import { useUser, useFirestore, addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -66,38 +61,39 @@ export function GoalDialog({ isOpen, setIsOpen, goal }: GoalDialogProps) {
   const form = useForm<GoalFormData>({
     resolver: zodResolver(goalSchema),
     defaultValues: {
-      title: goal?.title || '',
-      category: goal?.category || '',
-      targetAmount: goal?.targetAmount || 0,
-      currentAmount: goal?.currentAmount || 0,
-      targetDate: goal?.targetDate ? new Date(goal.targetDate) : undefined,
+      title: '',
+      category: '',
+      targetAmount: 0,
+      currentAmount: 0,
+      targetDate: undefined,
     },
   });
 
   React.useEffect(() => {
-    form.reset({
+    if (isOpen) {
+      form.reset({
         title: goal?.title || '',
         category: goal?.category || '',
         targetAmount: goal?.targetAmount || 0,
         currentAmount: goal?.currentAmount || 0,
         targetDate: goal?.targetDate ? new Date(goal.targetDate) : undefined,
-    });
-  }, [goal, form])
+      });
+    }
+  }, [goal, isOpen, form]);
 
   const onSubmit = (data: GoalFormData) => {
     if (!firestore || !user) return;
 
     const goalData = {
         ...data,
-        targetDate: data.targetDate ? data.targetDate.toISOString() : null,
+        targetDate: data.targetDate ? data.targetDate.toISOString() : undefined,
+        category: data.category as GoalCategory,
     };
 
     if (goal?.id) {
-      // Update existing goal
       const goalDocRef = doc(firestore, `users/${user.uid}/goals`, goal.id);
       updateDocumentNonBlocking(goalDocRef, goalData);
     } else {
-      // Create new goal
       const goalsCollection = collection(firestore, `users/${user.uid}/goals`);
       addDocumentNonBlocking(goalsCollection, { ...goalData, userId: user.uid });
     }
@@ -140,6 +136,7 @@ export function GoalDialog({ isOpen, setIsOpen, goal }: GoalDialogProps) {
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
+                    value={field.value}
                   >
                     <FormControl>
                       <SelectTrigger>

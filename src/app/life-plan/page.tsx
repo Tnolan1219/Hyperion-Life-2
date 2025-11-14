@@ -1,5 +1,3 @@
-
-
 'use client';
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import ReactFlow, {
@@ -204,7 +202,6 @@ function LifePlanCanvas() {
   
   const handleNodesChange = useCallback(
     (changes: NodeChange[]) => {
-      // If a node is deleted, also delete its connected edges
       const deletedNodeIds = changes
         .filter(change => change.type === 'remove')
         .map(change => (change as any).id);
@@ -384,7 +381,8 @@ function LifePlanCanvas() {
         deleteKeyCode={['Backspace', 'Delete']}
         minZoom={0.1}
         connectionRadius={50}
-        connectOnClick={false}
+        connectOnClick={true}
+        connectionMode="loose"
       >
         <div className="absolute top-4 right-4 z-10 flex gap-2">
             <DropdownMenu>
@@ -486,18 +484,6 @@ function LifePlanCanvas() {
 }
 
 export default function LifePlanPage() {
-  const [nodes, setNodes] = useState<Node[]>(initialNodes);
-  const [edges, setEdges] = useState<Edge[]>(initialEdges);
-
-  const handleAIGenerate = (aiNodes: Node[], aiEdges: Edge[]) => {
-      const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(aiNodes, aiEdges);
-      // We need a way to pass this down to the canvas
-      // This implementation is incorrect, but shows intent.
-      // A better solution would involve lifting state or using context.
-      setNodes(layoutedNodes);
-      setEdges(layoutedEdges);
-  };
-  
   return (
     <div className="flex flex-col gap-8 h-full">
       <div className="flex-shrink-0 px-4 md:px-8">
@@ -513,8 +499,11 @@ export default function LifePlanPage() {
         </ReactFlowProvider>
       </div>
       <div className="px-4 md:px-8 pb-8 flex-shrink-0">
-        {/* The onGenerate prop needs a proper state management solution */}
-        <AIPlanGenerator onGenerate={() => {}} />
+        <AIPlanGenerator onGenerate={() => {
+            // This function is passed to the AI component, but the state is managed within LifePlanCanvas.
+            // We'll need to lift state up or use context/zustand for this to work properly.
+            // For now, this is a placeholder. A more robust solution is needed.
+        }} />
       </div>
     </div>
   );

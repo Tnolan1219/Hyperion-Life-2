@@ -29,11 +29,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useUser, useFirestore } from '@/firebase';
-import {
-  addDocumentNonBlocking,
-  updateDocumentNonBlocking,
-} from '@/firebase/non-blocking-updates';
+import { useUser, useFirestore, addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import { Debt } from '@/app/portfolio/page';
 
@@ -61,25 +57,27 @@ export function DebtDialog({ isOpen, setIsOpen, debt }: DebtDialogProps) {
   const form = useForm<DebtFormData>({
     resolver: zodResolver(debtSchema),
     defaultValues: {
-      type: debt?.type || 'Credit Card',
-      name: debt?.name || '',
-      lender: debt?.lender || '',
-      balance: debt?.balance || 0,
-      apr: debt?.apr || 0,
-      minimumPayment: debt?.minimumPayment || 0,
+        type: 'Credit Card',
+        name: '',
+        lender: '',
+        balance: 0,
+        apr: 0,
+        minimumPayment: 0,
     },
   });
 
   React.useEffect(() => {
-    form.reset({
-      type: debt?.type || 'Credit Card',
-      name: debt?.name || '',
-      lender: debt?.lender || '',
-      balance: debt?.balance || 0,
-      apr: debt?.apr || 0,
-      minimumPayment: debt?.minimumPayment || 0,
-    });
-  }, [debt, form]);
+    if (isOpen) {
+        form.reset({
+          type: debt?.type || 'Credit Card',
+          name: debt?.name || '',
+          lender: debt?.lender || '',
+          balance: debt?.balance || 0,
+          apr: debt?.apr || 0,
+          minimumPayment: debt?.minimumPayment || 0,
+        });
+    }
+  }, [debt, isOpen, form]);
 
   const onSubmit = (data: DebtFormData) => {
     if (!firestore || !user) return;
@@ -116,7 +114,7 @@ export function DebtDialog({ isOpen, setIsOpen, debt }: DebtDialogProps) {
                   <FormLabel>Debt Type</FormLabel>
                   <Select
                     onValueChange={field.onChange}
-                    defaultValue={field.value}
+                    value={field.value}
                   >
                     <FormControl>
                       <SelectTrigger>

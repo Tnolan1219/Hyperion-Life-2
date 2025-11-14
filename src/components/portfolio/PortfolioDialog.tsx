@@ -30,11 +30,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { useUser, useFirestore } from '@/firebase';
-import {
-  addDocumentNonBlocking,
-  updateDocumentNonBlocking,
-} from '@/firebase/non-blocking-updates';
+import { useUser, useFirestore, addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 
 const assetSchema = z.object({
@@ -80,33 +76,35 @@ export function PortfolioDialog({ isOpen, setIsOpen, asset }: PortfolioDialogPro
   const form = useForm<AssetFormData>({
     resolver: zodResolver(assetSchema),
     defaultValues: {
-      type: asset?.type || 'Stock',
-      ticker: asset?.ticker || '',
-      name: asset?.name || '',
-      balance: asset?.balance || 0,
-      averageCost: asset?.averageCost || 0,
-      sector: asset?.sector || '',
-      notes: asset?.notes || '',
-      peRatio: asset?.peRatio || 0,
-      dividendYield: asset?.dividendYield || 0,
-      beta: asset?.beta || 0,
+        type: 'Stock',
+        ticker: '',
+        name: '',
+        balance: 0,
+        averageCost: 0,
+        sector: '',
+        notes: '',
+        peRatio: 0,
+        dividendYield: 0,
+        beta: 0,
     },
   });
 
   React.useEffect(() => {
-    form.reset({
-      type: asset?.type || 'Stock',
-      ticker: asset?.ticker || '',
-      name: asset?.name || '',
-      balance: asset?.balance || 0,
-      averageCost: asset?.averageCost || 0,
-      sector: asset?.sector || '',
-      notes: asset?.notes || '',
-      peRatio: asset?.peRatio || 0,
-      dividendYield: asset?.dividendYield || 0,
-      beta: asset?.beta || 0,
-    });
-  }, [asset, form]);
+    if (isOpen) {
+        form.reset({
+          type: asset?.type || 'Stock',
+          ticker: asset?.ticker || '',
+          name: asset?.name || '',
+          balance: asset?.balance || 0,
+          averageCost: asset?.averageCost || 0,
+          sector: asset?.sector || '',
+          notes: asset?.notes || '',
+          peRatio: asset?.peRatio || 0,
+          dividendYield: asset?.dividendYield || 0,
+          beta: asset?.beta || 0,
+        });
+    }
+  }, [asset, isOpen, form]);
 
   const onSubmit = (data: AssetFormData) => {
     if (!firestore || !user) return;
@@ -144,7 +142,7 @@ export function PortfolioDialog({ isOpen, setIsOpen, asset }: PortfolioDialogPro
                     <FormLabel>Asset Type</FormLabel>
                     <Select
                         onValueChange={field.onChange}
-                        defaultValue={field.value}
+                        value={field.value}
                     >
                         <FormControl>
                         <SelectTrigger>
