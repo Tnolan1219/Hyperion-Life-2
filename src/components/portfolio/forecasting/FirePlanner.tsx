@@ -32,13 +32,13 @@ interface FireResult {
 }
 
 const StatCard = ({ title, value, description }: { title: string; value: string; description: string }) => (
-    <Card className="text-center">
+    <Card className="text-center glass hover:border-primary/50">
         <CardHeader className="pb-2">
             <CardTitle className="text-sm text-muted-foreground">{title}</CardTitle>
         </CardHeader>
         <CardContent>
-            <p className="text-3xl font-bold">{value}</p>
-            <p className="text-xs text-muted-foreground mt-1">{description}</p>
+            <p className="text-3xl md:text-2xl lg:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary py-1">{value}</p>
+            <p className="text-xs text-muted-foreground mt-1 h-8">{description}</p>
         </CardContent>
     </Card>
 );
@@ -103,7 +103,7 @@ export function FirePlanner({ currentPortfolioValue, annualExpenses }: { current
     <div className="space-y-8">
         <Card className="glass">
             <CardHeader>
-                <CardTitle>FIRE Planner</CardTitle>
+                <CardTitle className="text-3xl font-bold text-primary">FIRE Planner</CardTitle>
                 <CardDescription>
                 Calculate your path to Financial Independence and Early Retirement.
                 </CardDescription>
@@ -154,7 +154,7 @@ export function FirePlanner({ currentPortfolioValue, annualExpenses }: { current
         
         {result && (
             <div className="space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     <StatCard title="Years to FI (est.)" value={isFinite(result.yearsToFi) ? result.yearsToFi.toFixed(1) : ' > 100'} description="How long until you reach financial independence." />
                     <StatCard title="FI Number" value={formatCurrency(result.fiNumber)} description="Portfolio needed to retire safely." />
                     <StatCard title="Withdrawal @ FI / yr" value={formatCurrency(result.withdrawalAtFi)} description="Annual withdrawal at FI (using your rate)." />
