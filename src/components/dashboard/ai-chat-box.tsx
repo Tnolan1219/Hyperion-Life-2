@@ -11,7 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { MessageCircle, Send, X, Bot, User } from 'lucide-react';
+import { MessageCircle, Send, X, Bot, User, HelpCircle } from 'lucide-react';
 import { ScrollArea } from '../ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback } from '../ui/avatar';
@@ -20,6 +20,12 @@ type Message = {
   role: 'user' | 'model';
   content: string;
 };
+
+const suggestionPrompts = [
+    "How do I start investing?",
+    "Explain the 50/30/20 budget rule.",
+    "What's the difference between a Roth IRA and a 401(k)?",
+]
 
 export function AiChatBox() {
   const [isOpen, setIsOpen] = useState(false);
@@ -31,18 +37,20 @@ export function AiChatBox() {
   const toggleChat = () => setIsOpen(!isOpen);
 
   useEffect(() => {
-    if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
+    if (isOpen && scrollAreaRef.current) {
+      setTimeout(() => {
+        if (scrollAreaRef.current) {
+            scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
+        }
+      }, 100);
     }
-  }, [messages]);
+  }, [messages, isOpen]);
 
-  const handleSend = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim()) return;
+  const handleSend = async (prompt: string) => {
+    if (!prompt.trim()) return;
 
-    const userMessage: Message = { role: 'user', content: input };
+    const userMessage: Message = { role: 'user', content: prompt };
     setMessages(prev => [...prev, userMessage]);
-    const currentInput = input;
     setInput('');
     setIsLoading(true);
 
@@ -50,7 +58,7 @@ export function AiChatBox() {
       const response = await fetch('/api/openai-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: currentInput }),
+        body: JSON.stringify({ prompt }),
       });
 
       if (!response.ok) {
@@ -64,7 +72,7 @@ export function AiChatBox() {
       console.error('Chatbot error:', error);
       const errorMessage: Message = {
         role: 'model',
-        content: 'Sorry, I encountered an error. Please try again.',
+        content: '<p>Sorry, I encountered an error. Please try again.</p>',
       };
       setMessages(prev => [...prev, errorMessage]);
     } finally {
@@ -99,6 +107,25 @@ export function AiChatBox() {
             <CardContent className="flex-grow overflow-hidden">
               <ScrollArea className="h-full pr-4" ref={scrollAreaRef}>
                 <div className="space-y-4">
+                  {messages.length === 0 && !isLoading && (
+                    <div className="text-center text-muted-foreground p-4 space-y-4">
+                        <HelpCircle className="mx-auto h-10 w-10 text-primary/70" />
+                        <h3 className="font-semibold">Not sure where to start?</h3>
+                        <p className="text-sm">Try one of these common questions:</p>
+                        <div className="flex flex-col gap-2">
+                            {suggestionPrompts.map(prompt => (
+                                <Button
+                                    key={prompt}
+                                    variant="outline"
+                                    className="text-left justify-start h-auto py-2"
+                                    onClick={() => handleSend(prompt)}
+                                >
+                                    {prompt}
+                                </Button>
+                            ))}
+                        </div>
+                    </div>
+                  )}
                   {messages.map((message, index) => (
                     <div
                       key={index}
@@ -122,7 +149,6 @@ export function AiChatBox() {
                             : 'bg-muted/60'
                         )}
                       >
-                        {/* Using dangerouslySetInnerHTML to render HTML from the API */}
                         <div className="prose prose-sm prose-invert" dangerouslySetInnerHTML={{ __html: message.content }} />
                       </div>
                        {message.role === 'user' && (
@@ -155,7 +181,7 @@ export function AiChatBox() {
             </CardContent>
             <CardFooter>
               <form
-                onSubmit={handleSend}
+                onSubmit={(e) => { e.preventDefault(); handleSend(input); }}
                 className="flex w-full items-center space-x-2"
               >
                 <Input
@@ -166,7 +192,7 @@ export function AiChatBox() {
                   disabled={isLoading}
                   className="flex-1"
                 />
-                <Button type="submit" size="icon" disabled={isLoading}>
+                <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
                   <Send className="h-4 w-4" />
                 </Button>
               </form>
