@@ -33,7 +33,7 @@ import {
   BrainCircuit,
   Star,
   AreaChart,
-  CrystalBall,
+  Wand2,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -256,7 +256,7 @@ export default function PortfolioPage() {
         <TabsList className="grid w-full grid-cols-5 max-w-2xl mb-6">
           <TabsTrigger value="overview"><AreaChart className="w-4 h-4 mr-2"/>Overview</TabsTrigger>
           <TabsTrigger value="analysis">Holdings Analysis</TabsTrigger>
-          <TabsTrigger value="predictive"><CrystalBall className="w-4 h-4 mr-2" />Predictive Modeling</TabsTrigger>
+          <TabsTrigger value="predictive"><Wand2 className="w-4 h-4 mr-2" />Predictive Modeling</TabsTrigger>
           <TabsTrigger value="insights"><BrainCircuit className="w-4 h-4 mr-2" />AI Insights</TabsTrigger>
           <TabsTrigger value="watchlist"><Star className="w-4 h-4 mr-2" />Watchlist</TabsTrigger>
         </TabsList>
