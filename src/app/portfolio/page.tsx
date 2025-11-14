@@ -32,7 +32,6 @@ import {
   TrendingUp,
   FilePieChart,
 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -118,14 +117,14 @@ export default function PortfolioPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="analysis">
-        <TabsList className="grid w-full grid-cols-2 max-w-lg">
+      <Tabs defaultValue="analysis" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 max-w-lg mb-6">
           <TabsTrigger value="analysis">Stock Analysis</TabsTrigger>
           <TabsTrigger value="overview">Overview</TabsTrigger>
         </TabsList>
         <TabsContent value="analysis" className="space-y-6">
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            <Card>
+            <Card className="bg-card/60 border-border/60 hover:border-primary/60 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
                   Total Value
@@ -141,7 +140,7 @@ export default function PortfolioPage() {
                 </p>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="bg-card/60 border-border/60 hover:border-primary/60 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
                   Overall Gain/Loss
@@ -157,7 +156,7 @@ export default function PortfolioPage() {
                 </p>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="bg-card/60 border-border/60 hover:border-primary/60 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">24h Change</CardTitle>
                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
@@ -172,7 +171,7 @@ export default function PortfolioPage() {
               </CardContent>
             </Card>
           </div>
-          <Card>
+          <Card className="bg-card/60 border-border/60 hover:border-primary/60 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10">
             <CardHeader>
               <CardTitle>Positions</CardTitle>
               <CardDescription>
@@ -182,18 +181,18 @@ export default function PortfolioPage() {
             <CardContent>
               <Table>
                 <TableHeader>
-                  <TableRow>
+                  <TableRow className="hover:bg-transparent">
                     <TableHead className="w-[150px]">Asset</TableHead>
                     <TableHead>Balance</TableHead>
                     <TableHead>Price</TableHead>
                     <TableHead>24h</TableHead>
                     <TableHead className="text-right">Allocation</TableHead>
-                    <TableHead className="w-[50px]">Actions</TableHead>
+                    <TableHead className="w-[50px] text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {exampleHoldings.map(holding => (
-                    <TableRow key={holding.ticker}>
+                    <TableRow key={holding.ticker} className="transition-colors hover:bg-muted/40">
                       <TableCell>
                         <div className="font-medium">{holding.ticker}</div>
                         <div className="text-sm text-muted-foreground">
@@ -228,7 +227,7 @@ export default function PortfolioPage() {
                           {holding.allocation.toFixed(1)}%
                         </div>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" className="h-8 w-8 p-0">

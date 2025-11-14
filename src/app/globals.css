@@ -4,36 +4,36 @@
 
 @layer base {
   :root {
-    --background: 210 20% 98%;
-    --foreground: 220 17% 12%;
+    --background: 220 17% 8%;
+    --foreground: 210 40% 98%;
 
-    --card: 210 20% 100%;
-    --card-foreground: 220 17% 12%;
+    --card: 216 15% 14%;
+    --card-foreground: 210 40% 98%;
 
-    --popover: 210 20% 100%;
-    --popover-foreground: 220 17% 12%;
+    --popover: 220 17% 5%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 180 100% 45%;
-    --primary-foreground: 210 20% 98%;
+    --primary: 180 100% 50%;
+    --primary-foreground: 220 17% 5%;
 
-    --secondary: 210 20% 94%;
-    --secondary-foreground: 220 17% 12%;
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 210 20% 94%;
-    --muted-foreground: 215 20% 55%;
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
 
-    --accent: 210 20% 94%;
-    --accent-foreground: 220 17% 12%;
+    --accent: 217 33% 17%;
+    --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 210 20% 98%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
 
     --success: 140 70% 45%;
 
-    --border: 210 20% 88%;
-    --input: 210 20% 88%;
-    --ring: 180 100% 45%;
-
+    --border: 217 14% 22%;
+    --input: 217 33% 17%;
+    --ring: 180 100% 50%;
+    
     --radius: 0.8rem;
   }
 
@@ -82,23 +82,22 @@
   .glass {
     @apply bg-card/80 border backdrop-blur-lg;
   }
-  
+
   .animated-background {
-    @apply bg-background;
-    background: linear-gradient(-45deg, hsl(220 17% 5%), hsl(210 20% 8%), hsl(190 25% 8%), hsl(220 17% 5%));
-    background-size: 400% 400%;
-    animation: gradient 15s ease infinite;
+    background-color: hsl(var(--background));
+    background-image:
+      radial-gradient(circle at 1px 1px, hsl(var(--foreground) / 0.1) 1px, transparent 0),
+      radial-gradient(circle at 10px 10px, hsl(var(--foreground) / 0.05) 1px, transparent 0);
+    background-size: 20px 20px;
+    animation: pan-bg 20s linear infinite;
   }
 
-  @keyframes gradient {
+  @keyframes pan-bg {
     0% {
-      background-position: 0% 50%;
-    }
-    50% {
-      background-position: 100% 50%;
+      background-position: 0% 0%;
     }
     100% {
-      background-position: 0% 50%;
+      background-position: 100% 100%;
     }
   }
 }

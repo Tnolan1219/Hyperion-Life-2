@@ -38,16 +38,24 @@ function NavLink({
   const isActive = pathname === href;
 
   return (
-    <Link href={href} legacyBehavior>
-      <a
-        className={cn(
-          'flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary hover:bg-primary/10',
-          isActive && 'bg-primary/10 text-primary'
-        )}
-      >
-        <Icon className="h-5 w-5" />
-        {label}
-      </a>
+    <Link
+      href={href}
+      className={cn(
+        'group flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary relative',
+        isActive && 'bg-primary/10 text-primary font-semibold',
+        'hover:bg-primary/5'
+      )}
+    >
+      <div className={cn(
+        "absolute left-0 top-1/2 -translate-y-1/2 h-0 w-1 bg-primary rounded-r-full transition-all duration-300 group-hover:h-1/2",
+        isActive ? 'h-full' : 'h-0'
+      )}
+      style={{
+        boxShadow: isActive ? '0 0 12px hsl(var(--primary))' : 'none'
+      }}
+      />
+      <Icon className="h-5 w-5" />
+      <span>{label}</span>
     </Link>
   );
 }
@@ -65,7 +73,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   if (isLoading || (!user && pathname !== '/')) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center animated-background">
         <div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-primary"></div>
       </div>
     );
@@ -77,7 +85,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
-      <div className="hidden border-r bg-card md:block">
+      <div className="hidden border-r bg-card/80 md:block">
         <div className="flex h-full max-h-screen flex-col gap-2">
           <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
             <Link href="/" className="flex items-center gap-2 font-semibold">
@@ -87,7 +95,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <span>Base 44</span>
             </Link>
           </div>
-          <div className="flex-1">
+          <div className="flex-1 py-4">
             <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
               {navItems.map(item => (
                 <NavLink key={item.href} {...item} />

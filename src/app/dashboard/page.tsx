@@ -36,7 +36,7 @@ const StatCard = ({
   change?: string;
   changeColor?: string;
 }) => (
-  <Card className="bg-card/60 border-border/60 hover:border-primary/60 transition-colors duration-300 hover:shadow-2xl hover:shadow-primary/10">
+  <Card className="bg-card/60 border-border/60 hover:border-primary/60 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1">
     <CardHeader className="pb-2 flex flex-row items-center justify-between">
       <CardTitle className="text-sm font-medium text-muted-foreground">
         {title}
@@ -131,7 +131,7 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <Card className="col-span-1 lg:col-span-2 bg-card/60 border-border/60">
+        <Card className="col-span-1 lg:col-span-2 bg-card/60 border-border/60 hover:border-primary/60 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2"><LineChart className="text-primary"/>Net Worth Over Time</CardTitle>
                 <CardDescription>Your wealth trajectory for the last 12 months.</CardDescription>
@@ -145,7 +145,7 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
          <ChartPlaceholder title="Debt Breakdown" icon={<BarChart />} description="A view of your liabilities by type (student loan, credit card, etc)." />
-         <Card className="col-span-1 lg:col-span-3 bg-card/60 border-border/60">
+         <Card className="col-span-1 lg:col-span-3 bg-card/60 border-border/60 hover:border-primary/60 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10">
             <CardHeader>
                 <CardTitle>Recent Transactions</CardTitle>
                 <CardDescription>Your latest financial activities.</CardDescription>

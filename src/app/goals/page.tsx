@@ -50,7 +50,7 @@ const GoalCard = ({
 }) => {
   const progress = (goal.current / goal.target) * 100;
   return (
-    <Card className="bg-card/60 border-border/60 hover:border-primary/60 transition-colors duration-300 flex flex-col">
+    <Card className="bg-card/60 border-border/60 hover:border-primary/60 transition-all duration-300 flex flex-col hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1">
       <CardHeader>
         <div className="flex justify-between items-start">
           <div>
@@ -109,7 +109,7 @@ export default function GoalsPage() {
         {exampleGoals.map(goal => (
           <GoalCard key={goal.id} goal={goal} />
         ))}
-         <Card className="min-h-[280px] flex flex-col items-center justify-center bg-card/40 border-border/40 border-dashed hover:border-primary/80 transition-colors">
+         <Card className="min-h-[280px] flex flex-col items-center justify-center bg-card/40 border-border/40 border-dashed hover:border-primary/80 transition-colors hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1">
             <PlusCircle className="h-10 w-10 text-muted-foreground mb-4" />
             <h3 className="text-lg font-semibold">Create a New Goal</h3>
             <p className="text-sm text-muted-foreground mt-1">Start your next financial journey.</p>
