@@ -112,7 +112,7 @@ function LifePlanCanvas() {
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const { screenToFlowPosition, fitView, setCenter } = useReactFlow();
 
-  const [connectingNode, setConnectingNode] = useState<string | null>(null);
+  const [connectingNodeId, setConnectingNodeId] = useState<string | null>(null);
 
   const [netWorth, setNetWorth] = useState(0);
   const [annualIncome, setAnnualIncome] = useState(0);
@@ -152,12 +152,18 @@ function LifePlanCanvas() {
   }, [nodes]);
 
   useEffect(() => {
-    fitView({ duration: 300 });
-  }, [fitView]);
+    const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(initialNodes, initialEdges);
+    setNodes(layoutedNodes);
+    setEdges(layoutedEdges);
+    
+    window.requestAnimationFrame(() => {
+        fitView({ duration: 300 });
+    });
+  }, [fitView, setNodes, setEdges]);
 
   const onConnect = useCallback(
     (params: Connection | Edge) => {
-      setConnectingNode(null);
+      setConnectingNodeId(null);
       setEdges(eds =>
         addEdge(
           {
@@ -173,16 +179,16 @@ function LifePlanCanvas() {
     [setEdges]
   );
 
-  const addNode = (type: string) => {
+  const addNode = (type: string, label: string) => {
     const newNode: Node = {
       id: `node_${+new Date()}`,
       type,
       position: screenToFlowPosition({
-        x: 400,
+        x: window.innerWidth / 2 - 300,
         y: 200,
       }),
       data: {
-        title: `New ${type.charAt(0).toUpperCase() + type.slice(1)}`,
+        title: label,
         amount: 0,
         frequency: 'one-time',
         notes: '',
@@ -194,18 +200,18 @@ function LifePlanCanvas() {
 
   const onNodeClick = useCallback(
     (event: React.MouseEvent, node: Node) => {
-      if (connectingNode) {
-        onConnect({ source: connectingNode, target: node.id, sourceHandle: null, targetHandle: null });
+      if (connectingNodeId) {
+        onConnect({ source: connectingNodeId, target: node.id, sourceHandle: null, targetHandle: null });
       } else {
         setSelectedNode(node);
       }
     },
-    [connectingNode, onConnect]
+    [connectingNodeId, onConnect]
   );
 
   const onPaneClick = useCallback(() => {
     setSelectedNode(null);
-    setConnectingNode(null);
+    setConnectingNodeId(null);
   }, []);
 
   const onNodeDataChange = (nodeId: string, newData: any) => {
@@ -228,10 +234,15 @@ function LifePlanCanvas() {
   
   const handleLoadTemplate = (templateName: keyof typeof lifePlanTemplates) => {
     const template = lifePlanTemplates[templateName];
-    setNodes(template.nodes);
-    setEdges(template.edges);
+    const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(template.nodes, template.edges);
+    
+    setNodes(layoutedNodes);
+    setEdges(layoutedEdges);
     setSelectedNode(null);
-    setTimeout(() => onLayout('TB'), 100);
+
+    window.requestAnimationFrame(() => {
+        fitView({ duration: 500 });
+    });
   }
   
   const onDeleteNode = (nodeId: string) => {
@@ -257,58 +268,27 @@ function LifePlanCanvas() {
   );
 
   return (
-    <div className="w-full grow rounded-lg overflow-hidden relative flex">
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={handleNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        onNodeClick={onNodeClick}
-        onPaneClick={onPaneClick}
-        nodeTypes={nodeTypes}
-        fitView
-        className={cn('bg-card/30', connectingNode && 'cursor-crosshair')}
-        proOptions={{ hideAttribution: true }}
-        deleteKeyCode={['Backspace', 'Delete']}
-        minZoom={0.1}
-      >
-        <Background gap={24} size={1} color="hsl(var(--border))" />
-        <Controls className="react-flow-controls" position='bottom-left'>
-            <button onClick={() => fitView({ duration: 500 })}>
-                <ZoomIn />
-            </button>
-             <button onClick={() => onLayout('TB')}>
-                <Layout />
-            </button>
-        </Controls>
-        <Panel position="top-left">
-          <div className="flex gap-2">
-            <Card className="glass">
-              <CardHeader className="p-3">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <PlusCircle className="h-5 w-5" />
-                  Add to Plan
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-3 pt-0 grid grid-cols-5 gap-2">
-                {nodeMenu.map(({ type, label, icon: Icon, color }) => (
-                  <Button
-                    key={type}
-                    variant="outline"
-                    size="sm"
-                    onClick={() => addNode(type)}
-                    className="flex flex-col h-16 w-16 gap-1 border-border/60 hover:border-primary"
-                  >
-                    <Icon className={cn('h-5 w-5', `text-${color}-400`)} />
-                    <span className="text-xs">{label}</span>
-                  </Button>
-                ))}
-              </CardContent>
-            </Card>
+    <div className="w-full h-full rounded-lg overflow-hidden relative flex">
+        <div className="absolute top-4 left-4 z-10 flex gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="glass h-full">
+                <Button variant="outline" className="glass h-auto py-2">
+                  <PlusCircle className="mr-2 h-4 w-4" /> Add to Plan
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                 {nodeMenu.map(({ type, label, icon: Icon, color }) => (
+                  <DropdownMenuItem key={type} onClick={() => addNode(type, `New ${label}`)}>
+                    <Icon className={cn('mr-2 h-4 w-4', `text-${color}-400`)} />
+                    <span>{label}</span>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="glass h-auto py-2">
                   <Zap className="mr-2 h-4 w-4" /> Templates
                 </Button>
               </DropdownMenuTrigger>
@@ -324,8 +304,31 @@ function LifePlanCanvas() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          </div>
-        </Panel>
+        </div>
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        onNodesChange={handleNodesChange}
+        onEdgesChange={onEdgesChange}
+        onConnect={onConnect}
+        onNodeClick={onNodeClick}
+        onPaneClick={onPaneClick}
+        nodeTypes={nodeTypes}
+        fitView
+        className={cn('bg-card/30', connectingNodeId && 'cursor-crosshair')}
+        proOptions={{ hideAttribution: true }}
+        deleteKeyCode={['Backspace', 'Delete']}
+        minZoom={0.1}
+      >
+        <Background gap={24} size={1} color="hsl(var(--border))" />
+        <Controls className="react-flow-controls" position='bottom-left'>
+            <button onClick={() => fitView({ duration: 500 })}>
+                <ZoomIn />
+            </button>
+             <button onClick={() => onLayout('TB')}>
+                <Layout />
+            </button>
+        </Controls>
          <Panel position="bottom-center">
             <Card className="glass py-2 px-4 flex items-center gap-6">
                 <div className="text-center">
@@ -345,7 +348,7 @@ function LifePlanCanvas() {
         onNodeDataChange={onNodeDataChange}
         closeEditor={() => setSelectedNode(null)}
         startConnecting={() => {
-            if (selectedNode) setConnectingNode(selectedNode.id);
+            if (selectedNode) setConnectingNodeId(selectedNode.id);
             setSelectedNode(null);
         }}
         onDeleteNode={() => {
@@ -382,17 +385,19 @@ function LifePlanCanvas() {
 
 export default function LifePlanPage() {
   return (
-    <div className="h-[calc(100vh-120px)] md:h-[calc(100vh-80px)] flex flex-col gap-8">
-      <div className="flex-shrink-0">
+    <div className="h-[calc(100vh-80px)] flex flex-col gap-8">
+      <div className="flex-shrink-0 px-4 md:px-8">
         <h1 className="text-4xl font-bold">Life Plan</h1>
         <p className="text-muted-foreground mt-2">
           Visualize and map out your financial future. Drag, drop, and connect
           the dots.
         </p>
       </div>
-      <ReactFlowProvider>
-        <LifePlanCanvas />
-      </ReactFlowProvider>
+      <div className="flex-grow">
+        <ReactFlowProvider>
+            <LifePlanCanvas />
+        </ReactFlowProvider>
+      </div>
     </div>
   );
 }
