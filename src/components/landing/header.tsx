@@ -29,7 +29,7 @@ export const Header = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3">
           <Logo className="text-primary h-7 w-7" />
-          <span className="text-xl font-bold">StockMind AI</span>
+          <span className="text-xl font-bold">Base 44</span>
         </Link>
         <nav className="hidden md:flex items-center gap-2 text-sm">
           <Button variant="ghost" size="sm" asChild>

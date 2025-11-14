@@ -211,7 +211,7 @@ const SignIn = ({ auth }: { auth: Auth | null }) => {
     <div className="min-h-screen gradient-hero flex items-center justify-center">
       <Card className="w-full max-w-sm glass">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Welcome to StockMind AI</CardTitle>
+          <CardTitle className="text-2xl">Welcome to Base 44</CardTitle>
           <CardDescription>
             Sign in to continue to your dashboard
           </CardDescription>

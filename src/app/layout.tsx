@@ -12,8 +12,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'StockMind AI',
-  description: 'Advanced stock analysis powered by artificial intelligence.',
+  title: 'Base 44',
+  description: 'Personal finance dashboard.',
 };
 
 export default function RootLayout({

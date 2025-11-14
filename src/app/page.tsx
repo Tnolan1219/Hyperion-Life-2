@@ -88,17 +88,15 @@ const Hero = () => (
         <div className="space-y-8 text-center md:text-left" data-reveal>
           <div className="inline-flex items-center justify-center bg-chip rounded-full px-4 py-1.5 text-sm font-medium tracking-wide">
             <Sparkles className="w-4 h-4 mr-2 text-primary" />
-            AI-Powered Stock Analysis
+            AI-Powered Financial Coaching
           </div>
           <h1 className="text-4xl md:text-6xl font-bold !leading-tight">
-            Invest smarter
+            Maximize your
             <br />
-            with <span className="text-primary">AI</span> insights
+            <span className="text-primary">Net Worth</span>
           </h1>
           <p className="max-w-prose mx-auto md:mx-0 text-lg text-text-muted">
-            Advanced stock analysis powered by artificial intelligence. Track
-            your portfolio, discover opportunities, and make data-driven
-            investment decisions.
+            Base 44 is your personal financial strategist, combining intuitive design, secure integrations, and intelligent recommendations to guide you to long-term wealth.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
             <Button
@@ -107,7 +105,7 @@ const Hero = () => (
               className="btn-primary-gradient text-background font-bold text-base h-12 px-8 rounded-full"
               data-btn
             >
-              <Link href="/dashboard">Start Analyzing</Link>
+              <Link href="/dashboard">Get Started Free</Link>
             </Button>
             <Button
               asChild
@@ -129,7 +127,7 @@ const Hero = () => (
             </div>
             <div>
               <p className="text-2xl font-bold">10K+</p>
-              <p className="text-sm text-text-muted">Stocks Covered</p>
+              <p className="text-sm text-text-muted">Users Coached</p>
             </div>
           </div>
         </div>
@@ -222,10 +220,10 @@ const CtaBand = () => (
   <section className="py-16 md:py-24">
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center" data-reveal>
       <h2 className="text-3xl md:text-4xl font-bold mb-4">
-        Launch your AI analysis
+        Start your journey to financial freedom
       </h2>
       <p className="text-lg text-text-muted mb-8 max-w-2xl mx-auto">
-        Connect a brokerage, import a CSV, or start with a demo portfolio.
+        Connect your accounts, set your goals, and let your AI co-pilot do the rest.
       </p>
       <div className="flex flex-col sm:flex-row gap-4 justify-center">
         <Button

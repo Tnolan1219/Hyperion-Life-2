@@ -35,7 +35,7 @@ export const Footer = () => (
         <div className="flex items-center space-x-3">
           <Logo className="h-6 w-6 text-primary" />
           <p className="text-base text-text-muted">
-            &copy; {new Date().getFullYear()} StockMind AI. All rights reserved.
+            &copy; {new Date().getFullYear()} Base 44. All rights reserved.
           </p>
         </div>
         {/* Add social media icons here if needed */}
