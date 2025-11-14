@@ -43,12 +43,16 @@ import React, { useMemo, useState } from 'react';
 import { deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { PortfolioDialog } from '@/components/portfolio/PortfolioDialog';
 import { Skeleton } from '@/components/ui/skeleton';
-import { PortfolioValueChart } from '@/components/portfolio/charts/PortfolioValueChart';
 import { AssetAllocationChart } from '@/components/portfolio/charts/AssetAllocationChart';
 import { SectorDiversificationChart } from '@/components/portfolio/charts/SectorDiversificationChart';
 import { CashFlowChart } from '@/components/portfolio/CashFlowChart';
 import { BudgetTracker } from '@/components/portfolio/BudgetTracker';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { PredictiveControls } from '@/components/portfolio/forecasting/Controls';
+import { ProjectedGrowthChart } from '@/components/portfolio/forecasting/ProjectedGrowthChart';
+import { MonteCarloChart } from '@/components/portfolio/forecasting/MonteCarloChart';
+import { AiInsights } from '@/components/portfolio/forecasting/AiInsights';
 
 
 export type Asset = {
@@ -243,11 +247,6 @@ const HoldingsAnalysisSection = () => {
     if (isLoading) {
         return (
             <div className="space-y-6">
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    <Card><CardHeader><Skeleton className="h-5 w-2/4 mb-2" /><Skeleton className="h-8 w-3/4" /></CardHeader></Card>
-                    <Card><CardHeader><Skeleton className="h-5 w-2/4 mb-2" /><Skeleton className="h-8 w-3/4" /></CardHeader></Card>
-                    <Card><CardHeader><Skeleton className="h-5 w-2/4 mb-2" /><Skeleton className="h-8 w-3/4" /></CardHeader></Card>
-                </div>
                 <Card>
                     <CardHeader><Skeleton className="h-6 w-1/4 mb-2" /><Skeleton className="h-4 w-1/2" /></CardHeader>
                     <CardContent><div className="space-y-4">{[...Array(3)].map((_, i) => (<div key={i} className="flex justify-between items-center p-2"><div className="w-1/4"><Skeleton className="h-5 w-full" /></div><div className="w-1/4"><Skeleton className="h-5 w-full" /></div><div className="w-1/4"><Skeleton className="h-5 w-full" /></div><div className="w-1/6"><Skeleton className="h-5 w-full" /></div></div>))}</div ></CardContent>
@@ -258,39 +257,6 @@ const HoldingsAnalysisSection = () => {
     
     return (
         <div className="space-y-8">
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Total Portfolio Value</CardTitle>
-                    <Wallet className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                    <div className="text-2xl font-bold">{formatCurrency(totalValue)}</div>
-                    <p className="text-xs text-muted-foreground">+1.5% from last month</p>
-                </CardContent>
-                </Card>
-                <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Overall Gain/Loss</CardTitle>
-                    <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                    <div className={`text-2xl font-bold ${overallGainLoss >= 0 ? 'text-green-400' : 'text-red-400'}`}>{formatCurrency(overallGainLoss)}</div>
-                    <p className="text-xs text-muted-foreground">Total return since inception</p>
-                </CardContent>
-                </Card>
-                <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">24h Change</CardTitle>
-                    <Activity className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                    <div className="text-2xl font-bold text-green-400">+{formatCurrency(482.19)} (+2.15%)</div>
-                    <p className="text-xs text-muted-foreground">Across all holdings</p>
-                </CardContent>
-                </Card>
-            </div>
-            
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
                 <div className="xl:col-span-1">
                     <AssetAllocationChart assets={processedAssets} />
@@ -378,60 +344,93 @@ export default function NetWorthPage() {
           </Button>
         </div>
       </div>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
-        <Card>
-            <CardHeader className="pb-2 flex flex-row items-center justify-between">
-                <CardTitle className="text-sm font-medium">Monthly Cash Flow</CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-                <p className="text-2xl font-bold text-green-400">+$1,850.75</p>
-                <p className="text-xs text-muted-foreground">Income minus expenses this month</p>
-            </CardContent>
-        </Card>
-        <Card>
-            <CardHeader className="pb-2 flex flex-row items-center justify-between">
-                <CardTitle className="text-sm font-medium">Budget vs. Actual</CardTitle>
-                <Scale className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-                <p className="text-2xl font-bold">$2,150 / $3,000</p>
-                <p className="text-xs text-muted-foreground">71% of monthly budget spent</p>
-            </CardContent>
-        </Card>
-        <Card>
-            <CardHeader className="pb-2 flex flex-row items-center justify-between">
-                <CardTitle className="text-sm font-medium">Monthly Investments</CardTitle>
-                <PiggyBank className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-                <p className="text-2xl font-bold">+$750.00</p>
-                <p className="text-xs text-muted-foreground">Contributions to investment accounts</p>
-            </CardContent>
-        </Card>
-         <Card>
-            <CardHeader className="pb-2 flex flex-row items-center justify-between">
-                <CardTitle className="text-sm font-medium">Net Worth</CardTitle>
-                <Wallet className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-                <p className="text-2xl font-bold">$124,812</p>
-                <p className="text-xs text-muted-foreground">+3.2% this month</p>
-            </CardContent>
-        </Card>
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-        <div className="lg:col-span-2">
-            <BudgetTracker />
-        </div>
-        <div className="lg:col-span-3">
-            <CashFlowChart />
-        </div>
-      </div>
-      
-      <HoldingsAnalysisSection />
+       <Tabs defaultValue="overview" className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="holdings">Holdings</TabsTrigger>
+          <TabsTrigger value="budget">Budget</TabsTrigger>
+          <TabsTrigger value="forecasting">Forecasting</TabsTrigger>
+        </TabsList>
+        <TabsContent value="overview" className="pt-6">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+                <Card>
+                    <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                        <CardTitle className="text-sm font-medium">Monthly Cash Flow</CardTitle>
+                        <DollarSign className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <p className="text-2xl font-bold text-green-400">+$1,850.75</p>
+                        <p className="text-xs text-muted-foreground">Income minus expenses this month</p>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                        <CardTitle className="text-sm font-medium">Budget vs. Actual</CardTitle>
+                        <Scale className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <p className="text-2xl font-bold">$2,150 / $3,000</p>
+                        <p className="text-xs text-muted-foreground">71% of monthly budget spent</p>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                        <CardTitle className="text-sm font-medium">Monthly Investments</CardTitle>
+                        <PiggyBank className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <p className="text-2xl font-bold">+$750.00</p>
+                        <p className="text-xs text-muted-foreground">Contributions to investment accounts</p>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                        <CardTitle className="text-sm font-medium">Net Worth</CardTitle>
+                        <Wallet className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <p className="text-2xl font-bold">$124,812</p>
+                        <p className="text-xs text-muted-foreground">+3.2% this month</p>
+                    </CardContent>
+                </Card>
+            </div>
+             <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+                <div className="lg:col-span-2">
+                    <BudgetTracker />
+                </div>
+                <div className="lg:col-span-3">
+                    <CashFlowChart />
+                </div>
+            </div>
+        </TabsContent>
+        <TabsContent value="holdings" className="pt-6">
+            <HoldingsAnalysisSection />
+        </TabsContent>
+        <TabsContent value="budget" className="pt-6">
+             <Card>
+                <CardHeader>
+                    <CardTitle>Monthly Budget</CardTitle>
+                    <CardDescription>Manage your income and expenses. This section is under construction.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <p className="text-muted-foreground">Detailed budget management, including adding/editing income and expense categories, will be available here soon.</p>
+                </CardContent>
+            </Card>
+        </TabsContent>
+         <TabsContent value="forecasting" className="pt-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-1">
+                    <PredictiveControls />
+                </div>
+                <div className="lg:col-span-2 space-y-8">
+                    <ProjectedGrowthChart />
+                    <MonteCarloChart />
+                    <AiInsights />
+                </div>
+            </div>
+        </TabsContent>
+      </Tabs>
       
       <PortfolioDialog isOpen={isDialogOpen} setIsOpen={setIsDialogOpen} />
     </div>
