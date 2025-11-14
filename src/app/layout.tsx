@@ -29,6 +29,7 @@ export default function RootLayout({
       <head />
       <body
         className={`${inter.variable} font-sans antialiased animated-background`}
+        suppressHydrationWarning={true}
       >
         <ThemeProvider
           attribute="class"
