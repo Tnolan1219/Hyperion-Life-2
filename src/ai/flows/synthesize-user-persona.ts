@@ -53,7 +53,7 @@ export type SynthesizeUserPersonaInput = z.infer<
 const SynthesizeUserPersonaOutputSchema = z.object({
   aiPersonaSummary: z
     .string()
-    .describe('A detailed AI-generated summary of the user persona.'),
+    .describe('A friendly, encouraging, and detailed AI-generated summary of the user persona.'),
 });
 
 export type SynthesizeUserPersonaOutput = z.infer<
@@ -70,8 +70,8 @@ const prompt = ai.definePrompt({
   name: 'synthesizeUserPersonaPrompt',
   input: {schema: SynthesizeUserPersonaInputSchema},
   output: {schema: SynthesizeUserPersonaOutputSchema},
-  prompt: `You are an AI financial coach. Your task is to synthesize a user persona
-based on the provided user profile, preferences, goals, assets, and debts.
+  prompt: `You are an AI financial coach with an encouraging and friendly tone.
+Your task is to synthesize a user persona based on the provided user data.
 
 Profile: {{{profile}}}
 Preferences: {{{preferences}}}
@@ -79,9 +79,10 @@ Goals: {{#each goals}}- Type: {{{goalType}}}, Target: {{{targetAmount}}}, Date: 
 Assets Summary: {{{assetsSummary}}}
 Debts Summary: {{{debtsSummary}}}
 
-Based on this information, create a detailed summary of the user persona that
-will help personalize the AI coaching experience. Focus on key characteristics,
-financial habits, and potential challenges and opportunities.
+Based on this information, create a concise, friendly summary of the user persona in a short paragraph.
+This summary will help personalize the AI coaching experience.
+Focus on the user's key financial characteristics, strengths, potential challenges, and opportunities in a supportive way.
+Start the summary with something like "Here's how I see your financial picture..."
 `,
 });
 

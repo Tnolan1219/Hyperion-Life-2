@@ -19,8 +19,8 @@ const SimulateFinancialScenarioInputSchema = z.object({
 export type SimulateFinancialScenarioInput = z.infer<typeof SimulateFinancialScenarioInputSchema>;
 
 const SimulateFinancialScenarioOutputSchema = z.object({
-  projectedOutcome: z.string().describe('The projected financial outcome of the scenario.'),
-  aiCommentary: z.string().describe('AI-powered commentary on the potential impact of the decisions.'),
+  projectedOutcome: z.string().describe('The projected financial outcome of the scenario, written as a short, encouraging paragraph.'),
+  aiCommentary: z.string().describe('AI-powered commentary on the potential impact of the decisions, formatted as a bulleted list.'),
 });
 export type SimulateFinancialScenarioOutput = z.infer<typeof SimulateFinancialScenarioOutputSchema>;
 
@@ -34,16 +34,17 @@ const prompt = ai.definePrompt({
   name: 'simulateFinancialScenarioPrompt',
   input: {schema: SimulateFinancialScenarioInputSchema},
   output: {schema: SimulateFinancialScenarioOutputSchema},
-  prompt: `You are a financial advisor who simulates financial scenarios and provides commentary.
+  prompt: `You are an expert financial advisor who is friendly, encouraging, and simulates financial scenarios.
 
-You will use the following information to simulate the financial scenario and provide AI-powered commentary on the potential impact of the decisions.
+You will use the following information to simulate the scenario and provide commentary.
 
 Scenario Description: {{{scenarioDescription}}}
 User Profile: {{{userProfile}}}
 
-Provide a projected financial outcome and AI commentary.
-Projected Outcome:
-AI Commentary: `,
+Instructions:
+- For 'projectedOutcome': Write a short, encouraging paragraph summarizing the most likely financial outcome of this scenario.
+- For 'aiCommentary': Provide your analysis and commentary on the potential impacts and considerations. Format this as a concise, easy-to-read bulleted list.
+`,
 });
 
 const simulateFinancialScenarioFlow = ai.defineFlow(

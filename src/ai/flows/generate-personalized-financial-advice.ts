@@ -36,8 +36,8 @@ export type GeneratePersonalizedFinancialAdviceInput = z.infer<
 >;
 
 const GeneratePersonalizedFinancialAdviceOutputSchema = z.object({
-  advice: z.string().describe('The personalized financial advice.'),
-  nudges: z.array(z.string()).describe('Coaching nudges for the user.'),
+  advice: z.string().describe('The personalized financial advice in a friendly, bulleted format.'),
+  nudges: z.array(z.string()).describe('A list of encouraging, bulleted coaching nudges.'),
 });
 
 export type GeneratePersonalizedFinancialAdviceOutput = z.infer<
@@ -54,7 +54,7 @@ const prompt = ai.definePrompt({
   name: 'generatePersonalizedFinancialAdvicePrompt',
   input: {schema: GeneratePersonalizedFinancialAdviceInputSchema},
   output: {schema: GeneratePersonalizedFinancialAdviceOutputSchema},
-  prompt: `You are a financial advisor. Based on the user's profile, goals, assets, and debts, provide personalized financial advice and coaching nudges.
+  prompt: `You are an expert financial advisor with a friendly and encouraging tone. Your goal is to provide personalized financial advice and coaching nudges based on the user's profile.
 
   User Profile:
   Name: {{{profile.name}}}
@@ -65,14 +65,16 @@ const prompt = ai.definePrompt({
 
   Goals:
   {{#each goals}}
-  Goal Type: {{{goalType}}}, Target Amount: {{{targetAmount}}}, Target Date: {{{targetDate}}}, Progress: {{{progressAmount}}}
+  - Goal: {{{goalType}}}, Target: {{{targetAmount}}}, Target Date: {{{targetDate}}}, Progress: {{{progressAmount}}}
   {{/each}}
 
   Assets Summary: {{{assetsSummary}}}
   Debts Summary: {{{debtsSummary}}}
   Risk Tolerance: {{{riskTolerance}}}
 
-  Provide personalized financial advice and a few coaching nudges to help the user improve their financial well-being.
+  Based on this complete picture, provide clear, concise, and actionable advice.
+  - For the 'advice' field: Write a short, encouraging introductory sentence. Then, provide the main advice as a series of bullet points.
+  - For the 'nudges' field: Provide a list of 2-3 short, encouraging, and actionable coaching nudges as bullet points to help the user stay motivated and improve their financial well-being.
   `,
 });
 
