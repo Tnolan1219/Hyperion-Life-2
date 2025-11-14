@@ -43,7 +43,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useCollection, useUser, useFirestore } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { PortfolioDialog } from '@/components/portfolio/PortfolioDialog';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -165,71 +165,136 @@ const AssetRow = ({ asset, totalValue }: { asset: Asset, totalValue: number }) =
     )
 }
 
-const LoadingSkeleton = () => (
-    <div className="space-y-6">
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-             <Card className="bg-card/60 border-border/60"><CardHeader><Skeleton className="h-5 w-2/4 mb-2" /><Skeleton className="h-8 w-3/4" /></CardHeader></Card>
-             <Card className="bg-card/60 border-border/60"><CardHeader><Skeleton className="h-5 w-2/4 mb-2" /><Skeleton className="h-8 w-3/4" /></CardHeader></Card>
-             <Card className="bg-card/60 border-border/60"><CardHeader><Skeleton className="h-5 w-2/4 mb-2" /><Skeleton className="h-8 w-3/4" /></CardHeader></Card>
-        </div>
-         <Card className="bg-card/60 border-border/60">
-            <CardHeader>
-                <Skeleton className="h-6 w-1/4 mb-2" />
-                <Skeleton className="h-4 w-1/2" />
-            </CardHeader>
-            <CardContent>
-                <div className="space-y-4">
-                    {[...Array(3)].map((_, i) => (
-                         <div key={i} className="flex justify-between items-center p-2">
-                            <div className="w-1/4"><Skeleton className="h-5 w-full" /></div>
-                            <div className="w-1/4"><Skeleton className="h-5 w-full" /></div>
-                            <div className="w-1/4"><Skeleton className="h-5 w-full" /></div>
-                            <div className="w-1/6"><Skeleton className="h-5 w-full" /></div>
-                        </div>
-                    ))}
+const HoldingsAnalysisTab = () => {
+    const { user } = useUser();
+    const firestore = useFirestore();
+
+    const assetsCollection = useMemo(() => {
+        if (firestore && user) {
+        return collection(firestore, `users/${user.uid}/assets`);
+        }
+        return null;
+    }, [firestore, user]);
+
+    const { data: assets, isLoading } = useCollection<Asset>(assetsCollection);
+    
+    const { totalValue, totalCost, overallGainLoss, processedAssets } = useMemo(() => {
+        if (!assets) return { totalValue: 0, totalCost: 0, overallGainLoss: 0, processedAssets: [] };
+
+        let runningTotalValue = 0;
+        let runningTotalCost = 0;
+
+        const processed = assets.map(asset => {
+            const price = asset.price || (asset.type === 'Stock' ? Math.random() * 500 : asset.type === 'Crypto' ? Math.random() * 70000 : 100);
+            const value = asset.balance * price;
+            const cost = asset.balance * (asset.averageCost || 0);
+            runningTotalValue += value;
+            runningTotalCost += cost;
+            return { ...asset, price, value };
+        });
+
+        return {
+            totalValue: runningTotalValue,
+            totalCost: runningTotalCost,
+            overallGainLoss: runningTotalValue - runningTotalCost,
+            processedAssets: processed,
+        };
+    }, [assets]);
+
+    if (isLoading) {
+        return (
+            <div className="space-y-6">
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    <Card><CardHeader><Skeleton className="h-5 w-2/4 mb-2" /><Skeleton className="h-8 w-3/4" /></CardHeader></Card>
+                    <Card><CardHeader><Skeleton className="h-5 w-2/4 mb-2" /><Skeleton className="h-8 w-3/4" /></CardHeader></Card>
+                    <Card><CardHeader><Skeleton className="h-5 w-2/4 mb-2" /><Skeleton className="h-8 w-3/4" /></CardHeader></Card>
                 </div>
-            </CardContent>
-        </Card>
-    </div>
-);
+                <Card>
+                    <CardHeader><Skeleton className="h-6 w-1/4 mb-2" /><Skeleton className="h-4 w-1/2" /></CardHeader>
+                    <CardContent><div className="space-y-4">{[...Array(3)].map((_, i) => (<div key={i} className="flex justify-between items-center p-2"><div className="w-1/4"><Skeleton className="h-5 w-full" /></div><div className="w-1/4"><Skeleton className="h-5 w-full" /></div><div className="w-1/4"><Skeleton className="h-5 w-full" /></div><div className="w-1/6"><Skeleton className="h-5 w-full" /></div></div>))}</div ></CardContent>
+                </Card>
+            </div>
+        );
+    }
+    
+    return (
+        <div className="space-y-6">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Total Value</CardTitle>
+                    <DollarSign className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">{formatCurrency(totalValue)}</div>
+                    <p className="text-xs text-muted-foreground">+1.5% from last month</p>
+                </CardContent>
+                </Card>
+                <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Overall Gain/Loss</CardTitle>
+                    <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className={`text-2xl font-bold ${overallGainLoss >= 0 ? 'text-green-400' : 'text-red-400'}`}>{formatCurrency(overallGainLoss)}</div>
+                    <p className="text-xs text-muted-foreground">Total return since inception</p>
+                </CardContent>
+                </Card>
+                <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">24h Change</CardTitle>
+                    <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold text-green-400">+{formatCurrency(482.19)} (+2.15%)</div>
+                    <p className="text-xs text-muted-foreground">Across all holdings</p>
+                </CardContent>
+                </Card>
+            </div>
+            
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                <div className="xl:col-span-1">
+                    <AssetAllocationChart assets={processedAssets} />
+                </div>
+                    <div className="xl:col-span-2">
+                    <SectorDiversificationChart assets={processedAssets} />
+                </div>
+            </div>
+
+            <Card>
+                <CardHeader>
+                <CardTitle>Positions</CardTitle>
+                <CardDescription>Your individual investment holdings.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                <Table>
+                    <TableHeader>
+                    <TableRow className="hover:bg-transparent">
+                        <TableHead>Asset</TableHead>
+                        <TableHead>Sector</TableHead>
+                        <TableHead>Balance</TableHead>
+                        <TableHead>Price</TableHead>
+                        <TableHead>Gain/Loss</TableHead>
+                        <TableHead>24h</TableHead>
+                        <TableHead className="text-right">Allocation</TableHead>
+                        <TableHead className="w-[50px] text-right">Actions</TableHead>
+                    </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {processedAssets.map(asset => (
+                            <AssetRow key={asset.id} asset={asset} totalValue={totalValue} />
+                        ))}
+                    </TableBody>
+                </Table>
+                </CardContent>
+            </Card>
+        </div>
+    )
+}
 
 export default function PortfolioPage() {
-  const [isDialogOpen, setIsDialogOpen] = React.useState(false);
-  const { user } = useUser();
-  const firestore = useFirestore();
-
-  const assetsCollection = useMemo(() => {
-    if (firestore && user) {
-      return collection(firestore, `users/${user.uid}/assets`);
-    }
-    return null;
-  }, [firestore, user]);
-
-  const { data: assets, isLoading } = useCollection<Asset>(assetsCollection);
-  
-  const { totalValue, totalCost, overallGainLoss, processedAssets } = useMemo(() => {
-    if (!assets) return { totalValue: 0, totalCost: 0, overallGainLoss: 0, processedAssets: [] };
-
-    let runningTotalValue = 0;
-    let runningTotalCost = 0;
-
-    const processed = assets.map(asset => {
-        // Mock price for now
-        const price = asset.price || (asset.type === 'Stock' ? Math.random() * 500 : asset.type === 'Crypto' ? Math.random() * 70000 : 100);
-        const value = asset.balance * price;
-        const cost = asset.balance * (asset.averageCost || 0);
-        runningTotalValue += value;
-        runningTotalCost += cost;
-        return { ...asset, price, value };
-    });
-
-    return {
-        totalValue: runningTotalValue,
-        totalCost: runningTotalCost,
-        overallGainLoss: runningTotalValue - runningTotalCost,
-        processedAssets: processed,
-    };
-  }, [assets]);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("analysis");
 
   return (
     <div className="space-y-8">
@@ -252,7 +317,7 @@ export default function PortfolioPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="overview" className="w-full">
+      <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-5 max-w-2xl mb-6">
           <TabsTrigger value="overview"><AreaChart className="w-4 h-4 mr-2"/>Overview</TabsTrigger>
           <TabsTrigger value="analysis">Holdings Analysis</TabsTrigger>
@@ -261,149 +326,72 @@ export default function PortfolioPage() {
           <TabsTrigger value="watchlist"><Star className="w-4 h-4 mr-2" />Watchlist</TabsTrigger>
         </TabsList>
         
-        <TabsContent value="overview">
-             <PortfolioValueChart />
-        </TabsContent>
+        {activeTab === "overview" && (
+            <TabsContent value="overview">
+                <PortfolioValueChart />
+            </TabsContent>
+        )}
 
-        <TabsContent value="analysis" className="space-y-6">
-          {isLoading ? <LoadingSkeleton /> : (
-            <>
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    <Card className="bg-card/60 border-border/60 hover:border-primary/60 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">
-                        Total Value
-                        </CardTitle>
-                        <DollarSign className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">
-                        {formatCurrency(totalValue)}
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                        +1.5% from last month
-                        </p>
-                    </CardContent>
-                    </Card>
-                    <Card className="bg-card/60 border-border/60 hover:border-primary/60 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">
-                        Overall Gain/Loss
-                        </CardTitle>
-                        <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className={`text-2xl font-bold ${overallGainLoss >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                        {formatCurrency(overallGainLoss)}
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                        Total return since inception
-                        </p>
-                    </CardContent>
-                    </Card>
-                    <Card className="bg-card/60 border-border/60 hover:border-primary/60 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">24h Change</CardTitle>
-                        <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold text-green-400">
-                        +{formatCurrency(482.19)} (+2.15%)
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                        Across all holdings
-                        </p>
-                    </CardContent>
-                    </Card>
+        {activeTab === "analysis" && (
+            <TabsContent value="analysis">
+                <HoldingsAnalysisTab />
+            </TabsContent>
+        )}
+        
+        {activeTab === "predictive" && (
+            <TabsContent value="predictive" className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-1 space-y-6">
+                    <PredictiveControls />
                 </div>
-                
-                <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-                    <div className="xl:col-span-1">
-                        <AssetAllocationChart assets={processedAssets} />
-                    </div>
-                     <div className="xl:col-span-2">
-                        <SectorDiversificationChart assets={processedAssets} />
-                    </div>
+                <div className="lg:col-span-2 space-y-6">
+                    <ProjectedGrowthChart />
+                    <MonteCarloChart />
+                    <AiInsights />
                 </div>
+            </TabsContent>
+        )}
 
-                <Card className="bg-card/60 border-border/60 hover:border-primary/60 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10">
-                    <CardHeader>
-                    <CardTitle>Positions</CardTitle>
-                    <CardDescription>
-                        Your individual investment holdings.
+         {activeTab === "insights" && (
+            <TabsContent value="insights">
+                <Card className="min-h-[60vh] flex flex-col items-center justify-center bg-card/60 border-border/60 border-dashed">
+                    <CardHeader className="text-center">
+                    <div className="inline-flex items-center justify-center p-3 mb-4 bg-primary/10 rounded-full">
+                        <BrainCircuit className="h-12 w-12 text-primary" />
+                    </div>
+                    <CardTitle className="text-2xl font-bold">AI Insights Coming Soon</CardTitle>
+                    <CardDescription className="text-muted-foreground">
+                        Get AI-powered recommendations and analysis.
                     </CardDescription>
                     </CardHeader>
                     <CardContent>
-                    <Table>
-                        <TableHeader>
-                        <TableRow className="hover:bg-transparent">
-                            <TableHead>Asset</TableHead>
-                            <TableHead>Sector</TableHead>
-                            <TableHead>Balance</TableHead>
-                            <TableHead>Price</TableHead>
-                            <TableHead>Gain/Loss</TableHead>
-                            <TableHead>24h</TableHead>
-                            <TableHead className="text-right">Allocation</TableHead>
-                            <TableHead className="w-[50px] text-right">Actions</TableHead>
-                        </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {processedAssets.map(asset => (
-                                <AssetRow key={asset.id} asset={asset} totalValue={totalValue} />
-                            ))}
-                        </TableBody>
-                    </Table>
+                    <p className="max-w-md text-center text-muted-foreground">
+                        This area will feature rebalancing suggestions, tax-loss harvesting tips, and goal alignment analysis.
+                    </p>
                     </CardContent>
                 </Card>
-            </>
-          )}
-        </TabsContent>
-        <TabsContent value="predictive" className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-1 space-y-6">
-                <PredictiveControls />
-            </div>
-            <div className="lg:col-span-2 space-y-6">
-                <ProjectedGrowthChart />
-                <MonteCarloChart />
-                <AiInsights />
-            </div>
-        </TabsContent>
-         <TabsContent value="insights">
-           <Card className="min-h-[60vh] flex flex-col items-center justify-center bg-card/40 border-border/40 border-dashed">
-            <CardHeader className="text-center">
-              <div className="inline-flex items-center justify-center p-3 mb-4 bg-primary/10 rounded-full">
-                <BrainCircuit className="h-12 w-12 text-primary" />
-              </div>
-              <CardTitle className="text-2xl font-bold">AI Insights Coming Soon</CardTitle>
-              <CardDescription className="text-muted-foreground">
-                Get AI-powered recommendations and analysis.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="max-w-md text-center text-muted-foreground">
-                This area will feature rebalancing suggestions, tax-loss harvesting tips, and goal alignment analysis.
-              </p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-         <TabsContent value="watchlist">
-           <Card className="min-h-[60vh] flex flex-col items-center justify-center bg-card/40 border-border/40 border-dashed">
-            <CardHeader className="text-center">
-              <div className="inline-flex items-center justify-center p-3 mb-4 bg-primary/10 rounded-full">
-                <Star className="h-12 w-12 text-primary" />
-              </div >
-              <CardTitle className="text-2xl font-bold">Watchlist Coming Soon</CardTitle>
-              <CardDescription className="text-muted-foreground">
-                Track assets you're interested in.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="max-w-md text-center text-muted-foreground">
-                You'll be able to add tickers, view trends, and set price alerts right here.
-              </p>
-            </CardContent>
-          </Card>
-        </TabsContent>
+            </TabsContent>
+         )}
+
+         {activeTab === "watchlist" && (
+            <TabsContent value="watchlist">
+                <Card className="min-h-[60vh] flex flex-col items-center justify-center bg-card/60 border-border/60 border-dashed">
+                    <CardHeader className="text-center">
+                    <div className="inline-flex items-center justify-center p-3 mb-4 bg-primary/10 rounded-full">
+                        <Star className="h-12 w-12 text-primary" />
+                    </div >
+                    <CardTitle className="text-2xl font-bold">Watchlist Coming Soon</CardTitle>
+                    <CardDescription className="text-muted-foreground">
+                        Track assets you're interested in.
+                    </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                    <p className="max-w-md text-center text-muted-foreground">
+                        You'll be able to add tickers, view trends, and set price alerts right here.
+                    </p>
+                    </CardContent>
+                </Card>
+            </TabsContent>
+         )}
       </Tabs>
       <PortfolioDialog isOpen={isDialogOpen} setIsOpen={setIsDialogOpen} />
     </div>
