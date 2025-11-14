@@ -1,26 +1,217 @@
+/**
+ * @fileoverview Firestore Security Rules for the Base 44 platform.
+ *
+ * Core Philosophy:
+ * This ruleset enforces a strict user-ownership model for all data nested under `/users/{userId}`.
+ * Only the authenticated user matching the `userId` path parameter can read or write their own data.
+ * Public read access is granted to the root-level collections `/tips`, `/links`, and `/newsCache`.
+ *
+ * Data Structure:
+ * - All user-specific data (profiles, preferences, assets, debts, goals, advice, AI sessions)
+ *   is nested under the `/users/{userId}` collection.
+ * - Public data (tips, links, news articles) is stored in root-level collections.
+ *
+ * Key Security Decisions:
+ * - Users can only access their own data. Listing other users is disallowed.
+ * - Public collections (tips, links, newsCache) are readable by everyone.
+ *
+ * Denormalization for Authorization:
+ * - User-specific collections (assets, debts, goals, etc.) enforce ownership by matching the `userId`
+ *   path parameter against the authenticated user's UID (`request.auth.uid`). This avoids the need
+ *   for `get()` calls to verify ownership.
+ */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow public read-only access for landing page data
-    match /kpis/{kpiId} {
-      allow read;
-      allow write: if false;
-    }
-    match /holdings/{holdingId} {
-      allow read;
-      allow write: if false;
-    }
-    match /features/{featureId} {
-      allow read;
-      allow write: if false;
+
+    /**
+     * @description Checks if the request is authenticated.
+     */
+    function isSignedIn() {
+      return request.auth != null;
     }
 
-    // Keep original user data rules, but restrict writes for now
-    match /users/{userId}/{document=**} {
-      function isOwner() {
-        return request.auth != null && request.auth.uid == userId;
-      }
-      allow read, write: if isOwner();
+    /**
+     * @description Checks if the authenticated user's UID matches the provided userId.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * @description Checks if the authenticated user is the owner of an existing document.
+     */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    /**
+     * @description Rules for the /users/{userId} collection.
+     * @path /users/{userId}
+     * @allow (create) - Authenticated user can create their own user document if the userId matches their auth UID.
+     * @allow (get, update, delete) - Authenticated user can read, update, and delete their own user document if the userId matches their auth UID.
+     * @deny (create) - Unauthenticated user cannot create a user document.
+     * @deny (update, delete) - Authenticated user cannot modify a user document that does not belong to them.
+     * @principle Enforces document ownership for writes.
+     */
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Rules for the /users/{userId}/profiles/{profileId} collection.
+     * @path /users/{userId}/profiles/{profileId}
+     * @allow (create) - Authenticated user can create their own profile document if the userId matches their auth UID.
+     * @allow (get, update, delete) - Authenticated user can read, update, and delete their own profile document if the userId matches their auth UID.
+     * @deny (create) - Unauthenticated user cannot create a profile document.
+     * @deny (update, delete) - Authenticated user cannot modify a profile document that does not belong to them.
+     * @principle Enforces document ownership for writes.
+     */
+    match /users/{userId}/profiles/{profileId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Rules for the /users/{userId}/preferences/{preferencesId} collection.
+     * @path /users/{userId}/preferences/{preferencesId}
+     * @allow (create) - Authenticated user can create their own preferences document if the userId matches their auth UID.
+     * @allow (get, update, delete) - Authenticated user can read, update, and delete their own preferences document if the userId matches their auth UID.
+     * @deny (create) - Unauthenticated user cannot create a preferences document.
+     * @deny (update, delete) - Authenticated user cannot modify a preferences document that does not belong to them.
+     * @principle Enforces document ownership for writes.
+     */
+    match /users/{userId}/preferences/{preferencesId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Rules for the /users/{userId}/assets/{assetId} collection.
+     * @path /users/{userId}/assets/{assetId}
+     * @allow (create) - Authenticated user can create their own asset document if the userId matches their auth UID.
+     * @allow (get, update, delete) - Authenticated user can read, update, and delete their own asset document if the userId matches their auth UID.
+     * @deny (create) - Unauthenticated user cannot create an asset document.
+     * @deny (update, delete) - Authenticated user cannot modify an asset document that does not belong to them.
+     * @principle Enforces document ownership for writes.
+     */
+    match /users/{userId}/assets/{assetId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Rules for the /users/{userId}/debts/{debtId} collection.
+     * @path /users/{userId}/debts/{debtId}
+     * @allow (create) - Authenticated user can create their own debt document if the userId matches their auth UID.
+     * @allow (get, update, delete) - Authenticated user can read, update, and delete their own debt document if the userId matches their auth UID.
+     * @deny (create) - Unauthenticated user cannot create a debt document.
+     * @deny (update, delete) - Authenticated user cannot modify a debt document that does not belong to them.
+     * @principle Enforces document ownership for writes.
+     */
+    match /users/{userId}/debts/{debtId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Rules for the /users/{userId}/goals/{goalId} collection.
+     * @path /users/{userId}/goals/{goalId}
+     * @allow (create) - Authenticated user can create their own goal document if the userId matches their auth UID.
+     * @allow (get, update, delete) - Authenticated user can read, update, and delete their own goal document if the userId matches their auth UID.
+     * @deny (create) - Unauthenticated user cannot create a goal document.
+     * @deny (update, delete) - Authenticated user cannot modify a goal document that does not belong to them.
+     * @principle Enforces document ownership for writes.
+     */
+    match /users/{userId}/goals/{goalId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Rules for the /tips/{tipId} collection.
+     * @path /tips/{tipId}
+     * @allow (get, list) - Anyone can read tips.
+     * @deny (create, update, delete) - No one can create, update, or delete tips.
+     */
+    match /tips/{tipId} {
+      allow get, list: if true;
+      allow create, update, delete: if false;
+    }
+
+    /**
+     * @description Rules for the /links/{linkId} collection.
+     * @path /links/{linkId}
+     * @allow (get, list) - Anyone can read links.
+     * @deny (create, update, delete) - No one can create, update, or delete links.
+     */
+    match /links/{linkId} {
+      allow get, list: if true;
+      allow create, update, delete: if false;
+    }
+
+    /**
+     * @description Rules for the /newsCache/{newsCacheId} collection.
+     * @path /newsCache/{newsCacheId}
+     * @allow (get, list) - Anyone can read newsCache.
+     * @deny (create, update, delete) - No one can create, update, or delete newsCache.
+     */
+    match /newsCache/{newsCacheId} {
+      allow get, list: if true;
+      allow create, update, delete: if false;
+    }
+
+    /**
+     * @description Rules for the /users/{userId}/advice/{adviceId} collection.
+     * @path /users/{userId}/advice/{adviceId}
+     * @allow (create) - Authenticated user can create their own advice document if the userId matches their auth UID.
+     * @allow (get, update, delete) - Authenticated user can read, update, and delete their own advice document if the userId matches their auth UID.
+     * @deny (create) - Unauthenticated user cannot create a advice document.
+     * @deny (update, delete) - Authenticated user cannot modify a advice document that does not belong to them.
+     * @principle Enforces document ownership for writes.
+     */
+    match /users/{userId}/advice/{adviceId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Rules for the /users/{userId}/aiSessions/{aiSessionId} collection.
+     * @path /users/{userId}/aiSessions/{aiSessionId}
+     * @allow (create) - Authenticated user can create their own aiSessions document if the userId matches their auth UID.
+     * @allow (get, update, delete) - Authenticated user can read, update, and delete their own aiSessions document if the userId matches their auth UID.
+     * @deny (create) - Unauthenticated user cannot create a aiSessions document.
+     * @deny (update, delete) - Authenticated user cannot modify a aiSessions document that does not belong to them.
+     * @principle Enforces document ownership for writes.
+     */
+    match /users/{userId}/aiSessions/{aiSessionId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
     }
   }
 }

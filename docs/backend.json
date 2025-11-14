@@ -8,19 +8,88 @@
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the user. This corresponds to the Firebase Auth UID."
+          "description": "Unique identifier for the user.  This corresponds to the Firebase Auth UID.",
+          "format": "uuid"
         },
         "profile": {
           "type": "string",
-          "description": "User profile data, including name, age, location, income, and career stage.  Serialized as a JSON string."
+          "description": "References the UserProfile entity. (Relationship: User 1:1 UserProfile)"
         },
         "preferences": {
           "type": "string",
-          "description": "User preferences, including risk tolerance, dark mode setting, reduced motion setting and notification options. Serialized as a JSON string."
+          "description": "References the UserPreferences entity. (Relationship: User 1:1 UserPreferences)"
         },
         "persona": {
           "type": "string",
-          "description": "AI-generated persona summary for the user, used for personalized coaching. Serialized as a JSON string."
+          "description": "Summary of the user's AI persona, generated and updated by AI models."
+        }
+      },
+      "required": [
+        "id",
+        "profile",
+        "preferences"
+      ]
+    },
+    "UserProfile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserProfile",
+      "type": "object",
+      "description": "Stores profile information for a user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the UserProfile entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "User's full name."
+        },
+        "age": {
+          "type": "number",
+          "description": "User's age."
+        },
+        "location": {
+          "type": "string",
+          "description": "User's location."
+        },
+        "income": {
+          "type": "number",
+          "description": "User's annual income."
+        },
+        "careerStage": {
+          "type": "string",
+          "description": "User's career stage."
+        }
+      },
+      "required": [
+        "id"
+      ]
+    },
+    "UserPreferences": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserPreferences",
+      "type": "object",
+      "description": "Stores user-specific preferences for the application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the UserPreferences entity."
+        },
+        "riskTolerance": {
+          "type": "string",
+          "description": "User's risk tolerance level."
+        },
+        "darkMode": {
+          "type": "boolean",
+          "description": "Whether dark mode is enabled for the user."
+        },
+        "reducedMotion": {
+          "type": "boolean",
+          "description": "Whether reduced motion is enabled for the user."
+        },
+        "notificationOptIn": {
+          "type": "boolean",
+          "description": "Whether the user has opted into notifications."
         }
       },
       "required": [
@@ -39,11 +108,11 @@
         },
         "userId": {
           "type": "string",
-          "description": "Reference to the User who owns this asset. (Relationship: User 1:N Asset)"
+          "description": "Reference to User. (Relationship: User 1:N Asset)"
         },
         "type": {
           "type": "string",
-          "description": "Type of asset (bank, investment, realEstate, crypto, other)."
+          "description": "Type of asset (e.g., bank, investment, realEstate, crypto)."
         },
         "name": {
           "type": "string",
@@ -51,7 +120,7 @@
         },
         "institution": {
           "type": "string",
-          "description": "Name of the institution where the asset is held."
+          "description": "Institution holding the asset."
         },
         "value": {
           "type": "number",
@@ -59,7 +128,7 @@
         },
         "currency": {
           "type": "string",
-          "description": "Currency of the asset value (e.g., USD, EUR)."
+          "description": "Currency of the asset."
         },
         "tags": {
           "type": "array",
@@ -70,16 +139,16 @@
         },
         "details": {
           "type": "string",
-          "description": "Additional details about the asset, such as account ID, interest rate, allocation and notes. Serialized as a JSON string."
+          "description": "Account ID, interest rate, allocation, and notes about the asset."
         },
         "updatedAt": {
           "type": "string",
-          "description": "Timestamp of the last update to the asset.",
+          "description": "Last update date and time of the asset.",
           "format": "date-time"
         },
         "createdAt": {
           "type": "string",
-          "description": "Timestamp of when the asset was created.",
+          "description": "Creation date and time of the asset.",
           "format": "date-time"
         }
       },
@@ -104,11 +173,11 @@
         },
         "userId": {
           "type": "string",
-          "description": "Reference to the User who owns this debt. (Relationship: User 1:N Debt)"
+          "description": "Reference to User. (Relationship: User 1:N Debt)"
         },
         "type": {
           "type": "string",
-          "description": "Type of debt (loan, creditCard, mortgage, studentLoan)."
+          "description": "Type of debt (e.g., loan, creditCard, mortgage, studentLoan)."
         },
         "name": {
           "type": "string",
@@ -116,7 +185,7 @@
         },
         "lender": {
           "type": "string",
-          "description": "Name of the lender."
+          "description": "Lender for the debt."
         },
         "balance": {
           "type": "number",
@@ -124,7 +193,7 @@
         },
         "apr": {
           "type": "number",
-          "description": "Annual percentage rate of the debt."
+          "description": "Annual percentage rate for the debt."
         },
         "minimumPayment": {
           "type": "number",
@@ -132,21 +201,21 @@
         },
         "dueDate": {
           "type": "string",
-          "description": "Due date for the next payment.",
+          "description": "Due date for the debt payment.",
           "format": "date-time"
         },
         "strategyMeta": {
           "type": "string",
-          "description": "Metadata related to debt payoff strategies (snowballRank, avalancheRank). Serialized as a JSON string."
+          "description": "Snowball rank and avalanche rank for debt payoff strategies."
         },
         "updatedAt": {
           "type": "string",
-          "description": "Timestamp of the last update to the debt.",
+          "description": "Last update date and time of the debt.",
           "format": "date-time"
         },
         "createdAt": {
           "type": "string",
-          "description": "Timestamp of when the debt was created.",
+          "description": "Creation date and time of the debt.",
           "format": "date-time"
         }
       },
@@ -174,11 +243,11 @@
         },
         "userId": {
           "type": "string",
-          "description": "Reference to the User who created this goal. (Relationship: User 1:N Goal)"
+          "description": "Reference to User. (Relationship: User 1:N Goal)"
         },
         "goalType": {
           "type": "string",
-          "description": "Type of goal (emergencyFund, houseDownPayment, retirement)."
+          "description": "Type of goal (e.g., emergencyFund, houseDownPayment, retirement)."
         },
         "targetAmount": {
           "type": "number",
@@ -194,17 +263,20 @@
           "description": "Current progress towards the goal."
         },
         "milestones": {
-          "type": "string",
-          "description": "Milestones associated with the goal. Serialized as a JSON string."
+          "type": "array",
+          "description": "Milestones associated with the goal.",
+          "items": {
+            "type": "string"
+          }
         },
         "updatedAt": {
           "type": "string",
-          "description": "Timestamp of the last update to the goal.",
+          "description": "Last update date and time of the goal.",
           "format": "date-time"
         },
         "createdAt": {
           "type": "string",
-          "description": "Timestamp of when the goal was created.",
+          "description": "Creation date and time of the goal.",
           "format": "date-time"
         }
       },
@@ -252,7 +324,7 @@
         },
         "publishedAt": {
           "type": "string",
-          "description": "Timestamp of when the tip was published.",
+          "description": "Date and time the tip was published.",
           "format": "date-time"
         }
       },
@@ -286,7 +358,7 @@
         },
         "category": {
           "type": "string",
-          "description": "Category of the link (site, resource)."
+          "description": "Category of the link (e.g., site, resource)."
         },
         "priority": {
           "type": "number",
@@ -294,7 +366,7 @@
         },
         "publishedAt": {
           "type": "string",
-          "description": "Timestamp of when the link was published.",
+          "description": "Date and time the link was published.",
           "format": "date-time"
         }
       },
@@ -332,7 +404,7 @@
         },
         "publishedAt": {
           "type": "string",
-          "description": "Timestamp of when the news article was published.",
+          "description": "Date and time the news article was published.",
           "format": "date-time"
         },
         "summary": {
@@ -360,7 +432,7 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Advice",
       "type": "object",
-      "description": "Represents AI-generated financial advice for a user.",
+      "description": "Represents AI-generated financial advice.",
       "properties": {
         "id": {
           "type": "string",
@@ -368,32 +440,32 @@
         },
         "userId": {
           "type": "string",
-          "description": "Reference to the User who received this advice. (Relationship: User 1:N Advice)"
+          "description": "Reference to User. (Relationship: User 1:N Advice)"
         },
         "adviceType": {
           "type": "string",
-          "description": "Type of advice (coaching, scenario, nudge)."
+          "description": "Type of advice (e.g., coaching, scenario, nudge)."
         },
         "prompt": {
           "type": "string",
-          "description": "The prompt used to generate the advice."
+          "description": "Prompt used to generate the advice."
         },
         "response": {
           "type": "string",
-          "description": "The AI-generated response/advice."
+          "description": "AI-generated response."
         },
         "modelMeta": {
           "type": "string",
-          "description": "Metadata about the AI model used to generate the advice. Serialized as a JSON string."
+          "description": "Metadata about the AI model used to generate the advice."
         },
         "createdAt": {
           "type": "string",
-          "description": "Timestamp of when the advice was generated.",
+          "description": "Date and time the advice was generated.",
           "format": "date-time"
         },
         "feedback": {
           "type": "string",
-          "description": "User feedback on the advice (rating, note). Serialized as a JSON string."
+          "description": "User feedback on the advice (rating and notes)."
         }
       },
       "required": [
@@ -410,7 +482,7 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "AiSession",
       "type": "object",
-      "description": "Represents an AI coaching session with a user.",
+      "description": "Represents an AI coaching session.",
       "properties": {
         "id": {
           "type": "string",
@@ -418,23 +490,26 @@
         },
         "userId": {
           "type": "string",
-          "description": "Reference to the User who participated in this session. (Relationship: User 1:N AiSession)"
+          "description": "Reference to User. (Relationship: User 1:N AiSession)"
         },
         "context": {
           "type": "string",
-          "description": "Contextual information for the AI session (goals, risk tolerance, assetsSummary, debtsSummary). Serialized as a JSON string."
+          "description": "Contextual information for the session (goals, risk tolerance, asset summary, debt summary)."
         },
         "messages": {
-          "type": "string",
-          "description": "Messages exchanged during the AI session. Serialized as a JSON string."
+          "type": "array",
+          "description": "Messages exchanged during the session.",
+          "items": {
+            "type": "string"
+          }
         },
         "modelMeta": {
           "type": "string",
-          "description": "Metadata about the AI model used during the session. Serialized as a JSON string."
+          "description": "Metadata about the AI model used during the session."
         },
         "createdAt": {
           "type": "string",
-          "description": "Timestamp of when the session was created.",
+          "description": "Date and time the session was created.",
           "format": "date-time"
         }
       },
@@ -463,11 +538,51 @@
           "schema": {
             "$ref": "#/backend/entities/User"
           },
-          "description": "Stores user profiles. The 'userId' corresponds to the Firebase Auth UID.",
+          "description": "Stores user data.  The 'userId' parameter corresponds to the Firebase Auth UID.",
           "params": [
             {
               "name": "userId",
-              "description": "The unique identifier for the user, matching the Firebase Auth UID."
+              "description": "The Firebase Auth UID of the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/profiles/{profileId}",
+        "definition": {
+          "entityName": "UserProfile",
+          "schema": {
+            "$ref": "#/backend/entities/UserProfile"
+          },
+          "description": "Stores user profile information.  The 'userId' parameter corresponds to the Firebase Auth UID.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The Firebase Auth UID of the user."
+            },
+            {
+              "name": "profileId",
+              "description": "The id of the user profile document."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/preferences/{preferencesId}",
+        "definition": {
+          "entityName": "UserPreferences",
+          "schema": {
+            "$ref": "#/backend/entities/UserPreferences"
+          },
+          "description": "Stores user preferences. The 'userId' parameter corresponds to the Firebase Auth UID.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The Firebase Auth UID of the user."
+            },
+            {
+              "name": "preferencesId",
+              "description": "The id of the user preferences document."
             }
           ]
         }
@@ -479,15 +594,15 @@
           "schema": {
             "$ref": "#/backend/entities/Asset"
           },
-          "description": "Stores assets owned by a specific user. Includes denormalized 'userId' for authorization independence.",
+          "description": "Stores assets owned by the user. The 'userId' parameter corresponds to the Firebase Auth UID.",
           "params": [
             {
               "name": "userId",
-              "description": "The unique identifier for the user who owns the asset."
+              "description": "The Firebase Auth UID of the user."
             },
             {
               "name": "assetId",
-              "description": "The unique identifier for the asset."
+              "description": "The unique identifier of the asset."
             }
           ]
         }
@@ -499,15 +614,15 @@
           "schema": {
             "$ref": "#/backend/entities/Debt"
           },
-          "description": "Stores debts owed by a specific user. Includes denormalized 'userId' for authorization independence.",
+          "description": "Stores debts owed by the user. The 'userId' parameter corresponds to the Firebase Auth UID.",
           "params": [
             {
               "name": "userId",
-              "description": "The unique identifier for the user who owes the debt."
+              "description": "The Firebase Auth UID of the user."
             },
             {
               "name": "debtId",
-              "description": "The unique identifier for the debt."
+              "description": "The unique identifier of the debt."
             }
           ]
         }
@@ -519,15 +634,15 @@
           "schema": {
             "$ref": "#/backend/entities/Goal"
           },
-          "description": "Stores financial goals set by a specific user. Includes denormalized 'userId' for authorization independence.",
+          "description": "Stores financial goals set by the user. The 'userId' parameter corresponds to the Firebase Auth UID.",
           "params": [
             {
               "name": "userId",
-              "description": "The unique identifier for the user who set the goal."
+              "description": "The Firebase Auth UID of the user."
             },
             {
               "name": "goalId",
-              "description": "The unique identifier for the goal."
+              "description": "The unique identifier of the goal."
             }
           ]
         }
@@ -539,11 +654,11 @@
           "schema": {
             "$ref": "#/backend/entities/Tip"
           },
-          "description": "Stores global financial tips.  Accessible to all users.",
+          "description": "Stores financial tips.",
           "params": [
             {
               "name": "tipId",
-              "description": "The unique identifier for the tip."
+              "description": "The unique identifier of the financial tip."
             }
           ]
         }
@@ -555,11 +670,11 @@
           "schema": {
             "$ref": "#/backend/entities/Link"
           },
-          "description": "Stores global links to external resources. Accessible to all users.",
+          "description": "Stores links to external resources.",
           "params": [
             {
               "name": "linkId",
-              "description": "The unique identifier for the link."
+              "description": "The unique identifier of the link."
             }
           ]
         }
@@ -571,11 +686,11 @@
           "schema": {
             "$ref": "#/backend/entities/NewsCache"
           },
-          "description": "Stores cached news articles. Accessible to all users.",
+          "description": "Stores cached news articles.",
           "params": [
             {
               "name": "newsCacheId",
-              "description": "The unique identifier for the news article (hash of the URL)."
+              "description": "The unique identifier of the news cache article (hash of the URL)."
             }
           ]
         }
@@ -587,15 +702,15 @@
           "schema": {
             "$ref": "#/backend/entities/Advice"
           },
-          "description": "Stores AI-generated financial advice for a specific user. Includes denormalized 'userId' for authorization independence.",
+          "description": "Stores AI-generated financial advice for the user. The 'userId' parameter corresponds to the Firebase Auth UID.",
           "params": [
             {
               "name": "userId",
-              "description": "The unique identifier for the user who received the advice."
+              "description": "The Firebase Auth UID of the user."
             },
             {
               "name": "adviceId",
-              "description": "The unique identifier for the advice."
+              "description": "The unique identifier of the advice."
             }
           ]
         }
@@ -607,20 +722,20 @@
           "schema": {
             "$ref": "#/backend/entities/AiSession"
           },
-          "description": "Stores AI coaching sessions for a specific user. Includes denormalized 'userId' for authorization independence.",
+          "description": "Stores AI coaching sessions for the user. The 'userId' parameter corresponds to the Firebase Auth UID.",
           "params": [
             {
               "name": "userId",
-              "description": "The unique identifier for the user who participated in the session."
+              "description": "The Firebase Auth UID of the user."
             },
             {
               "name": "aiSessionId",
-              "description": "The unique identifier for the AI session."
+              "description": "The unique identifier of the AI session."
             }
           ]
         }
       }
     ],
-    "reasoning": "The Firestore data structure is designed to ensure security, scalability, and debuggability, adhering to the principles of Authorization Independence and Structural Segregation. User-owned data (Assets, Debts, Goals, Advice, AiSessions) is stored under the `/users/{userId}` path to simplify ownership-based security rules. The `Tips`, `Links` and `NewsCache` collections are global and publicly readable, while write access is restricted via Cloud Functions.\n\n**Authorization Independence (CRITICAL):**  For entities within a user's profile (assets, debts, goals, advice, and AI sessions), the `userId` field within each document acts as the primary means of authorization.  This eliminates the need for complex hierarchical `get()` calls in security rules.  Security rules can directly validate `request.auth.uid == resource.data.userId` without needing to traverse up the hierarchy. For example, when writing rules for `/assets/{assetId}`, the `resource.data.userId` field is leveraged, thus avoiding a dependency on the parent `/users/{userId}` document.\n\n**Structural Segregation (Homogeneous Security Posture):**  Collections like `tips`, `links`, and `newsCache` are global, publicly readable, and writable only by admins (via Cloud Functions).  User-specific data resides under the `/users/{userId}` collection.  This segregation simplifies security rules by ensuring that each collection has a clear and consistent security posture.\n\n**QAPs (Rules are not Filters):**  The structure supports secure `list` operations by enforcing ownership at the path level for user-owned data.  For example, listing assets under `/users/{userId}/assets` will only return assets owned by the authenticated user.  The publicly readable collections do not contain any user-specific data, so listing them is inherently safe.\n\n**Membership Map:** The application does not require collaborative data that necessitates the membership map authorization strategy. Therefore, this pattern is not included in the data structure.\n\n**Invariants:** Ownership is enforced using the path-based ownership pattern. Timestamps (`createdAt`, `updatedAt`) are included in entities to track data modification times. Integrity of denormalized data is maintained by explicitly defining authorization fields (e.g., `userId` in `Asset`, `Debt`, `Goal`, `Advice`, `AiSession`)."
+    "reasoning": "The Firestore data structure is designed to ensure Authorization Independence, Clarity of Intent, and support secure list operations (QAPs). User-owned data is stored in hierarchical paths under the `/users/{userId}` collection, ensuring clear ownership.  This eliminates the need for `get()` calls in security rules to check ownership, enabling atomic operations. Tips, Links, and NewsCache are stored in root-level collections, allowing global read access without compromising user data.\n\nAuthorization Independence is achieved by avoiding hierarchical authorization dependencies. For instance, assets, debts, goals, advice and AI sessions are stored under the user's document, making it easy to check ownership directly in the security rules without needing to access parent documents.\n\nQAPs are supported through structural segregation. Publicly accessible data (tips, links, newsCache) is stored separately from user-specific data, enabling secure `list` operations. User-specific data (assets, debts, goals, advice, aiSessions) benefits from path-based ownership, further simplifying and securing `list` operations."
   }
 }
