@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    --background: 220 17% 8%;
+    --background: 220 17% 5%;
     --foreground: 210 40% 98%;
 
     --card: 216 15% 14%;
@@ -38,7 +38,7 @@
   }
 
   .dark {
-    --background: 220 17% 8%;
+    --background: 220 17% 5%;
     --foreground: 210 40% 98%;
 
     --card: 216 15% 14%;
@@ -89,7 +89,7 @@
       radial-gradient(circle at 1px 1px, hsl(var(--foreground) / 0.1) 1px, transparent 0),
       radial-gradient(circle at 10px 10px, hsl(var(--foreground) / 0.05) 1px, transparent 0);
     background-size: 20px 20px;
-    animation: pan-bg 20s linear infinite;
+    animation: pan-bg 120s linear infinite;
   }
 
   @keyframes pan-bg {

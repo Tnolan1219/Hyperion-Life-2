@@ -85,7 +85,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
-      <div className="hidden border-r bg-card/80 md:block">
+      <aside className="hidden border-r bg-card/80 md:block">
         <div className="flex h-full max-h-screen flex-col gap-2">
           <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
             <Link href="/" className="flex items-center gap-2 font-semibold">
@@ -103,10 +103,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </nav>
           </div>
         </div>
-      </div>
+      </aside>
       <div className="flex flex-col">
         <Header />
-        <main className="flex-1 p-4 pt-20 md:p-8 md:pt-8">{children}</main>
+        <main className="flex-1 overflow-y-auto p-4 pt-20 md:p-8 md:pt-8">{children}</main>
         <Chatbot />
       </div>
     </div>
