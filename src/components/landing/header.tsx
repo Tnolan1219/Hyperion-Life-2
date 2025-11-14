@@ -23,18 +23,22 @@ import {
   Target,
   Settings,
   Map,
+  Home,
+  Star,
+  AreaChart,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 
 const navItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/life-plan', label: 'Life Plan', icon: Map },
-  { href: '/portfolio', label: 'Portfolio', icon: Wallet },
-  { href: '/ai-coach', label: 'AI Coach', icon: BrainCircuit },
-  { href: '/goals', label: 'Goals', icon: Target },
-  { href: '/settings', label: 'Settings', icon: Settings },
+  { href: '/dashboard', label: 'Dashboard', icon: Home, color: 'sky' },
+  { href: '/life-plan', label: 'Life Plan', icon: Map, color: 'violet' },
+  { href: '/portfolio', label: 'Portfolio', icon: AreaChart, color: 'amber' },
+  { href: '/ai-coach', label: 'AI Coach', icon: BrainCircuit, color: 'cyan' },
+  { href: '/goals', label: 'Goals', icon: Star, color: 'rose' },
+  { href: '/settings', label: 'Settings', icon: Settings, color: 'slate' },
 ];
+
 
 function NavLink({
   href,
@@ -76,7 +80,7 @@ export const Header = () => {
   }
 
   return (
-    <header className="flex h-14 items-center gap-4 border-b bg-card px-4 lg:h-[60px] lg:px-6">
+    <header className="sticky top-0 z-40 flex h-14 items-center gap-4 border-b bg-transparent px-4 backdrop-blur-lg lg:h-[60px] lg:px-6">
       <Sheet>
         <SheetTrigger asChild>
           <Button variant="outline" size="icon" className="shrink-0 md:hidden">

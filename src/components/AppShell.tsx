@@ -4,19 +4,14 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
-  LayoutDashboard,
-  Wallet,
-  BrainCircuit,
-  Target,
-  Settings,
+  Home,
   Map,
+  AreaChart,
+  BrainCircuit,
+  Star,
+  Settings,
   ChevronsLeft,
   ChevronsRight,
-  BarChart,
-  Home,
-  Star,
-  AreaChart,
-  Lightbulb,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUser } from '@/firebase';
