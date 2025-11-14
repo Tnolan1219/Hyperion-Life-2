@@ -12,7 +12,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'Base 44',
+  title: 'Net Worth Max',
   description: 'Personal finance dashboard.',
 };
 
@@ -43,5 +43,3 @@ export default function RootLayout({
     </html>
   );
 }
-
-    

@@ -32,7 +32,7 @@ const SignInPrompt = () => {
       <Card className="w-full max-w-sm glass">
         <CardHeader className="text-center">
           <CardTitle className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary py-2">
-            Base 44
+            Net Worth Max
           </CardTitle>
           <CardDescription className="text-muted-foreground pt-2">
             Your AI-powered financial co-pilot.

@@ -95,7 +95,7 @@ export const Header = () => {
               className="flex items-center gap-2 text-lg font-semibold mb-4"
             >
               <Logo className="h-6 w-6 text-primary" />
-              <span>Base 44</span>
+              <span>Net Worth Max</span>
             </Link>
             {navItems.map(item => (
               <MobileNavLink key={item.href} {...item} />
@@ -162,4 +162,4 @@ export const Header = () => {
       )}
     </header>
   );
-}
+};

@@ -23,7 +23,7 @@ const chatFlow = ai.defineFlow(
     const response = await ai.generate({
       model: llm,
       history,
-      prompt: `You are a friendly and helpful financial assistant chatbot for Base 44.
+      prompt: `You are a friendly and helpful financial assistant chatbot for Net Worth Max.
         Your goal is to provide helpful and accurate information about personal finance, investing, and wealth management.
         Keep your responses concise and easy to understand.
 
