@@ -24,6 +24,7 @@ import {
   LogOut,
   Moon,
   Sun,
+  LogIn,
 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -38,6 +39,10 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { useFirebase } from '@/firebase';
+import { Skeleton } from '../ui/skeleton';
+import Link from 'next/link';
+import { Auth, signOut } from 'firebase/auth';
 
 const navItems = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -48,9 +53,27 @@ const navItems = [
   { href: '/settings', label: 'Settings', icon: Settings },
 ];
 
+function handleLogout(auth: Auth) {
+  signOut(auth);
+}
+
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const userAvatar = PlaceHolderImages.find(img => img.id === 'user-avatar');
+  const { user, isUserLoading, auth } = useFirebase();
+
+  if (isUserLoading) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center">
+        <Logo className="w-12 h-12 text-primary animate-pulse" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <>{children}</>;
+  }
+
 
   return (
     <SidebarProvider>
@@ -75,49 +98,70 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                     className: 'bg-card border-border shadow-lg text-foreground'
                   }}
                 >
-                  <a href={item.href}>
+                  <Link href={item.href}>
                     <item.icon />
                     <span>{item.label}</span>
-                  </a>
+                  </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             ))}
           </SidebarMenu>
         </SidebarContent>
         <SidebarFooter>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="justify-start gap-2 w-full p-2 h-12">
-                 <Avatar className="h-8 w-8">
-                  {userAvatar && (
-                    <Image src={userAvatar.imageUrl} alt={userAvatar.description} data-ai-hint={userAvatar.imageHint} width={32} height={32} />
-                  )}
-                  <AvatarFallback>JD</AvatarFallback>
-                </Avatar>
-                <div className="text-left">
-                  <p className="text-sm font-medium">John Doe</p>
-                  <p className="text-xs text-muted-foreground">john.doe@email.com</p>
-                </div>
+          {isUserLoading ? (
+            <div className="flex items-center gap-2 w-full p-2 h-12">
+              <Skeleton className="h-8 w-8 rounded-full" />
+              <div className="flex-1 space-y-1">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-3 w-32" />
+              </div>
+            </div>
+          ) : user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="justify-start gap-2 w-full p-2 h-12">
+                   <Avatar className="h-8 w-8">
+                    {user.photoURL ? (
+                      <Image src={user.photoURL} alt={user.displayName || 'User Avatar'} width={32} height={32} />
+                    ) : userAvatar && (
+                      <Image src={userAvatar.imageUrl} alt={userAvatar.description} data-ai-hint={userAvatar.imageHint} width={32} height={32} />
+                    )}
+                    <AvatarFallback>{user.displayName ? user.displayName.charAt(0).toUpperCase() : user.email?.charAt(0).toUpperCase()}</AvatarFallback>
+                  </Avatar>
+                  <div className="text-left truncate">
+                    <p className="text-sm font-medium truncate">{user.isAnonymous ? 'Anonymous User' : user.displayName || user.email}</p>
+                    {!user.isAnonymous && user.email && <p className="text-xs text-muted-foreground truncate">{user.email}</p>}
+                  </div>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56 mb-2 ml-2 bg-card border-border shadow-lg" align="start">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/settings">
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Settings</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <LifeBuoy className="mr-2 h-4 w-4" />
+                  <span>Support</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => handleLogout(auth)}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Log out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+             <Button variant="ghost" className="justify-start gap-2 w-full p-2 h-12" asChild>
+                <Link href="/login">
+                  <LogIn className="w-5 h-5" />
+                  <span>Login</span>
+                </Link>
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56 mb-2 ml-2 bg-card border-border shadow-lg" align="start">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>
-                <Settings className="mr-2 h-4 w-4" />
-                <span>Settings</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <LifeBuoy className="mr-2 h-4 w-4" />
-                <span>Support</span>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>
-                <LogOut className="mr-2 h-4 w-4" />
-                <span>Log out</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          )}
         </SidebarFooter>
       </Sidebar>
 

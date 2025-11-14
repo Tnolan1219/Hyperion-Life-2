@@ -1,34 +1,15 @@
+'use client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
+import { Goal } from "@/lib/types";
+import { Skeleton } from "../ui/skeleton";
 
-const goals = [
-    {
-        name: "Emergency Fund",
-        target: 15000,
-        current: 12500,
-        description: "6 months of expenses"
-    },
-    {
-        name: "House Down Payment",
-        target: 50000,
-        current: 37500,
-        description: "For a new home in 2026"
-    },
-    {
-        name: "Retirement",
-        target: 1000000,
-        current: 250000,
-        description: "401(k) and IRA contributions"
-    },
-    {
-        name: "New Car",
-        target: 20000,
-        current: 5000,
-        description: "Saving for a reliable vehicle"
-    },
-]
+interface GoalsOverviewProps {
+    goals: Goal[] | null;
+    isLoading: boolean;
+}
 
-export default function GoalsOverview() {
+export default function GoalsOverview({ goals, isLoading }: GoalsOverviewProps) {
     return (
         <Card className="bg-card/80 backdrop-blur-sm">
             <CardHeader>
@@ -37,21 +18,36 @@ export default function GoalsOverview() {
             </CardHeader>
             <CardContent>
                 <div className="space-y-6">
-                    {goals.map((goal) => {
-                        const progress = (goal.current / goal.target) * 100;
-                        return (
-                            <div key={goal.name} className="space-y-2">
+                    {isLoading ? (
+                        Array.from({ length: 4 }).map((_, i) => (
+                           <div key={i} className="space-y-2">
                                 <div className="flex justify-between items-baseline">
-                                    <h4 className="font-medium">{goal.name}</h4>
-                                    <span className="text-sm font-mono text-muted-foreground">
-                                        ${goal.current.toLocaleString()} / ${goal.target.toLocaleString()}
-                                    </span>
+                                    <Skeleton className="h-5 w-32" />
+                                    <Skeleton className="h-4 w-24" />
                                 </div>
-                                <Progress value={progress} className="h-2" indicatorClassName="bg-primary shadow-glow shadow-primary/50" />
-                                <p className="text-xs text-muted-foreground">{goal.description}</p>
+                                <Skeleton className="h-2 w-full" />
+                                <Skeleton className="h-3 w-48" />
                             </div>
-                        )
-                    })}
+                        ))
+                    ) : goals && goals.length > 0 ? (
+                        goals.map((goal) => {
+                            const progress = (goal.progressAmount / goal.targetAmount) * 100;
+                            return (
+                                <div key={goal.id} className="space-y-2">
+                                    <div className="flex justify-between items-baseline">
+                                        <h4 className="font-medium">{goal.goalType}</h4>
+                                        <span className="text-sm font-mono text-muted-foreground">
+                                            ${goal.progressAmount.toLocaleString()} / ${goal.targetAmount.toLocaleString()}
+                                        </span>
+                                    </div>
+                                    <Progress value={progress} className="h-2" />
+                                    <p className="text-xs text-muted-foreground">{goal.goalType}</p>
+                                </div>
+                            )
+                        })
+                    ) : (
+                        <p className="text-muted-foreground text-sm text-center py-8">No goals set yet.</p>
+                    )}
                 </div>
             </CardContent>
         </Card>
