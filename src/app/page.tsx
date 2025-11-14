@@ -22,7 +22,7 @@ const SignInPrompt = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center animated-background px-4">
-      <Card className="w-full max-w-sm glass">
+      <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
           <CardTitle className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary py-2">
             Base 44

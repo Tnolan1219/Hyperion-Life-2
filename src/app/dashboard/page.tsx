@@ -49,7 +49,7 @@ const StatCard = ({
   icon: React.ReactNode;
   description: string;
 }) => (
-  <Card className="hover:border-primary/50 hover:-translate-y-1">
+  <Card className="glass hover:border-primary/50 hover:-translate-y-1">
     <CardHeader className="pb-2 flex flex-row items-center justify-between">
       <CardTitle className="text-sm font-medium text-muted-foreground">
         {title}
@@ -100,7 +100,7 @@ const GoalInFocus = ({ goal }: { goal: Goal }) => {
     const progress = goal.targetAmount > 0 ? (goal.currentAmount / goal.targetAmount) * 100 : 0;
 
     return (
-        <Card className="h-full flex flex-col hover:border-primary/50 hover:-translate-y-1">
+        <Card className="h-full flex flex-col glass hover:border-primary/50 hover:-translate-y-1">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">Goal In Focus</CardTitle>
                 <CardDescription>Your top priority goal right now.</CardDescription>
@@ -221,7 +221,7 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        <Card className="col-span-1 lg:col-span-3 hover:border-primary/50 hover:-translate-y-1">
+        <Card className="col-span-1 lg:col-span-3 glass hover:border-primary/50 hover:-translate-y-1">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               Net Worth Over Time
@@ -275,7 +275,7 @@ export default function Dashboard() {
             {goalInFocus ? (
                 <GoalInFocus goal={goalInFocus} />
             ) : (
-                 <Card className="h-full flex flex-col items-center justify-center text-center hover:border-primary/50 hover:-translate-y-1">
+                 <Card className="h-full flex flex-col items-center justify-center text-center glass hover:border-primary/50 hover:-translate-y-1">
                      <CardHeader>
                         <div className="flex items-center justify-center h-16 w-16 bg-primary/10 rounded-full mx-auto mb-4">
                             <Target className="h-8 w-8 text-primary" />

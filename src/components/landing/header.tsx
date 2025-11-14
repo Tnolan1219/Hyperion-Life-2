@@ -40,7 +40,7 @@ const navItems = [
 ];
 
 
-function NavLink({
+function MobileNavLink({
   href,
   label,
   icon: Icon,
@@ -79,7 +79,7 @@ export const Header = () => {
   }
 
   return (
-    <header className="sticky top-0 z-40 flex h-14 items-center gap-4 border-b border-border/20 bg-transparent px-4 backdrop-blur-lg lg:h-[60px] lg:px-6">
+    <header className="sticky top-0 z-40 flex h-14 items-center gap-4 border-b border-border/20 bg-background/80 backdrop-blur-lg px-4 lg:h-[60px] lg:px-6">
       <Sheet>
         <SheetTrigger asChild>
           <Button variant="outline" size="icon" className="shrink-0 md:hidden">
@@ -97,7 +97,7 @@ export const Header = () => {
               <span>Base 44</span>
             </Link>
             {navItems.map(item => (
-              <NavLink key={item.href} {...item} />
+              <MobileNavLink key={item.href} {...item} />
             ))}
           </nav>
         </SheetContent>
