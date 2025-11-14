@@ -521,6 +521,74 @@
         "modelMeta",
         "createdAt"
       ]
+    },
+    "Income": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Income",
+      "type": "object",
+      "description": "Represents a single income transaction for a user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the income entry."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N Income)"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the income source (e.g., 'Monthly Salary', 'Freelance Project')."
+        },
+        "amount": {
+          "type": "number",
+          "description": "Amount of income received."
+        },
+        "category": {
+          "type": "string",
+          "description": "Category of the income (e.g., 'Salary', 'Bonus', 'Investment')."
+        },
+        "date": {
+          "type": "string",
+          "description": "Date the income was received.",
+          "format": "date-time"
+        }
+      },
+      "required": ["id", "userId", "description", "amount", "category", "date"]
+    },
+    "Expense": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Expense",
+      "type": "object",
+      "description": "Represents a single expense transaction for a user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the expense entry."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N Expense)"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the expense (e.g., 'Groceries', 'Rent Payment')."
+        },
+        "amount": {
+          "type": "number",
+          "description": "Amount of the expense."
+        },
+        "category": {
+          "type": "string",
+          "description": "Category of the expense (e.g., 'Food', 'Housing', 'Transportation')."
+        },
+        "date": {
+          "type": "string",
+          "description": "Date of the expense.",
+          "format": "date-time"
+        }
+      },
+      "required": ["id", "userId", "description", "amount", "category", "date"]
     }
   },
   "auth": {
@@ -646,6 +714,46 @@
           ]
         }
       },
+       {
+        "path": "/users/{userId}/income/{incomeId}",
+        "definition": {
+          "entityName": "Income",
+          "schema": {
+            "$ref": "#/backend/entities/Income"
+          },
+          "description": "Stores income transactions for the user.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The Firebase Auth UID of the user."
+            },
+            {
+              "name": "incomeId",
+              "description": "The unique identifier of the income transaction."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/expenses/{expenseId}",
+        "definition": {
+          "entityName": "Expense",
+          "schema": {
+            "$ref": "#/backend/entities/Expense"
+          },
+          "description": "Stores expense transactions for the user.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The Firebase Auth UID of the user."
+            },
+            {
+              "name": "expenseId",
+              "description": "The unique identifier of the expense transaction."
+            }
+          ]
+        }
+      },
       {
         "path": "/tips/{tipId}",
         "definition": {
@@ -735,8 +843,6 @@
         }
       }
     ],
-    "reasoning": "The Firestore data structure is designed to ensure Authorization Independence, Clarity of Intent, and support secure list operations (QAPs). User-owned data is stored in hierarchical paths under the `/users/{userId}` collection, ensuring clear ownership.  This eliminates the need for `get()` calls in security rules to check ownership, enabling atomic operations. Tips, Links, and NewsCache are stored in root-level collections, allowing global read access without compromising user data.\n\nAuthorization Independence is achieved by avoiding hierarchical authorization dependencies. For instance, assets, debts, goals, advice and AI sessions are stored under the user's document, making it easy to check ownership directly in the security rules without needing to access parent documents.\n\nQAPs are supported through structural segregation. Publicly accessible data (tips, links, newsCache) is stored separately from user-specific data, enabling secure `list` operations. User-specific data (assets, debts, goals, advice, aiSessions) benefits from path-based ownership, further simplifying and securing `list` operations."
+    "reasoning": "The Firestore data structure is designed to ensure Authorization Independence, Clarity of Intent, and support secure list operations (QAPs). User-owned data is stored in hierarchical paths under the `/users/{userId}` collection, ensuring clear ownership. This eliminates the need for `get()` calls in security rules to check ownership, enabling atomic operations. Tips, Links, and NewsCache are stored in root-level collections, allowing global read access without compromising user data.\n\nAuthorization Independence is achieved by avoiding hierarchical authorization dependencies. For instance, assets, debts, goals, advice and AI sessions are stored under the user's document, making it easy to check ownership directly in the security rules without needing to access parent documents.\n\nQAPs are supported through structural segregation. Publicly accessible data (tips, links, newsCache) is stored separately from user-specific data, enabling secure `list` operations. User-specific data (assets, debts, goals, advice, aiSessions) benefits from path-based ownership, further simplifying and securing `list` operations. The addition of income and expenses collections under the user's document maintains this ownership-based security model."
   }
 }
-
-    

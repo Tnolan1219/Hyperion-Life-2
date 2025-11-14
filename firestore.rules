@@ -148,6 +148,24 @@ service cloud.firestore {
     }
 
     /**
+     * @description Rules for the /users/{userId}/income/{incomeId} collection.
+     * @path /users/{userId}/income/{incomeId}
+     * @principle Enforces document ownership for writes.
+     */
+    match /users/{userId}/income/{incomeId} {
+      allow get, list, create, update, delete: if isOwner(userId);
+    }
+    
+    /**
+     * @description Rules for the /users/{userId}/expenses/{expenseId} collection.
+     * @path /users/{userId}/expenses/{expenseId}
+     * @principle Enforces document ownership for writes.
+     */
+    match /users/{userId}/expenses/{expenseId} {
+      allow get, list, create, update, delete: if isOwner(userId);
+    }
+
+    /**
      * @description Rules for the /tips/{tipId} collection.
      * @path /tips/{tipId}
      * @allow (get, list) - Anyone can read tips.

@@ -1,4 +1,5 @@
 
+
 'use client';
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import ReactFlow, {
@@ -74,7 +75,7 @@ const nodeMenu = [
   { type: 'other', label: 'Other', icon: Zap, color: 'teal' },
 ];
 
-const dagreGraph = new dagre.graphlib.Graph();
+const dagreGraph = new dagre.graphlib.Graph({ multigraph: true });
 dagreGraph.setDefaultEdgeLabel(() => ({}));
 
 const nodeWidth = 208;
@@ -82,7 +83,7 @@ const nodeHeight = 88;
 
 const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = 'TB') => {
   const isHorizontal = direction === 'LR';
-  dagreGraph.setGraph({ rankdir: direction });
+  dagreGraph.setGraph({ rankdir: direction, nodesep: 100, ranksep: 100 });
 
   nodes.forEach((node) => {
     dagreGraph.setNode(node.id, { width: nodeWidth, height: nodeHeight });
@@ -385,6 +386,7 @@ function LifePlanCanvas() {
         connectionMode='loose'
         connectionRadius={50}
         connectOnClick={true}
+        multiSelectionKeyCode={null}
       >
         <div className="absolute top-4 right-4 z-10 flex gap-2">
             <DropdownMenu>
@@ -499,7 +501,7 @@ export default function LifePlanPage() {
   };
   
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-8 h-full">
       <div className="flex-shrink-0 px-4 md:px-8">
         <h1 className="text-4xl font-bold">Life Plan</h1>
         <p className="text-muted-foreground mt-2">
@@ -507,12 +509,12 @@ export default function LifePlanPage() {
           the dots.
         </p>
       </div>
-      <div className="h-[calc(100vh-240px)]">
+      <div className="flex-grow h-[calc(100vh-240px)]">
         <ReactFlowProvider>
             <LifePlanCanvas />
         </ReactFlowProvider>
       </div>
-      <div className="px-4 md:px-8 pb-8">
+      <div className="px-4 md:px-8 pb-8 flex-shrink-0">
         {/* The onGenerate prop needs a proper state management solution */}
         <AIPlanGenerator onGenerate={() => {}} />
       </div>

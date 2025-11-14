@@ -59,7 +59,10 @@ import { AiInsights } from '@/components/portfolio/forecasting/AiInsights';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
-
+import { BudgetSummary } from '@/components/portfolio/budget/BudgetSummary';
+import { CategorySpendingChart } from '@/components/portfolio/budget/CategorySpendingChart';
+import { IncomeExpenseTable } from '@/components/portfolio/budget/IncomeExpenseTable';
+import dynamic from 'next/dynamic';
 
 export type Asset = {
   id?: string;
@@ -77,6 +80,14 @@ export type Asset = {
   beta?: number;
 };
 
+export type Transaction = {
+    id?: string;
+    type: 'Income' | 'Expense';
+    category: string;
+    description: string;
+    amount: number;
+    date: string; // ISO 8601 format
+};
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('en-US', {
@@ -274,6 +285,16 @@ const AIPortfolioAnalysis = ({ assets }: { assets: Asset[] }) => {
     );
 };
 
+const LoadingSection = () => (
+     <div className="space-y-6">
+        <Card>
+            <CardHeader><Skeleton className="h-6 w-1/4 mb-2" /><Skeleton className="h-4 w-1/2" /></CardHeader>
+            <CardContent><div className="space-y-4">{[...Array(3)].map((_, i) => (<div key={i} className="flex justify-between items-center p-2"><div className="w-1/4"><Skeleton className="h-5 w-full" /></div><div className="w-1/4"><Skeleton className="h-5 w-full" /></div><div className="w-1/4"><Skeleton className="h-5 w-full" /></div><div className="w-1/6"><Skeleton className="h-5 w-full" /></div></div>))}</div ></CardContent>
+        </Card>
+    </div>
+);
+
+
 const HoldingsAnalysisSection = () => {
     const { user } = useUser();
     const firestore = useFirestore();
@@ -328,14 +349,7 @@ const HoldingsAnalysisSection = () => {
 
 
     if (isLoading) {
-        return (
-            <div className="space-y-6">
-                <Card>
-                    <CardHeader><Skeleton className="h-6 w-1/4 mb-2" /><Skeleton className="h-4 w-1/2" /></CardHeader>
-                    <CardContent><div className="space-y-4">{[...Array(3)].map((_, i) => (<div key={i} className="flex justify-between items-center p-2"><div className="w-1/4"><Skeleton className="h-5 w-full" /></div><div className="w-1/4"><Skeleton className="h-5 w-full" /></div><div className="w-1/4"><Skeleton className="h-5 w-full" /></div><div className="w-1/6"><Skeleton className="h-5 w-full" /></div></div>))}</div ></CardContent>
-                </Card>
-            </div>
-        );
+        return <LoadingSection />;
     }
     
     return (
@@ -405,6 +419,114 @@ const HoldingsAnalysisSection = () => {
     )
 }
 
+const BudgetSection = () => {
+    const { user } = useUser();
+    const firestore = useFirestore();
+
+    const incomeCollection = useMemoFirebase(() => {
+        if (firestore && user) return collection(firestore, `users/${user.uid}/income`);
+        return null;
+    }, [firestore, user]);
+
+    const expensesCollection = useMemoFirebase(() => {
+        if (firestore && user) return collection(firestore, `users/${user.uid}/expenses`);
+        return null;
+    }, [firestore, user]);
+
+    const { data: income, isLoading: incomeLoading } = useCollection<Transaction>(incomeCollection);
+    const { data: expenses, isLoading: expensesLoading } = useCollection<Transaction>(expensesCollection);
+
+    if (incomeLoading || expensesLoading) {
+        return <LoadingSection />;
+    }
+
+    return (
+        <div className="space-y-8">
+            <BudgetSummary income={income || []} expenses={expenses || []} />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <CategorySpendingChart expenses={expenses || []} />
+                <CashFlowChart />
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                 <IncomeExpenseTable title="Income" data={income || []} collectionName='income' />
+                 <IncomeExpenseTable title="Expenses" data={expenses || []} collectionName='expenses' />
+            </div>
+        </div>
+    );
+};
+
+const DynamicHoldingsSection = dynamic(() => Promise.resolve(HoldingsAnalysisSection), { loading: () => <LoadingSection /> });
+const DynamicBudgetSection = dynamic(() => Promise.resolve(BudgetSection), { loading: () => <LoadingSection /> });
+
+const DynamicForecastingSection = () => (
+     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-1">
+            <PredictiveControls />
+        </div>
+        <div className="lg:col-span-2 space-y-8">
+            <ProjectedGrowthChart />
+            <MonteCarloChart />
+            <AiInsights />
+        </div>
+    </div>
+);
+
+const DynamicOverviewSection = () => (
+    <div className="space-y-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <Card>
+                <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                    <CardTitle className="text-sm font-medium">Monthly Cash Flow</CardTitle>
+                    <DollarSign className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <p className="text-2xl font-bold text-green-400">+$1,850.75</p>
+                    <p className="text-xs text-muted-foreground">Income minus expenses this month</p>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                    <CardTitle className="text-sm font-medium">Budget vs. Actual</CardTitle>
+                    <Scale className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <p className="text-2xl font-bold">$2,150 / $3,000</p>
+                    <p className="text-xs text-muted-foreground">71% of monthly budget spent</p>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                    <CardTitle className="text-sm font-medium">Monthly Investments</CardTitle>
+                    <PiggyBank className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <p className="text-2xl font-bold">+$750.00</p>
+                    <p className="text-xs text-muted-foreground">Contributions to investment accounts</p>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                    <CardTitle className="text-sm font-medium">Net Worth</CardTitle>
+                    <Wallet className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <p className="text-2xl font-bold">$124,812</p>
+                    <p className="text-xs text-muted-foreground">+3.2% this month</p>
+                </CardContent>
+            </Card>
+        </div>
+         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+            <div className="lg:col-span-2">
+                <BudgetTracker />
+            </div>
+            <div className="lg:col-span-3">
+                <CashFlowChart />
+            </div>
+        </div>
+    </div>
+);
+
+
 export default function NetWorthPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
@@ -437,82 +559,16 @@ export default function NetWorthPage() {
           <TabsTrigger value="forecasting">Forecasting</TabsTrigger>
         </TabsList>
         <TabsContent value="overview" className="pt-6">
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
-                <Card>
-                    <CardHeader className="pb-2 flex flex-row items-center justify-between">
-                        <CardTitle className="text-sm font-medium">Monthly Cash Flow</CardTitle>
-                        <DollarSign className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-2xl font-bold text-green-400">+$1,850.75</p>
-                        <p className="text-xs text-muted-foreground">Income minus expenses this month</p>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="pb-2 flex flex-row items-center justify-between">
-                        <CardTitle className="text-sm font-medium">Budget vs. Actual</CardTitle>
-                        <Scale className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-2xl font-bold">$2,150 / $3,000</p>
-                        <p className="text-xs text-muted-foreground">71% of monthly budget spent</p>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="pb-2 flex flex-row items-center justify-between">
-                        <CardTitle className="text-sm font-medium">Monthly Investments</CardTitle>
-                        <PiggyBank className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-2xl font-bold">+$750.00</p>
-                        <p className="text-xs text-muted-foreground">Contributions to investment accounts</p>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="pb-2 flex flex-row items-center justify-between">
-                        <CardTitle className="text-sm font-medium">Net Worth</CardTitle>
-                        <Wallet className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-2xl font-bold">$124,812</p>
-                        <p className="text-xs text-muted-foreground">+3.2% this month</p>
-                    </CardContent>
-                </Card>
-            </div>
-             <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-                <div className="lg:col-span-2">
-                    <BudgetTracker />
-                </div>
-                <div className="lg:col-span-3">
-                    <CashFlowChart />
-                </div>
-            </div>
+            <DynamicOverviewSection />
         </TabsContent>
         <TabsContent value="holdings" className="pt-6">
-            <HoldingsAnalysisSection />
+            <DynamicHoldingsSection />
         </TabsContent>
         <TabsContent value="budget" className="pt-6">
-             <Card>
-                <CardHeader>
-                    <CardTitle>Monthly Budget</CardTitle>
-                    <CardDescription>Manage your income and expenses. This section is under construction.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <p className="text-muted-foreground">Detailed budget management, including adding/editing income and expense categories, will be available here soon.</p>
-                </CardContent>
-            </Card>
+            <DynamicBudgetSection />
         </TabsContent>
          <TabsContent value="forecasting" className="pt-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-1">
-                    <PredictiveControls />
-                </div>
-                <div className="lg:col-span-2 space-y-8">
-                    <ProjectedGrowthChart />
-                    <MonteCarloChart />
-                    <AiInsights />
-                </div>
-            </div>
+            <DynamicForecastingSection />
         </TabsContent>
       </Tabs>
       
