@@ -4,7 +4,7 @@ import React from 'react';
 import { Handle, Position } from 'reactflow';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { Briefcase, GraduationCap, PiggyBank, Heart, Flag } from 'lucide-react';
+import { Briefcase, GraduationCap, PiggyBank, Heart, Flag, Zap } from 'lucide-react';
 
 const iconMap = {
   career: Briefcase,
@@ -12,6 +12,7 @@ const iconMap = {
   financial: PiggyBank,
   lifeEvent: Heart,
   goal: Flag,
+  other: Zap,
 };
 
 const colorMap = {
@@ -20,6 +21,7 @@ const colorMap = {
   financial: 'green',
   lifeEvent: 'pink',
   goal: 'purple',
+  other: 'teal',
 };
 
 type CustomNodeProps = {
@@ -107,5 +109,5 @@ export const EducationNode = (props: any) => (
 );
 export const CareerNode = (props: any) => <CustomNode {...props} type="career" />;
 export const GoalNode = (props: any) => <CustomNode {...props} type="goal" />;
-
+export const OtherNode = (props: any) => <CustomNode {...props} type="other" />;
     

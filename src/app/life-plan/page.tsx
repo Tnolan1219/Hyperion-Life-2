@@ -25,6 +25,7 @@ import {
   EducationNode,
   CareerNode,
   GoalNode,
+  OtherNode,
 } from '@/components/life-plan/CustomNodes';
 import { Button } from '@/components/ui/button';
 import {
@@ -58,6 +59,7 @@ const nodeTypes = {
   education: EducationNode,
   career: CareerNode,
   goal: GoalNode,
+  other: OtherNode,
 };
 
 const nodeMenu = [
@@ -66,6 +68,7 @@ const nodeMenu = [
   { type: 'financial', label: 'Milestone', icon: PiggyBank, color: 'green' },
   { type: 'lifeEvent', label: 'Life Event', icon: Heart, color: 'pink' },
   { type: 'goal', label: 'Goal', icon: Flag, color: 'purple' },
+  { type: 'other', label: 'Other', icon: Zap, color: 'teal' },
 ];
 
 const dagreGraph = new dagre.graphlib.Graph();
@@ -288,8 +291,9 @@ function LifePlanCanvas() {
         proOptions={{ hideAttribution: true }}
         deleteKeyCode={['Backspace', 'Delete']}
         minZoom={0.1}
+        connectionMode='loose'
       >
-        <div className="absolute top-4 left-4 z-10 flex gap-2">
+        <div className="absolute top-4 right-4 z-10 flex gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="glass h-auto py-2">
@@ -406,5 +410,3 @@ export default function LifePlanPage() {
     </div>
   );
 }
-
-    

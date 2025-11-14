@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss"
 
 const config = {
@@ -17,16 +18,19 @@ const config = {
     'text-green-400',
     'text-pink-400',
     'text-purple-400',
+    'text-teal-400',
     'border-orange-400/50',
     'border-blue-400/50',
     'border-green-400/50',
     'border-pink-400/50',
     'border-purple-400/50',
+    'border-teal-400/50',
     'hover:shadow-orange-400/20',
     'hover:shadow-blue-400/20',
     'hover:shadow-green-400/20',
     'hover:shadow-pink-400/20',
     'hover:shadow-purple-400/20',
+    'hover:shadow-teal-400/20',
     // Safelist for goal categories
     'bg-blue-500/10',
     'text-blue-500',
