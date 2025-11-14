@@ -178,8 +178,8 @@ function LifePlanCanvas() {
       id: `node_${+new Date()}`,
       type,
       position: screenToFlowPosition({
-        x: window.innerWidth / 2.5,
-        y: window.innerHeight / 3,
+        x: 400,
+        y: 200,
       }),
       data: {
         title: `New ${type.charAt(0).toUpperCase() + type.slice(1)}`,
