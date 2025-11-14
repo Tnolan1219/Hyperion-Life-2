@@ -99,7 +99,7 @@ function NavLink({
             className={cn(
               'group flex items-center justify-center rounded-2xl h-12 w-12 my-2 text-muted-foreground transition-all duration-300 relative',
               'transform-gpu hover:scale-[1.05]',
-              isActive ? `${colors.bg} ${colors.text} font-semibold` : 'hover:bg-accent/50'
+              isActive ? `${colors.bg} ${colors.text} font-semibold` : `hover:bg-accent/50 ${colors.hoverBg}`
             )}
           >
             <div className={cn(
