@@ -7,7 +7,7 @@ import {
   Home,
   Map,
   Wallet,
-  BrainCircuit,
+  Brain,
   Star,
   Settings,
 } from 'lucide-react';
@@ -22,7 +22,7 @@ const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: Home, color: 'sky' },
   { href: '/life-plan', label: 'Life Plan', icon: Map, color: 'violet' },
   { href: '/portfolio', label: 'Net Worth', icon: Wallet, color: 'amber' },
-  { href: '/ai-coach', label: 'AI Coach', icon: BrainCircuit, color: 'cyan' },
+  { href: '/ai-coach', label: 'AI Coach', icon: Brain, color: 'cyan' },
   { href: '/goals', label: 'Goals', icon: Star, color: 'rose' },
   { href: '/settings', label: 'Settings', icon: Settings, color: 'slate' },
 ];

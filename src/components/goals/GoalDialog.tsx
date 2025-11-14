@@ -31,12 +31,14 @@ import {
 } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { Calendar as CalendarIcon } from 'lucide-react';
+import { Calendar as CalendarIcon, CheckCircle } from 'lucide-react';
 import { useUser, useFirestore, addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { goalCategories, Goal, GoalCategory } from '@/app/goals/page';
+import { useToast } from '@/hooks/use-toast';
+
 
 const goalSchema = z.object({
   title: z.string().min(1, 'Title is required.'),
@@ -57,6 +59,7 @@ interface GoalDialogProps {
 export function GoalDialog({ isOpen, setIsOpen, goal }: GoalDialogProps) {
   const { user } = useUser();
   const firestore = useFirestore();
+  const { toast } = useToast();
 
   const form = useForm<GoalFormData>({
     resolver: zodResolver(goalSchema),
@@ -100,6 +103,20 @@ export function GoalDialog({ isOpen, setIsOpen, goal }: GoalDialogProps) {
     setIsOpen(false);
     form.reset();
   };
+  
+  const handleMarkAsComplete = () => {
+    if (!firestore || !user || !goal?.id) return;
+    
+    const goalDocRef = doc(firestore, `users/${user.uid}/goals`, goal.id);
+    updateDocumentNonBlocking(goalDocRef, { currentAmount: goal.targetAmount });
+
+    toast({
+        title: "Goal Complete!",
+        description: `Congratulations! You've reached your goal: "${goal.title}". You earned 100 MP!`,
+    });
+
+    setIsOpen(false);
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -227,11 +244,19 @@ export function GoalDialog({ isOpen, setIsOpen, goal }: GoalDialogProps) {
                 </FormItem>
               )}
             />
-            <DialogFooter>
-              <Button type="button" variant="ghost" onClick={() => setIsOpen(false)}>
-                Cancel
-              </Button>
-              <Button type="submit">{goal ? 'Save Changes' : 'Create Goal'}</Button>
+            <DialogFooter className="flex-col sm:flex-row sm:justify-between sm:items-center pt-4">
+                {goal && (
+                    <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={handleMarkAsComplete}>
+                        <CheckCircle className="mr-2 h-4 w-4" />
+                        Mark as Complete
+                    </Button>
+                )}
+                <div className="flex justify-end gap-2 w-full sm:w-auto">
+                    <Button type="button" variant="ghost" onClick={() => setIsOpen(false)}>
+                        Cancel
+                    </Button>
+                    <Button type="submit">{goal ? 'Save Changes' : 'Create Goal'}</Button>
+                </div>
             </DialogFooter>
           </form>
         </Form>

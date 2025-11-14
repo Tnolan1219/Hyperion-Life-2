@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useUser, useAuth } from '@/firebase';
-import { Sun, Moon, Bell, User as UserIcon, Menu } from 'lucide-react';
+import { Sun, Moon, Bell, User as UserIcon, Menu, Award } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import {
   DropdownMenu,
@@ -19,7 +19,7 @@ import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
   Wallet,
-  BrainCircuit,
+  Brain,
   Target,
   Settings,
   Map,
@@ -35,7 +35,7 @@ const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: Home, color: 'sky' },
   { href: '/life-plan', label: 'Life Plan', icon: Map, color: 'violet' },
   { href: '/portfolio', label: 'Net Worth', icon: Wallet, color: 'amber' },
-  { href: '/ai-coach', label: 'AI Coach', icon: BrainCircuit, color: 'cyan' },
+  { href: '/ai-coach', label: 'AI Coach', icon: Brain, color: 'cyan' },
   { href: '/goals', label: 'Goals', icon: Star, color: 'rose' },
   { href: '/settings', label: 'Settings', icon: Settings, color: 'slate' },
 ];
@@ -120,6 +120,10 @@ export const Header = () => {
 
       {user && auth ? (
         <>
+          <div className="flex items-center gap-2 glass rounded-full px-3 py-1.5 text-sm font-semibold">
+            <Award className="h-5 w-5 text-amber-400" />
+            <span>1,250 MP</span>
+          </div>
           <Button variant="ghost" size="icon" aria-label="Notifications">
             <Bell className="h-5 w-5" />
           </Button>

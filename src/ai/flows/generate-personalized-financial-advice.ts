@@ -73,8 +73,8 @@ const prompt = ai.definePrompt({
   Risk Tolerance: {{{riskTolerance}}}
 
   Based on this complete picture, provide clear, concise, and actionable advice.
-  - For the 'advice' field: Write a short, encouraging introductory sentence. Then, provide the main advice as a series of bullet points.
-  - For the 'nudges' field: Provide a list of 2-3 short, encouraging, and actionable coaching nudges as bullet points to help the user stay motivated and improve their financial well-being.
+  - For the 'advice' field: Write a short, encouraging introductory sentence. Then, provide the main advice as a series of 2-3 short bullet points.
+  - For the 'nudges' field: Provide a list of 2 short, encouraging, and actionable coaching nudges as bullet points.
   `,
 });
 
