@@ -54,9 +54,6 @@ import { CashFlowChart } from '@/components/portfolio/CashFlowChart';
 import { BudgetTracker } from '@/components/portfolio/BudgetTracker';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { PredictiveControls } from '@/components/portfolio/forecasting/Controls';
-import { ProjectedGrowthChart } from '@/components/portfolio/forecasting/ProjectedGrowthChart';
-import { AiInsights } from '@/components/portfolio/forecasting/AiInsights';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
@@ -65,7 +62,8 @@ import { CategorySpendingChart } from '@/components/portfolio/budget/CategorySpe
 import { IncomeExpenseTable } from '@/components/portfolio/budget/IncomeExpenseTable';
 import dynamic from 'next/dynamic';
 import { BudgetVsActualChart } from '@/components/portfolio/budget/BudgetVsActualChart';
-import { RunFinancialSimulationOutput, RunFinancialSimulationInput } from '@/ai/flows/run-financial-simulation';
+import { FirePlanner } from '@/components/portfolio/forecasting/FirePlanner';
+
 
 export type Asset = {
   id?: string;
@@ -606,15 +604,19 @@ const DynamicBudgetSection = dynamic(() => Promise.resolve(BudgetSection), { loa
 const DynamicForecastingSection = () => {
     const { user } = useUser();
     const firestore = useFirestore();
-    const [simulationResult, setSimulationResult] = useState<RunFinancialSimulationOutput | null>(null);
-    const [isLoading, setIsLoading] = useState(false);
     
     const assetsCollection = useMemoFirebase(() => {
         if (firestore && user) return collection(firestore, `users/${user.uid}/assets`);
         return null;
     }, [firestore, user]);
+    
+    const expensesCollection = useMemoFirebase(() => {
+        if (firestore && user) return collection(firestore, `users/${user.uid}/expenses`);
+        return null;
+    }, [firestore, user]);
 
     const { data: assets } = useCollection<Asset>(assetsCollection);
+    const { data: expenses } = useCollection<Transaction>(expensesCollection);
     
     const totalValue = useMemo(() => {
          if (!assets) return 0;
@@ -623,39 +625,16 @@ const DynamicForecastingSection = () => {
             return acc + asset.balance * price;
         }, 0);
     }, [assets]);
-
-    const handleRunSimulation = async (inputs: Omit<RunFinancialSimulationInput, 'initialValue'>) => {
-        setIsLoading(true);
-        setSimulationResult(null);
-
-        try {
-            const response = await fetch('/api/genkit/runFinancialSimulationFlow', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...inputs, initialValue: totalValue }),
-            });
-            const result = await response.json();
-            if (response.ok) {
-                setSimulationResult(result);
-            } else {
-                throw new Error(result.error || 'Failed to run simulation');
-            }
-        } catch (error) {
-            console.error("Simulation error:", error);
-        } finally {
-            setIsLoading(false);
-        }
-    }
+    
+    const annualExpenses = useMemo(() => {
+        if (!expenses) return 0;
+        // This is a simplification; in a real app, you'd filter by date range (last 12 months)
+        return expenses.reduce((acc, expense) => acc + expense.amount, 0) * 12;
+    }, [expenses]);
 
      return (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-1">
-                <PredictiveControls onRunSimulation={handleRunSimulation} isLoading={isLoading} />
-            </div>
-            <div className="lg:col-span-2 space-y-8">
-                <ProjectedGrowthChart simulationResult={simulationResult} />
-                <AiInsights simulationResult={simulationResult} />
-            </div>
+        <div className="space-y-8">
+            <FirePlanner currentPortfolioValue={totalValue} annualExpenses={annualExpenses} />
         </div>
     );
 };
@@ -735,14 +714,17 @@ export default function NetWorthPage() {
         </div>
       </div>
 
-       <Tabs defaultValue="holdings" className="w-full">
+       <Tabs defaultValue="budget" className="w-full">
         <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="budget">Budget</TabsTrigger>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="holdings">Holdings</TabsTrigger>
           <TabsTrigger value="debts">Debts</TabsTrigger>
-          <TabsTrigger value="budget">Budget</TabsTrigger>
           <TabsTrigger value="forecasting">Forecasting</TabsTrigger>
         </TabsList>
+        <TabsContent value="budget" className="pt-6">
+            <DynamicBudgetSection />
+        </TabsContent>
         <TabsContent value="overview" className="pt-6">
             <DynamicOverviewSection />
         </TabsContent>
@@ -751,9 +733,6 @@ export default function NetWorthPage() {
         </TabsContent>
         <TabsContent value="debts" className="pt-6">
             <DynamicDebtsSection />
-        </TabsContent>
-        <TabsContent value="budget" className="pt-6">
-            <DynamicBudgetSection />
         </TabsContent>
          <TabsContent value="forecasting" className="pt-6">
             <DynamicForecastingSection />
