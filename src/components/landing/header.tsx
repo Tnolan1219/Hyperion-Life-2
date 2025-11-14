@@ -2,9 +2,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Logo } from '@/components/icons/logo';
 import { useUser, useAuth } from '@/firebase';
-import { Sun, Moon, Bell, User as UserIcon } from 'lucide-react';
+import { Sun, Moon, Bell, User as UserIcon, Menu } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import {
   DropdownMenu,
@@ -15,101 +14,147 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
+import { usePathname } from 'next/navigation';
+import {
+  LayoutDashboard,
+  Wallet,
+  BrainCircuit,
+  Target,
+  Settings,
+  Map,
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+
+const navItems = [
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/life-plan', label: 'Life Plan', icon: Map },
+  { href: '/portfolio', label: 'Portfolio', icon: Wallet },
+  { href: '/ai-coach', label: 'AI Coach', icon: BrainCircuit },
+  { href: '/goals', label: 'Goals', icon: Target },
+  { href: '/settings', label: 'Settings', icon: Settings },
+];
+
+function NavLink({
+  href,
+  label,
+  icon: Icon,
+}: {
+  href: string;
+  label: string;
+  icon: React.ElementType;
+}) {
+  const pathname = usePathname();
+  const isActive = pathname === href;
+
+  return (
+    <Link href={href} legacyBehavior>
+      <a
+        className={cn(
+          'flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary hover:bg-primary/10',
+          isActive && 'bg-primary/10 text-primary'
+        )}
+      >
+        <Icon className="h-5 w-5" />
+        {label}
+      </a>
+    </Link>
+  );
+}
 
 
 export const Header = () => {
   const { user } = useUser();
   const auth = useAuth();
   const { theme, setTheme } = useTheme();
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 10);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  const navLinks = user ? [
-    { label: "Dashboard", href: "/dashboard" },
-    { label: "Life Plan", href: "#" },
-    { label: "Portfolio", href: "#" },
-    { label: "AI Coach", href: "#" },
-  ] : [];
+  const pathname = usePathname();
+  
+  // Hide header on the landing page if user is not logged in
+  if (!user && pathname === '/') {
+    return null;
+  }
 
   return (
-    <header
-      className={`fixed top-0 left-0 right-0 z-50 h-[72px] transition-all duration-300 ${
-        scrolled
-          ? 'bg-background/80 border-b border-border backdrop-blur-sm'
-          : 'bg-transparent'
-      }`}
-    >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-3">
-          <Logo className="text-primary h-7 w-7" />
-          <span className="text-xl font-bold">Base 44</span>
-        </Link>
-        { user && (
-          <nav className="hidden md:flex items-center gap-2 text-sm">
-            {navLinks.map(link => (
-               <Button variant="ghost" size="sm" asChild key={link.href}>
-                <Link href={link.href}>{link.label}</Link>
-              </Button>
+    <header className="flex h-14 items-center gap-4 border-b bg-card px-4 lg:h-[60px] lg:px-6">
+      <Sheet>
+        <SheetTrigger asChild>
+          <Button variant="outline" size="icon" className="shrink-0 md:hidden">
+            <Menu className="h-5 w-5" />
+            <span className="sr-only">Toggle navigation menu</span>
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="left" className="flex flex-col">
+          <nav className="grid gap-2 text-lg font-medium">
+            <Link
+              href="#"
+              className="flex items-center gap-2 text-lg font-semibold mb-4"
+            >
+              <BrainCircuit className="h-6 w-6 text-primary" />
+              <span>Base 44</span>
+            </Link>
+            {navItems.map(item => (
+              <NavLink key={item.href} {...item} />
             ))}
           </nav>
-        )}
-        <div className="flex items-center gap-2">
-           <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            aria-label="Toggle theme"
-          >
-            <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-            <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-          </Button>
-          {user && auth ? (
-            <>
-              <Button variant="ghost" size="icon" aria-label="Notifications">
-                <Bell className="h-5 w-5" />
-              </Button>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                    <Avatar className="h-8 w-8">
-                       <AvatarFallback>
-                        <UserIcon className="h-5 w-5" />
-                      </AvatarFallback>
-                    </Avatar>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56" align="end" forceMount>
-                  <DropdownMenuLabel className="font-normal">
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">
-                        {user.displayName || "Guest User"}
-                      </p>
-                      <p className="text-xs leading-none text-muted-foreground">
-                        {user.email || "guest@email.com"}
-                      </p>
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => auth.signOut()}>
-                    Log out
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </>
-          ) : (
-            <Button asChild>
-              <Link href="/dashboard">Log In</Link>
-            </Button>
-          )}
-        </div>
+        </SheetContent>
+      </Sheet>
+
+      <div className="w-full flex-1">
+        {/* Can be used for breadcrumbs or page title */}
       </div>
+
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+        aria-label="Toggle theme"
+      >
+        <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+        <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+      </Button>
+
+      {user && auth ? (
+        <>
+          <Button variant="ghost" size="icon" aria-label="Notifications">
+            <Bell className="h-5 w-5" />
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                className="relative h-8 w-8 rounded-full"
+              >
+                <Avatar className="h-8 w-8">
+                  <AvatarFallback>
+                    <UserIcon className="h-5 w-5" />
+                  </AvatarFallback>
+                </Avatar>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56" align="end" forceMount>
+              <DropdownMenuLabel className="font-normal">
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium leading-none">
+                    {user.displayName || 'Guest User'}
+                  </p>
+                  <p className="text-xs leading-none text-muted-foreground">
+                    {user.email || 'guest@email.com'}
+                  </p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => auth.signOut()}>
+                Log out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </>
+      ) : (
+        <Button asChild>
+          <Link href="/">Log In</Link>
+        </Button>
+      )}
     </header>
   );
 };

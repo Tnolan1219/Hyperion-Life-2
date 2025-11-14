@@ -6,6 +6,8 @@ import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 import { FirebaseProvider } from '@/firebase/provider';
 import { auth, firestore, firebaseApp } from '@/firebase';
 import { ThemeProvider } from '@/components/theme-provider';
+import { AppShell } from '@/components/AppShell';
+
 
 const inter = Inter({
   subsets: ['latin'],
@@ -25,7 +27,9 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head />
-      <body className={`${inter.variable} font-sans antialiased animated-background`}>
+      <body
+        className={`${inter.variable} font-sans antialiased animated-background`}
+      >
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
@@ -38,7 +42,7 @@ export default function RootLayout({
             firebaseApp={firebaseApp}
           >
             <FirebaseErrorListener />
-            {children}
+              <AppShell>{children}</AppShell>
             <Toaster />
           </FirebaseProvider>
         </ThemeProvider>

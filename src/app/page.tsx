@@ -2,12 +2,11 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Header } from '@/components/landing/header';
-import { Footer } from '@/components/landing/footer';
 import { useUser, useAuth } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { initiateAnonymousSignIn } from '@/firebase/non-blocking-login';
+import { BrainCircuit } from 'lucide-react';
 
 const SignInPrompt = () => {
   const auth = useAuth();
@@ -22,20 +21,23 @@ const SignInPrompt = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <Card className="w-full max-w-sm glass">
+    <div className="min-h-screen flex items-center justify-center animated-background px-4">
+      <Card className="w-full max-w-sm glass border-border/30">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Welcome to Base 44</CardTitle>
-          <CardDescription>
+          <div className="flex justify-center mb-4">
+            <BrainCircuit className="h-12 w-12 text-primary" />
+          </div>
+          <CardTitle className="text-3xl font-bold">Welcome to Base 44</CardTitle>
+          <CardDescription className="text-muted-foreground pt-2">
             Your AI-powered financial co-pilot.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
-          <Button onClick={handleAnonymousSignIn} className="w-full">
+          <Button onClick={handleAnonymousSignIn} className="w-full" size="lg">
             Sign In As Guest
           </Button>
-          <p className="text-xs text-muted-foreground text-center">
-            For this demo, we'll sign you in anonymously.
+          <p className="text-xs text-muted-foreground text-center px-4">
+            For this demo, we'll sign you in anonymously to explore the app.
           </p>
         </CardContent>
       </Card>
@@ -55,25 +57,13 @@ export default function LandingPage() {
   }, [user, isLoading, router]);
 
 
-  if (isLoading) {
+  if (isLoading || user) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center animated-background">
         <div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-primary"></div>
       </div>
     );
   }
 
-  if(user) {
-    return null; // or a loading spinner, since the redirect is happening
-  }
-
-  return (
-    <div className="min-h-screen flex flex-col">
-      <Header />
-      <main className="flex-grow flex items-center justify-center">
-        <SignInPrompt />
-      </main>
-      <Footer />
-    </div>
-  );
+  return <SignInPrompt />;
 }
