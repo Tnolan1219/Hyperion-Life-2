@@ -30,10 +30,10 @@ import {
   RefreshCw,
   DollarSign,
   TrendingUp,
-  FilePieChart,
   BrainCircuit,
   Star,
   AreaChart,
+  CrystalBall,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -50,6 +50,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { PortfolioValueChart } from '@/components/portfolio/charts/PortfolioValueChart';
 import { AssetAllocationChart } from '@/components/portfolio/charts/AssetAllocationChart';
 import { SectorDiversificationChart } from '@/components/portfolio/charts/SectorDiversificationChart';
+import { PredictiveControls } from '@/components/portfolio/forecasting/Controls';
+import { ProjectedGrowthChart } from '@/components/portfolio/forecasting/ProjectedGrowthChart';
+import { MonteCarloChart } from '@/components/portfolio/forecasting/MonteCarloChart';
+import { AiInsights } from '@/components/portfolio/forecasting/AiInsights';
+
 
 export type Asset = {
   id?: string;
@@ -77,7 +82,7 @@ const AssetRow = ({ asset, totalValue }: { asset: Asset, totalValue: number }) =
     const { user } = useUser();
 
     // Mock data for display until API is integrated
-    const price = asset.price || (asset.type === 'Stock' ? Math.random() * 500 : Math.random() * 70000);
+    const price = asset.price || (asset.type === 'Stock' ? Math.random() * 500 : asset.type === 'Crypto' ? Math.random() * 70000 : 100);
     const value = asset.balance * price;
     const gainLoss = asset.averageCost ? value - (asset.balance * asset.averageCost) : 0;
     const gainLossPercent = asset.averageCost && asset.averageCost > 0 ? (gainLoss / (asset.balance * asset.averageCost)) * 100 : 0;
@@ -210,7 +215,7 @@ export default function PortfolioPage() {
 
     const processed = assets.map(asset => {
         // Mock price for now
-        const price = asset.price || (asset.type === 'Stock' ? Math.random() * 500 : Math.random() * 70000);
+        const price = asset.price || (asset.type === 'Stock' ? Math.random() * 500 : asset.type === 'Crypto' ? Math.random() * 70000 : 100);
         const value = asset.balance * price;
         const cost = asset.balance * (asset.averageCost || 0);
         runningTotalValue += value;
@@ -248,11 +253,12 @@ export default function PortfolioPage() {
       </div>
 
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 max-w-2xl mb-6">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-5 max-w-2xl mb-6">
+          <TabsTrigger value="overview"><AreaChart className="w-4 h-4 mr-2"/>Overview</TabsTrigger>
           <TabsTrigger value="analysis">Holdings Analysis</TabsTrigger>
-          <TabsTrigger value="insights">AI Insights</TabsTrigger>
-          <TabsTrigger value="watchlist">Watchlist</TabsTrigger>
+          <TabsTrigger value="predictive"><CrystalBall className="w-4 h-4 mr-2" />Predictive Modeling</TabsTrigger>
+          <TabsTrigger value="insights"><BrainCircuit className="w-4 h-4 mr-2" />AI Insights</TabsTrigger>
+          <TabsTrigger value="watchlist"><Star className="w-4 h-4 mr-2" />Watchlist</TabsTrigger>
         </TabsList>
         
         <TabsContent value="overview">
@@ -351,6 +357,16 @@ export default function PortfolioPage() {
                 </Card>
             </>
           )}
+        </TabsContent>
+        <TabsContent value="predictive" className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-1 space-y-6">
+                <PredictiveControls />
+            </div>
+            <div className="lg:col-span-2 space-y-6">
+                <ProjectedGrowthChart />
+                <MonteCarloChart />
+                <AiInsights />
+            </div>
         </TabsContent>
          <TabsContent value="insights">
            <Card className="min-h-[60vh] flex flex-col items-center justify-center bg-card/60 border-border/60 border-dashed">
