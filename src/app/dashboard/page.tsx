@@ -7,9 +7,6 @@ import {
   Goal,
   Landmark,
   User,
-  Sun,
-  Moon,
-  Bell,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -20,12 +17,10 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { useAuth, useUser, useFirestore } from '@/firebase';
-import { initiateAnonymousSignIn } from '@/firebase/non-blocking-login';
 import { collection, query } from 'firebase/firestore';
 import { useCollection } from '@/firebase/firestore/use-collection';
 
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, PieChart, Pie } from 'recharts';
-import { Auth } from 'firebase/auth';
+import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, PieChart, Pie, Cell } from 'recharts';
 import { useMemoFirebase } from '@/hooks/use-memo-firebase';
 import { useRouter } from 'next/navigation';
 import { Header } from '@/components/landing/header';
@@ -63,7 +58,7 @@ const StatCard = ({
     <CardContent>
       <div className="text-2xl font-bold">{value}</div>
       {description && (
-        <p className="text-xs text-text-muted">{description}</p>
+        <p className="text-xs text-muted-foreground">{description}</p>
       )}
     </CardContent>
   </Card>
@@ -131,9 +126,11 @@ const Dashboard = () => {
   }, [assets]);
   
   const debtToAssetsData = [
-    { name: 'Assets', value: totalAssets },
-    { name: 'Debts', value: totalDebts },
+    { name: 'Assets', value: totalAssets, fill: 'hsl(var(--primary))' },
+    { name: 'Debts', value: totalDebts, fill: 'hsl(var(--destructive))' },
   ];
+
+  const COLORS = ['hsl(var(--primary))', '#00C49F', '#FFBB28', '#FF8042'];
 
   return (
     <div className="pt-24 pb-16 space-y-8">
@@ -146,25 +143,25 @@ const Dashboard = () => {
             title="Net Worth"
             value={formatCurrency(netWorth)}
             description="Total assets minus total debts"
-            icon={<User className="h-4 w-4 text-text-muted" />}
+            icon={<User className="h-4 w-4 text-muted-foreground" />}
           />
           <StatCard
             title="Total Assets"
             value={formatCurrency(totalAssets)}
             description={`${assets?.length || 0} assets tracked`}
-            icon={<Landmark className="h-4 w-4 text-text-muted" />}
+            icon={<Landmark className="h-4 w-4 text-muted-foreground" />}
           />
           <StatCard
             title="Total Debts"
             value={formatCurrency(totalDebts)}
             description={`${debts?.length || 0} debts tracked`}
-            icon={<DollarSign className="h-4 w-4 text-text-muted" />}
+            icon={<DollarSign className="h-4 w-4 text-muted-foreground" />}
           />
           <StatCard
             title="Goals"
             value={`${goals?.length || 0} Active`}
             description="On track to meet your targets"
-            icon={<Goal className="h-4 w-4 text-text-muted" />}
+            icon={<Goal className="h-4 w-4 text-muted-foreground" />}
           />
         </div>
         <div className="grid md:grid-cols-3 gap-8 mt-8">
@@ -178,7 +175,11 @@ const Dashboard = () => {
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
-                  <Pie data={assetAllocation} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} fill="hsl(var(--primary-neon))" label />
+                  <Pie data={assetAllocation} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} fill="hsl(var(--primary))" label>
+                    {assetAllocation.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
                 </PieChart>
               </ResponsiveContainer>
             </CardContent>
@@ -191,9 +192,13 @@ const Dashboard = () => {
             <CardContent>
                <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={debtToAssetsData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                  <XAxis dataKey="name" stroke="hsl(var(--text-muted))" fontSize={12} tickLine={false} axisLine={false} />
-                  <YAxis stroke="hsl(var(--text-muted))" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${Number(value) / 1000}k`} />
-                  <Bar dataKey="value" fill="hsl(var(--primary-neon))" radius={[4, 4, 0, 0]} />
+                  <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+                  <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${Number(value) / 1000}k`} />
+                  <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                    {debtToAssetsData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))}
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -207,8 +212,8 @@ const Dashboard = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col items-center justify-center text-center h-[200px]">
-                <BrainCircuit className="w-12 h-12 text-primary-neon mb-4" />
-                <p className="text-text-muted mb-4">Ready to optimize your finances? Start a session with your AI coach.</p>
+                <BrainCircuit className="w-12 h-12 text-primary mb-4" />
+                <p className="text-muted-foreground mb-4">Ready to optimize your finances? Start a session with your AI coach.</p>
                 <Button>Start Coaching Session</Button>
             </CardContent>
           </Card>
@@ -217,11 +222,12 @@ const Dashboard = () => {
   );
 };
 
-const SignInPrompt = ({ auth }: { auth: Auth | null }) => {
+const SignInPrompt = () => {
+  const auth = useAuth();
   const handleAnonymousSignIn = async () => {
     if (auth) {
       try {
-        initiateAnonymousSignIn(auth);
+        await (await import('@/firebase/non-blocking-login')).initiateAnonymousSignIn(auth);
       } catch (error) {
         console.error('Anonymous sign-in failed', error);
       }
@@ -229,7 +235,7 @@ const SignInPrompt = ({ auth }: { auth: Auth | null }) => {
   };
 
   return (
-    <div className="min-h-screen gradient-hero flex items-center justify-center">
+    <div className="min-h-screen flex items-center justify-center">
       <Card className="w-full max-w-sm glass">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">Welcome to Base 44</CardTitle>
@@ -238,10 +244,10 @@ const SignInPrompt = ({ auth }: { auth: Auth | null }) => {
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
-          <Button onClick={handleAnonymousSignIn} className="w-full btn-primary-gradient text-background font-bold">
+          <Button onClick={handleAnonymousSignIn} className="w-full">
             Sign In As Guest
           </Button>
-          <p className="text-xs text-text-muted text-center">
+          <p className="text-xs text-muted-foreground text-center">
             By signing in, you agree to our Terms of Service. For this demo, we'll
             sign you in anonymously.
           </p>
@@ -253,7 +259,6 @@ const SignInPrompt = ({ auth }: { auth: Auth | null }) => {
 
 export default function DashboardPage() {
   const { user, isLoading } = useUser();
-  const auth = useAuth();
   const router = useRouter();
 
   React.useEffect(() => {
@@ -264,14 +269,14 @@ export default function DashboardPage() {
 
   if (isLoading || !user) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-primary"></div>
       </div>
     );
   }
   
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen animated-background">
       <Header />
       <main>
         <Dashboard />

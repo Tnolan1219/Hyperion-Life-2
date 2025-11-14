@@ -6,8 +6,45 @@ import { Button } from '@/components/ui/button';
 import { Header } from '@/components/landing/header';
 import { Footer } from '@/components/landing/footer';
 import { ArrowRight, Sparkles } from 'lucide-react';
-import { useUser } from '@/firebase';
+import { useUser, useAuth } from '@/firebase';
 import { useRouter } from 'next/navigation';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+
+const SignInPrompt = () => {
+  const auth = useAuth();
+  const handleAnonymousSignIn = async () => {
+    if (auth) {
+      try {
+        await (await import('@/firebase/non-blocking-login')).initiateAnonymousSignIn(auth);
+      } catch (error) {
+        console.error('Anonymous sign-in failed', error);
+      }
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <Card className="w-full max-w-sm glass">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl">Welcome to Base 44</CardTitle>
+          <CardDescription>
+            Sign in to continue to your dashboard
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4">
+          <Button onClick={handleAnonymousSignIn} className="w-full">
+            Sign In As Guest
+          </Button>
+          <p className="text-xs text-muted-foreground text-center">
+            By signing in, you agree to our Terms of Service. For this demo, we'll
+            sign you in anonymously.
+          </p>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
 
 export default function LandingPage() {
   const { user, isLoading } = useUser();
@@ -51,48 +88,23 @@ export default function LandingPage() {
     }
   }, []);
 
-  if (isLoading || user) {
+  if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-primary"></div>
       </div>
     );
   }
 
+  if(user) {
+    return null; // or a loading spinner, since the redirect is happening
+  }
+
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen flex flex-col">
       <Header />
-      <main className="flex-grow">
-        <section className="relative w-full overflow-hidden">
-          <div className="absolute inset-0 gradient-hero -z-10" />
-          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-32">
-            <div className="text-center" data-reveal>
-              <div className="inline-flex items-center justify-center bg-chip rounded-full px-4 py-1.5 text-sm font-medium tracking-wide mb-6">
-                <Sparkles className="w-4 h-4 mr-2 text-primary" />
-                Your AI-Powered Financial Co-Pilot
-              </div>
-              <h1 className="text-4xl md:text-6xl font-bold !leading-tight tracking-tighter">
-                Maximize Your Net Worth.
-                <br />
-                <span className="text-primary">Design Your Future.</span>
-              </h1>
-              <p className="max-w-2xl mx-auto mt-6 text-lg text-text-muted">
-                Base 44 is your personal financial strategist, combining intuitive design, secure integrations, and intelligent recommendations to guide you to long-term wealth.
-              </p>
-              <div className="mt-8 flex justify-center gap-4">
-                <Button
-                  asChild
-                  size="lg"
-                  className="btn-primary-gradient text-background font-bold text-base h-12 px-8 rounded-full"
-                >
-                  <Link href="/dashboard">
-                    Get Started <ArrowRight className="ml-2" />
-                  </Link>
-                </Button>
-              </div>
-            </div>
-          </div>
-        </section>
+      <main className="flex-grow flex items-center justify-center">
+        <SignInPrompt />
       </main>
       <Footer />
     </div>
