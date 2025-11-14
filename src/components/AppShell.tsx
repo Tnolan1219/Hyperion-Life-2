@@ -16,6 +16,7 @@ import { useUser } from '@/firebase';
 import { Header } from '@/components/landing/header';
 import { AiChatBox } from '@/components/dashboard/ai-chat-box';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
+import { Logo } from './icons/logo';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: Home, color: 'sky' },
@@ -146,7 +147,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="flex h-14 items-center justify-center w-full lg:h-[60px] mb-2">
             <Link href="/" className="flex items-center justify-center gap-3 font-semibold text-foreground transition-opacity duration-300">
             <span className="text-primary">
-                <BrainCircuit className="h-7 w-7" />
+                <Logo className="h-7 w-7" />
             </span>
             </Link>
         </div>

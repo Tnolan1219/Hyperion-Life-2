@@ -33,6 +33,7 @@ import {
   Sparkles,
   Send,
   Loader2,
+  Calendar,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -45,6 +46,7 @@ import { collection, doc } from 'firebase/firestore';
 import React, { useMemo, useState } from 'react';
 import { deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { PortfolioDialog } from '@/components/portfolio/PortfolioDialog';
+import { DebtDialog } from '@/components/portfolio/DebtDialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AssetAllocationChart } from '@/components/portfolio/charts/AssetAllocationChart';
 import { SectorDiversificationChart } from '@/components/portfolio/charts/SectorDiversificationChart';
@@ -54,7 +56,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PredictiveControls } from '@/components/portfolio/forecasting/Controls';
 import { ProjectedGrowthChart } from '@/components/portfolio/forecasting/ProjectedGrowthChart';
-import { MonteCarloChart } from '@/components/portfolio/forecasting/MonteCarloChart';
 import { AiInsights } from '@/components/portfolio/forecasting/AiInsights';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -63,6 +64,8 @@ import { BudgetSummary } from '@/components/portfolio/budget/BudgetSummary';
 import { CategorySpendingChart } from '@/components/portfolio/budget/CategorySpendingChart';
 import { IncomeExpenseTable } from '@/components/portfolio/budget/IncomeExpenseTable';
 import dynamic from 'next/dynamic';
+import { BudgetVsActualChart } from '@/components/portfolio/budget/BudgetVsActualChart';
+import { RunFinancialSimulationOutput, RunFinancialSimulationInput } from '@/ai/flows/run-financial-simulation';
 
 export type Asset = {
   id?: string;
@@ -79,6 +82,17 @@ export type Asset = {
   dividendYield?: number;
   beta?: number;
 };
+
+export type Debt = {
+    id?: string;
+    type: 'Loan' | 'Credit Card' | 'Mortgage' | 'Student Loan' | 'Other';
+    name: string;
+    lender: string;
+    balance: number;
+    apr: number;
+    minimumPayment: number;
+    userId?: string;
+}
 
 export type Transaction = {
     id?: string;
@@ -180,6 +194,53 @@ const AssetRow = ({ asset, totalValue }: { asset: Asset, totalValue: number }) =
           </TableCell>
         </TableRow>
         <PortfolioDialog isOpen={isDialogOpen} setIsOpen={setIsDialogOpen} asset={asset} />
+        </>
+    )
+}
+
+const DebtRow = ({ debt }: { debt: Debt }) => {
+    const [isDialogOpen, setIsDialogOpen] = React.useState(false);
+    const firestore = useFirestore();
+    const { user } = useUser();
+
+    const handleDelete = () => {
+        if (firestore && user && debt.id) {
+            const debtDocRef = doc(firestore, `users/${user.uid}/debts`, debt.id);
+            deleteDocumentNonBlocking(debtDocRef);
+        }
+    }
+    
+    return (
+        <>
+        <TableRow key={debt.id} className="transition-colors hover:bg-muted/40">
+          <TableCell>
+            <div className="font-medium">{debt.name}</div>
+            <div className="text-sm text-muted-foreground">
+              {debt.lender}
+            </div>
+          </TableCell>
+           <TableCell>{debt.type}</TableCell>
+          <TableCell>{formatCurrency(debt.balance)}</TableCell>
+          <TableCell>{debt.apr.toFixed(2)}%</TableCell>
+          <TableCell>{formatCurrency(debt.minimumPayment)}</TableCell>
+          <TableCell className="text-right">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-8 w-8 p-0">
+                  <span className="sr-only">Open menu</span>
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setIsDialogOpen(true)}>Edit</DropdownMenuItem>
+                <DropdownMenuItem onClick={handleDelete} className="text-red-500">
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </TableCell>
+        </TableRow>
+        <DebtDialog isOpen={isDialogOpen} setIsOpen={setIsDialogOpen} debt={debt} />
         </>
     )
 }
@@ -296,6 +357,7 @@ const LoadingSection = () => (
 
 
 const HoldingsAnalysisSection = () => {
+    const [isAssetDialogOpen, setIsAssetDialogOpen] = useState(false);
     const { user } = useUser();
     const firestore = useFirestore();
 
@@ -353,6 +415,7 @@ const HoldingsAnalysisSection = () => {
     }
     
     return (
+        <>
         <div className="space-y-8">
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
                 <div className="xl:col-span-1">
@@ -389,8 +452,16 @@ const HoldingsAnalysisSection = () => {
 
             <Card>
                 <CardHeader>
-                <CardTitle>Investment Holdings</CardTitle>
-                <CardDescription>Your individual investment positions.</CardDescription>
+                    <div className="flex justify-between items-center">
+                        <div>
+                            <CardTitle>Investment Holdings</CardTitle>
+                            <CardDescription>Your individual investment positions.</CardDescription>
+                        </div>
+                         <Button onClick={() => setIsAssetDialogOpen(true)}>
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            Add Asset
+                        </Button>
+                    </div>
                 </CardHeader>
                 <CardContent>
                 <Table>
@@ -416,6 +487,66 @@ const HoldingsAnalysisSection = () => {
             </Card>
             <AIPortfolioAnalysis assets={assets || []} />
         </div>
+        <PortfolioDialog isOpen={isAssetDialogOpen} setIsOpen={setIsAssetDialogOpen} />
+        </>
+    )
+}
+
+const DebtsSection = () => {
+    const [isDebtDialogOpen, setIsDebtDialogOpen] = useState(false);
+    const { user } = useUser();
+    const firestore = useFirestore();
+
+    const debtsCollection = useMemoFirebase(() => {
+        if (firestore && user) {
+            return collection(firestore, `users/${user.uid}/debts`);
+        }
+        return null;
+    }, [firestore, user]);
+
+    const { data: debts, isLoading } = useCollection<Debt>(debtsCollection);
+
+    if (isLoading) {
+        return <LoadingSection />;
+    }
+
+    return (
+         <>
+        <Card>
+            <CardHeader>
+                <div className="flex justify-between items-center">
+                    <div>
+                        <CardTitle>Liabilities</CardTitle>
+                        <CardDescription>All your outstanding debts.</CardDescription>
+                    </div>
+                    <Button onClick={() => setIsDebtDialogOpen(true)}>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Add Debt
+                    </Button>
+                </div>
+            </CardHeader>
+            <CardContent>
+                <Table>
+                    <TableHeader>
+                        <TableRow className="hover:bg-transparent">
+                            <TableHead>Name</TableHead>
+                            <TableHead>Type</TableHead>
+                            <TableHead>Balance</TableHead>
+                            <TableHead>APR</TableHead>
+                            <TableHead>Min. Payment</TableHead>
+                            <TableHead className="w-[50px] text-right">Actions</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {(debts || []).map(debt => (
+                            <DebtRow key={debt.id} debt={debt} />
+                        ))}
+                    </TableBody>
+                </Table>
+            </CardContent>
+        </Card>
+        <DebtDialog isOpen={isDebtDialogOpen} setIsOpen={setIsDebtDialogOpen} />
+        </>
     )
 }
 
@@ -435,6 +566,15 @@ const BudgetSection = () => {
 
     const { data: income, isLoading: incomeLoading } = useCollection<Transaction>(incomeCollection);
     const { data: expenses, isLoading: expensesLoading } = useCollection<Transaction>(expensesCollection);
+    
+    // Hardcoded for now
+    const budgetCategories = {
+        'Food': 500,
+        'Housing': 1500,
+        'Transportation': 300,
+        'Entertainment': 200,
+        'Other': 400,
+    }
 
     if (incomeLoading || expensesLoading) {
         return <LoadingSection />;
@@ -443,9 +583,13 @@ const BudgetSection = () => {
     return (
         <div className="space-y-8">
             <BudgetSummary income={income || []} expenses={expenses || []} />
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <CategorySpendingChart expenses={expenses || []} />
-                <CashFlowChart />
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+                <div className="lg:col-span-2">
+                    <CategorySpendingChart expenses={expenses || []} />
+                </div>
+                <div className="lg:col-span-3">
+                    <BudgetVsActualChart expenses={expenses || []} budget={budgetCategories} />
+                </div>
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                  <IncomeExpenseTable title="Income" data={income || []} collectionName='income' />
@@ -456,20 +600,65 @@ const BudgetSection = () => {
 };
 
 const DynamicHoldingsSection = dynamic(() => Promise.resolve(HoldingsAnalysisSection), { loading: () => <LoadingSection /> });
+const DynamicDebtsSection = dynamic(() => Promise.resolve(DebtsSection), { loading: () => <LoadingSection /> });
 const DynamicBudgetSection = dynamic(() => Promise.resolve(BudgetSection), { loading: () => <LoadingSection /> });
 
-const DynamicForecastingSection = () => (
-     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-1">
-            <PredictiveControls />
+const DynamicForecastingSection = () => {
+    const { user } = useUser();
+    const firestore = useFirestore();
+    const [simulationResult, setSimulationResult] = useState<RunFinancialSimulationOutput | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
+    
+    const assetsCollection = useMemoFirebase(() => {
+        if (firestore && user) return collection(firestore, `users/${user.uid}/assets`);
+        return null;
+    }, [firestore, user]);
+
+    const { data: assets } = useCollection<Asset>(assetsCollection);
+    
+    const totalValue = useMemo(() => {
+         if (!assets) return 0;
+         return assets.reduce((acc, asset) => {
+            const price = asset.price || (asset.type === 'Stock' ? Math.random() * 500 : asset.type === 'Crypto' ? Math.random() * 70000 : 100);
+            return acc + asset.balance * price;
+        }, 0);
+    }, [assets]);
+
+    const handleRunSimulation = async (inputs: Omit<RunFinancialSimulationInput, 'initialValue'>) => {
+        setIsLoading(true);
+        setSimulationResult(null);
+
+        try {
+            const response = await fetch('/api/genkit/runFinancialSimulationFlow', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...inputs, initialValue: totalValue }),
+            });
+            const result = await response.json();
+            if (response.ok) {
+                setSimulationResult(result);
+            } else {
+                throw new Error(result.error || 'Failed to run simulation');
+            }
+        } catch (error) {
+            console.error("Simulation error:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    }
+
+     return (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-1">
+                <PredictiveControls onRunSimulation={handleRunSimulation} isLoading={isLoading} />
+            </div>
+            <div className="lg:col-span-2 space-y-8">
+                <ProjectedGrowthChart simulationResult={simulationResult} />
+                <AiInsights simulationResult={simulationResult} />
+            </div>
         </div>
-        <div className="lg:col-span-2 space-y-8">
-            <ProjectedGrowthChart />
-            <MonteCarloChart />
-            <AiInsights />
-        </div>
-    </div>
-);
+    );
+};
 
 const DynamicOverviewSection = () => (
     <div className="space-y-8">
@@ -528,7 +717,6 @@ const DynamicOverviewSection = () => (
 
 
 export default function NetWorthPage() {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   return (
     <div className="space-y-8">
@@ -544,17 +732,14 @@ export default function NetWorthPage() {
             <RefreshCw className="mr-2 h-4 w-4" />
             Refresh Data
           </Button>
-          <Button onClick={() => setIsDialogOpen(true)}>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Add Position
-          </Button>
         </div>
       </div>
 
-       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+       <Tabs defaultValue="holdings" className="w-full">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="holdings">Holdings</TabsTrigger>
+          <TabsTrigger value="debts">Debts</TabsTrigger>
           <TabsTrigger value="budget">Budget</TabsTrigger>
           <TabsTrigger value="forecasting">Forecasting</TabsTrigger>
         </TabsList>
@@ -564,6 +749,9 @@ export default function NetWorthPage() {
         <TabsContent value="holdings" className="pt-6">
             <DynamicHoldingsSection />
         </TabsContent>
+        <TabsContent value="debts" className="pt-6">
+            <DynamicDebtsSection />
+        </TabsContent>
         <TabsContent value="budget" className="pt-6">
             <DynamicBudgetSection />
         </TabsContent>
@@ -572,7 +760,6 @@ export default function NetWorthPage() {
         </TabsContent>
       </Tabs>
       
-      <PortfolioDialog isOpen={isDialogOpen} setIsOpen={setIsDialogOpen} />
     </div>
   );
 }

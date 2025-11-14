@@ -383,10 +383,8 @@ function LifePlanCanvas() {
         proOptions={{ hideAttribution: true }}
         deleteKeyCode={['Backspace', 'Delete']}
         minZoom={0.1}
-        connectionMode='loose'
         connectionRadius={50}
-        connectOnClick={true}
-        multiSelectionKeyCode={null}
+        connectOnClick={false}
       >
         <div className="absolute top-4 right-4 z-10 flex gap-2">
             <DropdownMenu>

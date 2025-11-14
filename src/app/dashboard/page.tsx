@@ -37,6 +37,18 @@ import { useMemo } from 'react';
 import { collection } from 'firebase/firestore';
 import { Goal } from '../goals/page';
 import { Progress } from '@/components/ui/progress';
+import { Asset } from '../portfolio/page';
+import { Debt } from '../portfolio/page';
+
+const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      notation: 'compact',
+      maximumFractionDigits: 2,
+    }).format(value);
+};
+
 
 const StatCard = ({
   title,
@@ -167,7 +179,36 @@ export default function Dashboard() {
     return null;
   }, [firestore, user]);
 
+  const assetsCollection = useMemoFirebase(() => {
+    if (firestore && user) {
+      return collection(firestore, `users/${user.uid}/assets`);
+    }
+    return null;
+  }, [firestore, user]);
+
+  const debtsCollection = useMemoFirebase(() => {
+    if (firestore && user) {
+      return collection(firestore, `users/${user.uid}/debts`);
+    }
+    return null;
+  }, [firestore, user]);
+
   const { data: goals, isLoading: goalsLoading } = useCollection<Goal>(goalsCollection);
+  const { data: assets, isLoading: assetsLoading } = useCollection<Asset>(assetsCollection);
+  const { data: debts, isLoading: debtsLoading } = useCollection<Debt>(debtsCollection);
+
+  const { netWorth, totalAssets, totalLiabilities, cashFlow } = useMemo(() => {
+    const totalAssets = assets?.reduce((acc, asset) => {
+        const price = asset.price || (asset.type === 'Stock' ? Math.random() * 500 : asset.type === 'Crypto' ? Math.random() * 70000 : 100);
+        return acc + asset.balance * price;
+    }, 0) || 0;
+    const totalLiabilities = debts?.reduce((acc, debt) => acc + debt.balance, 0) || 0;
+    const netWorth = totalAssets - totalLiabilities;
+    // TODO: Calculate cash flow from income/expenses
+    const cashFlow = 1250; 
+    return { netWorth, totalAssets, totalLiabilities, cashFlow };
+  }, [assets, debts]);
+
 
   const goalInFocus = useMemo(() => {
     if (!goals || goals.length === 0) return null;
@@ -196,25 +237,25 @@ export default function Dashboard() {
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Net Worth"
-          value="$24,812"
+          value={formatCurrency(netWorth)}
           description="+3.2% this month"
           icon={<DollarSign className="h-5 w-5" />}
         />
         <StatCard
           title="Assets"
-          value="$38,120"
+          value={formatCurrency(totalAssets)}
           description="Mainly investments"
           icon={<TrendingUp className="h-5 w-5" />}
         />
         <StatCard
           title="Liabilities"
-          value="$13,308"
+          value={formatCurrency(totalLiabilities)}
           description="Student loans"
           icon={<TrendingDown className="h-5 w-5" />}
         />
         <StatCard
           title="Cash Flow"
-          value="+$1,250"
+          value={`+${formatCurrency(cashFlow)}`}
           description="After expenses"
           icon={<Activity className="h-5 w-5" />}
         />

@@ -28,6 +28,7 @@ import {
   AreaChart,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Logo } from '../icons/logo';
 
 
 const navItems = [
@@ -93,7 +94,7 @@ export const Header = () => {
               href="#"
               className="flex items-center gap-2 text-lg font-semibold mb-4"
             >
-              <BrainCircuit className="h-6 w-6 text-primary" />
+              <Logo className="h-6 w-6 text-primary" />
               <span>Base 44</span>
             </Link>
             {navItems.map(item => (
@@ -161,6 +162,4 @@ export const Header = () => {
       )}
     </header>
   );
-};
-
-    
+}
