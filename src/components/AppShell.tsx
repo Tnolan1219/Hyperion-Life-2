@@ -22,6 +22,7 @@ import { useUser } from '@/firebase';
 import { Header } from '@/components/landing/header';
 import { Chatbot } from '@/components/chatbot';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
+import { Button } from './ui/button';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: Home, color: 'sky' },
