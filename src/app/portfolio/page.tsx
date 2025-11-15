@@ -701,7 +701,7 @@ export default function NetWorthPage() {
     <div className="space-y-8">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-4xl font-bold">Net Worth</h1>
+          <h1 className="text-4xl font-bold text-primary">Net Worth</h1>
           <p className="text-muted-foreground mt-2">
             A comprehensive overview of your financial landscape.
           </p>

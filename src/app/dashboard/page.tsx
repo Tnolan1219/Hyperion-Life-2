@@ -69,7 +69,7 @@ const StatCard = ({
       <div className="text-muted-foreground">{icon}</div>
     </CardHeader>
     <CardContent>
-      <div className="text-3xl font-bold">{value}</div>
+      <div className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary py-1">{value}</div>
       <p className="text-sm text-muted-foreground mt-1">{description}</p>
     </CardContent>
   </Card>
@@ -147,7 +147,7 @@ const GoalInFocus = ({ goal }: { goal: Goal }) => {
                         </defs>
                     </svg>
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="text-3xl font-bold text-primary">{progress.toFixed(0)}%</span>
+                        <span className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">{progress.toFixed(0)}%</span>
                     </div>
                 </div>
                 <h3 className="text-xl font-bold mt-4">{goal.title}</h3>
@@ -224,7 +224,7 @@ export default function Dashboard() {
     <div className="space-y-8">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-4xl font-bold flex items-center gap-3">
+          <h1 className="text-4xl font-bold flex items-center gap-3 text-primary">
             {greeting}, {user?.displayName || 'Guest'}
             <span className="text-3xl">👋</span>
           </h1>
@@ -334,5 +334,3 @@ export default function Dashboard() {
     </div>
   );
 }
-
-    

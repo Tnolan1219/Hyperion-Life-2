@@ -27,7 +27,7 @@ export function BudgetSummary({ income, expenses }: { income: Transaction[], exp
                     <TrendingUp className="h-4 w-4 text-green-400" />
                 </CardHeader>
                 <CardContent>
-                    <p className="text-2xl font-bold">{formatCurrency(totalIncome)}</p>
+                    <p className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">{formatCurrency(totalIncome)}</p>
                     <p className="text-xs text-muted-foreground">This month</p>
                 </CardContent>
             </Card>
@@ -37,7 +37,7 @@ export function BudgetSummary({ income, expenses }: { income: Transaction[], exp
                     <TrendingDown className="h-4 w-4 text-red-400" />
                 </CardHeader>
                 <CardContent>
-                    <p className="text-2xl font-bold">{formatCurrency(totalExpenses)}</p>
+                    <p className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">{formatCurrency(totalExpenses)}</p>
                     <p className="text-xs text-muted-foreground">This month</p>
                 </CardContent>
             </Card>
@@ -47,7 +47,7 @@ export function BudgetSummary({ income, expenses }: { income: Transaction[], exp
                     <DollarSign className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <p className={`text-2xl font-bold ${netCashFlow >= 0 ? 'text-green-400' : 'text-red-400'}`}>{formatCurrency(netCashFlow)}</p>
+                    <p className={`text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary ${netCashFlow >= 0 ? 'text-green-400' : 'text-red-400'}`}>{formatCurrency(netCashFlow)}</p>
                     <p className="text-xs text-muted-foreground">This month</p>
                 </CardContent>
             </Card>

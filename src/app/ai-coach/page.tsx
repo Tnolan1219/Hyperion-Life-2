@@ -172,7 +172,7 @@ export default function AICoachPage() {
   return (
     <div className="space-y-8">
       <div className="mb-8">
-        <h1 className="text-4xl font-bold">AI Coach</h1>
+        <h1 className="text-4xl font-bold text-primary">AI Coach</h1>
         <p className="text-muted-foreground mt-2">
           Your personal AI for financial wisdom and strategic planning.
         </p>

@@ -433,11 +433,11 @@ function LifePlanCanvas() {
             <Card className="glass py-2 px-4 flex items-center gap-6">
                 <div className="text-center">
                     <p className="text-xs text-muted-foreground">Projected Net Worth</p>
-                    <p className="text-lg font-bold text-green-400">{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', notation: 'compact' }).format(netWorth)}</p>
+                    <p className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', notation: 'compact' }).format(netWorth)}</p>
                 </div>
                 <div className="text-center">
                     <p className="text-xs text-muted-foreground">Est. Annual Income</p>
-                    <p className="text-lg font-bold">{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', notation: 'compact' }).format(annualIncome)}/yr</p>
+                    <p className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', notation: 'compact' }).format(annualIncome)}/yr</p>
                 </div>
             </Card>
         </Panel>
@@ -487,7 +487,7 @@ export default function LifePlanPage() {
   return (
     <div className="flex flex-col gap-8 h-full">
       <div className="flex-shrink-0 px-4 md:px-8">
-        <h1 className="text-4xl font-bold">Life Plan</h1>
+        <h1 className="text-4xl font-bold text-primary">Life Plan</h1>
         <p className="text-muted-foreground mt-2">
           Visualize and map out your financial future. Drag, drop, and connect
           the dots.
