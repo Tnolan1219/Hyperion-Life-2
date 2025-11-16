@@ -96,6 +96,7 @@ const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = 'TB') => 
     dagreGraph.setNode(node.id, { width: nodeWidth, height: nodeHeight });
   });
 
+  
   edges.forEach((edge) => {
     dagreGraph.setEdge(edge.source, edge.target);
   });
@@ -460,7 +461,7 @@ function LifePlanPageContent({
             case 'life-plan':
                 return (
                     <div className="flex-grow flex flex-col min-h-0">
-                        <div className="flex-grow relative">
+                        <div className="flex-grow relative h-[calc(100vh-280px)]">
                              <LifePlanCanvas 
                                 nodes={nodes}
                                 edges={edges}
@@ -480,11 +481,9 @@ function LifePlanPageContent({
                                 setIsExpanded={setIsExpanded}
                             />
                         </div>
-                        {!isExpanded && (
-                            <div className="flex-shrink-0 px-4 md:px-8 mt-8 w-full max-w-2xl mx-auto">
-                                <AIPlanGenerator onGenerate={handleAIGenerate} />
-                            </div>
-                        )}
+                        <div className={cn("px-4 md:px-8 mt-8 w-full max-w-2xl mx-auto flex-shrink-0", isExpanded && 'hidden')}>
+                           <AIPlanGenerator onGenerate={handleAIGenerate} />
+                        </div>
                     </div>
                 )
             case 'timeline':
@@ -509,7 +508,7 @@ export default function LifePlanPage() {
   return (
     <div className={cn(
         "flex flex-col",
-        isExpanded ? "fixed inset-0 bg-background z-50 h-screen" : "relative h-full"
+        isExpanded ? "fixed inset-0 bg-background z-50 h-screen" : "relative"
     )}>
         <div className={cn("px-4 md:px-8 flex-shrink-0", isExpanded ? "pt-4" : "pt-0")}>
             <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">Life Plan</h1>
@@ -558,3 +557,5 @@ export default function LifePlanPage() {
   );
 }
 
+
+    
