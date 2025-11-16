@@ -54,9 +54,9 @@ export function GoalsStep() {
     };
 
     return (
-        <Card className="w-full glass">
+        <Card className="w-full glass onboarding-card">
             <CardHeader>
-                <CardTitle className="text-2xl font-bold">Life Goals & Priorities</CardTitle>
+                <CardTitle className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">Life Goals & Priorities</CardTitle>
                 <CardDescription>
                     What are your biggest life goals right now? Choose all that apply — we’ll
                     tailor your plan accordingly.

@@ -35,9 +35,9 @@ export function InitialGoalsStep() {
   };
 
   return (
-    <Card className="w-full glass">
+    <Card className="w-full glass onboarding-card">
       <CardHeader>
-        <CardTitle className="text-2xl font-bold">Set Some Starting Goals (Optional)</CardTitle>
+        <CardTitle className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">Set Some Starting Goals (Optional)</CardTitle>
         <CardDescription>
           Kickstart your journey by adding a few common financial goals. You can always change these later.
         </CardDescription>

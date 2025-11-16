@@ -10,8 +10,8 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useOnboardingStore } from '@/store/onboarding-store';
-import { useUser, useFirestore, updateDocumentNonBlocking } from '@/firebase';
-import { addDoc, collection, doc } from 'firebase/firestore';
+import { useUser, useFirestore, addDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
+import { collection, doc } from 'firebase/firestore';
 import { CheckCircle, Map, Wallet, Brain } from 'lucide-react';
 import { Goal } from '@/app/goals/page';
 
@@ -29,29 +29,37 @@ export function SummaryStep() {
     const handleFinish = async () => {
         if (!user || !firestore) return;
 
+        // Use user.uid for doc IDs to enforce 1:1 relationship
         const userProfileRef = doc(firestore, `users/${user.uid}/profiles`, user.uid);
         const userPreferencesRef = doc(firestore, `users/${user.uid}/preferences`, user.uid);
         const goalsCollectionRef = collection(firestore, `users/${user.uid}/goals`);
 
         // Save profile data
-        updateDocumentNonBlocking(userProfileRef, {
+        setDocumentNonBlocking(userProfileRef, {
+            id: user.uid,
             name: fullName,
-            age: parseInt(age),
+            age: parseInt(age) || 0,
             careerStage,
             income: incomeRange,
-        });
-
+            location: 'Not specified' // Default value
+        }, { merge: true });
+        
         // Save preferences data
-        updateDocumentNonBlocking(userPreferencesRef, {
+        setDocumentNonBlocking(userPreferencesRef, {
+            id: user.uid,
             lifeGoals,
             financialSuccessDescription,
             planningPreferences,
-            onboardingComplete: true
-        });
+            onboardingComplete: true,
+            riskTolerance: 'Not specified', // Default value
+            darkMode: true, // Default value
+            reducedMotion: false, // Default value
+            notificationOptIn: false // Default value
+        }, { merge: true });
 
         // Save initial goals
         initialGoals.forEach((goal: Omit<Goal, 'id' | 'userId'>) => {
-            addDoc(goalsCollectionRef, { ...goal, userId: user.uid });
+            addDocumentNonBlocking(goalsCollectionRef, { ...goal, userId: user.uid });
         });
         
         // This is a bit of a hack to force the useUser hook to re-evaluate
@@ -63,12 +71,12 @@ export function SummaryStep() {
     };
 
     return (
-        <Card className="w-full glass text-center">
+        <Card className="w-full glass text-center onboarding-card">
             <CardHeader>
                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-500/20 mb-4">
                     <CheckCircle className="h-10 w-10 text-green-500" />
                 </div>
-                <CardTitle className="text-3xl font-bold">You’re All Set!</CardTitle>
+                <CardTitle className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">You’re All Set!</CardTitle>
                 <CardDescription className="text-lg">
                     We’ve built a personalized experience based on your goals and preferences.
                 </CardDescription>

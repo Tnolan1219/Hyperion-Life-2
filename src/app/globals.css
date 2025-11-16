@@ -83,6 +83,31 @@
      background: linear-gradient(180deg, hsl(var(--card) / 0.8), hsl(var(--background) / 0.8));
      @apply rounded-3xl border border-white/5 shadow-2xl shadow-black/40 backdrop-blur-lg;
   }
+
+  .onboarding-card {
+    @apply relative overflow-hidden;
+  }
+
+  .onboarding-card::before {
+    content: '';
+    @apply absolute -top-1/2 -left-1/2 w-[200%] h-[200%] bg-gradient-to-r from-transparent via-primary/20 to-transparent;
+    animation: rotate 10s linear infinite;
+    opacity: 0;
+    transition: opacity 0.5s;
+  }
+
+  .onboarding-card:hover::before {
+    opacity: 1;
+  }
+
+  @keyframes rotate {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
   
   .animated-background {
     background-color: hsl(var(--background));

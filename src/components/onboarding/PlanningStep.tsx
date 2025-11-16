@@ -34,9 +34,9 @@ export function PlanningStep() {
   };
 
   return (
-    <Card className="w-full glass">
+    <Card className="w-full glass onboarding-card">
       <CardHeader>
-        <CardTitle className="text-2xl font-bold">Planning & Tracking Preferences</CardTitle>
+        <CardTitle className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">Planning & Tracking Preferences</CardTitle>
         <CardDescription>
           How do you like to plan and track your progress?
         </CardDescription>

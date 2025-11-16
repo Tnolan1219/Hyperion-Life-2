@@ -41,9 +41,9 @@ export function WelcomeStep() {
     const canProceed = fullName && age && careerStage;
 
     return (
-        <Card className="w-full glass">
+        <Card className="w-full glass onboarding-card">
             <CardHeader>
-                <CardTitle className="text-2xl font-bold">Welcome to Net Worth Max!</CardTitle>
+                <CardTitle className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">Welcome to Net Worth Max!</CardTitle>
                 <CardDescription>
                     Let’s personalize your experience. This will only take a minute.
                 </CardDescription>
