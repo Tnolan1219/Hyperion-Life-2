@@ -40,7 +40,8 @@ export function NodeEditor({ selectedNode, onNodeDataChange, closeEditor, startC
   
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    const newFormData = { ...formData, [name]: parseFloat(value) || 0 };
+    const parsedValue = name === 'year' ? parseInt(value) : parseFloat(value);
+    const newFormData = { ...formData, [name]: isNaN(parsedValue) ? '' : parsedValue };
     setFormData(newFormData);
     if(selectedNode) {
         onNodeDataChange(selectedNode.id, newFormData);
@@ -91,6 +92,18 @@ export function NodeEditor({ selectedNode, onNodeDataChange, closeEditor, startC
             value={formData.title}
             onChange={handleInputChange}
             className="w-full"
+          />
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="year">Year</Label>
+          <Input
+            id="year"
+            name="year"
+            type="number"
+            value={formData.year}
+            onChange={handleAmountChange}
+            placeholder="e.g., 2025"
           />
         </div>
 

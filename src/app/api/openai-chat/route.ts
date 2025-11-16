@@ -34,7 +34,7 @@ export async function POST(req: Request) {
       model: 'gpt-4o-mini',
       messages,
       temperature: 0.7,
-      max_tokens: 1000,
+      max_tokens: 1500, // Increased for potentially larger JSON for life plans
       response_format: jsonOutput ? { type: "json_object" } : { type: "text" },
     });
 
@@ -53,6 +53,8 @@ export async function POST(req: Request) {
             return NextResponse.json({response: jsonResponse});
         } catch (e) {
             console.error('Failed to parse AI JSON response:', e);
+            // Log the problematic response from the AI
+            console.error('AI Response:', aiResponse);
             return NextResponse.json({error: 'AI returned invalid JSON'}, {status: 500});
         }
     }

@@ -51,6 +51,8 @@ import {
 import { cn } from '@/lib/utils';
 import dagre from 'dagre';
 import { Textarea } from '@/components/ui/textarea';
+import { LifePlanTimeline } from '@/components/life-plan/LifePlanTimeline';
+import { SearchNodes } from '@/components/life-plan/SearchNodes';
 
 const initialNodes: Node[] = lifePlanTemplates.default.nodes;
 const initialEdges: Edge[] = lifePlanTemplates.default.edges;
@@ -98,8 +100,6 @@ const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = 'TB') => 
     node.targetPosition = isHorizontal ? 'left' : 'top';
     node.sourcePosition = isHorizontal ? 'right' : 'bottom';
 
-    // We are shifting the dagre node position (anchor=center center) to the top left
-    // so it matches the React Flow node anchor point (top left).
     node.position = {
       x: nodeWithPosition.x - nodeWidth / 2,
       y: nodeWithPosition.y - nodeHeight / 2,
@@ -110,7 +110,6 @@ const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = 'TB') => 
 
   return { nodes: layoutedNodes, edges };
 };
-
 
 function AIPlanGenerator({ onGenerate }: { onGenerate: (nodes: Node[], edges: Edge[]) => void }) {
     const [prompt, setPrompt] = useState('');
@@ -128,7 +127,7 @@ function AIPlanGenerator({ onGenerate }: { onGenerate: (nodes: Node[], edges: Ed
         - id: A unique string identifier (e.g., "node_1", "node_2").
         - type: One of the following strings: 'career', 'education', 'financial', 'lifeEvent', 'goal', 'other'.
         - position: An object with { x: 0, y: 0 }.
-        - data: An object with a 'title' (string), and optionally 'amount' (number) and 'frequency' ('one-time' or 'yearly'). Infer amounts and frequencies where possible.
+        - data: An object with a 'title' (string), 'year' (number, representing the year of the event), and optionally 'amount' (number) and 'frequency' ('one-time' or 'yearly'). Infer amounts, years, and frequencies where possible.
 
         For each 'edge', include:
         - id: A unique string identifier (e.g., "e_1-2").
@@ -137,7 +136,7 @@ function AIPlanGenerator({ onGenerate }: { onGenerate: (nodes: Node[], edges: Ed
         - type: "smoothstep".
         - animated: true.
 
-        Interpret the user's text to create logical nodes and connect them sequentially or logically with edges. Infer reasonable titles and financial amounts if they are implied.`;
+        Interpret the user's text to create logical nodes and connect them sequentially or logically with edges. Infer reasonable titles, years, and financial amounts if they are implied.`;
 
         try {
             const response = await fetch('/api/openai-chat', {
@@ -175,7 +174,7 @@ function AIPlanGenerator({ onGenerate }: { onGenerate: (nodes: Node[], edges: Ed
             </CardHeader>
             <CardContent className="space-y-4">
                 <Textarea 
-                    placeholder="e.g., I'll start by getting a degree in computer science. Then, I'll work at a tech company for a few years, save up for a down payment on a house, and eventually start my own business..."
+                    placeholder="e.g., I'll graduate in 2025, get a job in 2026 making $70k, buy a house in 2030 for a $50k down payment..."
                     value={prompt}
                     onChange={(e) => setPrompt(e.target.value)}
                     rows={4}
@@ -193,7 +192,7 @@ function LifePlanCanvas() {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
-  const { screenToFlowPosition, fitView, setCenter, getViewport } = useReactFlow();
+  const { screenToFlowPosition, fitView, setCenter, getViewport, getNode } = useReactFlow();
 
   const [connectingNodeId, setConnectingNodeId] = useState<string | null>(null);
 
@@ -275,6 +274,7 @@ function LifePlanCanvas() {
       },
       data: {
         title: label,
+        year: new Date().getFullYear(),
         amount: 0,
         frequency: 'one-time',
         notes: '',
@@ -345,6 +345,16 @@ function LifePlanCanvas() {
   const onDeleteNode = (nodeId: string) => {
     handleNodesChange([{type: 'remove', id: nodeId}]);
   }
+  
+  const onFocusNode = (nodeId: string) => {
+    const node = getNode(nodeId);
+    if(node) {
+      const { x, y } = node.position;
+      const zoom = 1.5;
+      setCenter(x + (node.width || 0) / 2, y + (node.height || 0) / 2, { zoom, duration: 500 });
+      setSelectedNode(node);
+    }
+  }
 
   const onLayout = useCallback(
     (direction: 'TB' | 'LR') => {
@@ -363,106 +373,123 @@ function LifePlanCanvas() {
     },
     [nodes, edges, setNodes, setEdges, fitView]
   );
+  
+  const sortedNodes = useMemo(() => {
+    return [...nodes].sort((a,b) => (a.data.year || 0) - (b.data.year || 0));
+  }, [nodes]);
 
   return (
-    <div className="w-full h-full rounded-lg overflow-hidden relative flex">
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={handleNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        onNodeClick={onNodeClick}
-        onPaneClick={onPaneClick}
-        nodeTypes={nodeTypes}
-        fitView
-        className={cn('bg-card/30', connectingNodeId && 'cursor-crosshair')}
-        proOptions={{ hideAttribution: true }}
-        deleteKeyCode={['Backspace', 'Delete']}
-        minZoom={0.1}
-        connectionRadius={50}
-        connectOnClick={true}
-        connectionMode="loose"
-      >
-        <div className="absolute top-4 right-4 z-10 flex gap-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="glass h-auto py-2">
-                  <PlusCircle className="mr-2 h-4 w-4" /> Add to Plan
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                 {nodeMenu.map(({ type, label, icon: Icon, color }) => (
-                  <DropdownMenuItem key={type} onClick={() => addNode(type, `New ${label}`)}>
-                    <Icon className={cn('mr-2 h-4 w-4', `text-${color}-400`)} />
-                    <span>{label}</span>
+    <div className="flex flex-col h-full">
+        <div className="flex-shrink-0 px-4 md:px-8">
+            <div className="flex justify-between items-center">
+                <div>
+                    <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">Life Plan</h1>
+                    <p className="text-muted-foreground mt-2">
+                        Visualize and map out your financial future. Drag, drop, and connect
+                        the dots.
+                    </p>
+                </div>
+                <SearchNodes nodes={nodes} onFocusNode={onFocusNode} />
+            </div>
+      </div>
+      <div className="flex-grow h-[calc(100vh-240px)] mt-8">
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={handleNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          onNodeClick={onNodeClick}
+          onPaneClick={onPaneClick}
+          nodeTypes={nodeTypes}
+          fitView
+          className={cn('bg-card/30', connectingNodeId && 'cursor-crosshair')}
+          proOptions={{ hideAttribution: true }}
+          deleteKeyCode={['Backspace', 'Delete']}
+          minZoom={0.1}
+          connectionRadius={50}
+          connectOnClick={true}
+          connectionMode="loose"
+        >
+          <div className="absolute top-4 right-4 z-10 flex gap-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="glass h-auto py-2">
+                    <PlusCircle className="mr-2 h-4 w-4" /> Add to Plan
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  {nodeMenu.map(({ type, label, icon: Icon, color }) => (
+                    <DropdownMenuItem key={type} onClick={() => addNode(type, `New ${label}`)}>
+                      <Icon className={cn('mr-2 h-4 w-4', `text-${color}-400`)} />
+                      <span>{label}</span>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="glass h-auto py-2">
+                    <Zap className="mr-2 h-4 w-4" /> Templates
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem onClick={() => handleLoadTemplate('default')}>
+                    Standard Career Path
                   </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  <DropdownMenuItem onClick={() => handleLoadTemplate('earlyRetirement')}>
+                    Early Retirement (FIRE)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleLoadTemplate('startup')}>
+                    Startup Founder
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+          </div>
+          <Background gap={24} size={1} color="hsl(var(--border))" />
+          <Controls className="react-flow-controls" position='bottom-left'>
+              <button onClick={() => fitView({ duration: 500 })}>
+                  <ZoomIn />
+              </button>
+              <button onClick={() => onLayout('TB')}>
+                  <Layout />
+              </button>
+          </Controls>
+          <Panel position="bottom-center">
+              <Card className="glass py-2 px-4 flex items-center gap-6">
+                  <div className="text-center">
+                      <p className="text-xs text-muted-foreground">Projected Net Worth</p>
+                      <p className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', notation: 'compact' }).format(netWorth)}</p>
+                  </div>
+                  <div className="text-center">
+                      <p className="text-xs text-muted-foreground">Est. Annual Income</p>
+                      <p className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', notation: 'compact' }).format(annualIncome)}/yr</p>
+                  </div>
+              </Card>
+          </Panel>
+        </ReactFlow>
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="glass h-auto py-2">
-                  <Zap className="mr-2 h-4 w-4" /> Templates
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem onClick={() => handleLoadTemplate('default')}>
-                  Standard Career Path
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleLoadTemplate('earlyRetirement')}>
-                  Early Retirement (FIRE)
-                </DropdownMenuItem>
-                 <DropdownMenuItem onClick={() => handleLoadTemplate('startup')}>
-                  Startup Founder
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-        </div>
-        <Background gap={24} size={1} color="hsl(var(--border))" />
-        <Controls className="react-flow-controls" position='bottom-left'>
-            <button onClick={() => fitView({ duration: 500 })}>
-                <ZoomIn />
-            </button>
-             <button onClick={() => onLayout('TB')}>
-                <Layout />
-            </button>
-        </Controls>
-         <Panel position="bottom-center">
-            <Card className="glass py-2 px-4 flex items-center gap-6">
-                <div className="text-center">
-                    <p className="text-xs text-muted-foreground">Projected Net Worth</p>
-                    <p className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', notation: 'compact' }).format(netWorth)}</p>
-                </div>
-                <div className="text-center">
-                    <p className="text-xs text-muted-foreground">Est. Annual Income</p>
-                    <p className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', notation: 'compact' }).format(annualIncome)}/yr</p>
-                </div>
-            </Card>
-        </Panel>
-      </ReactFlow>
-
-      <NodeEditor
-        selectedNode={selectedNode}
-        onNodeDataChange={onNodeDataChange}
-        closeEditor={() => setSelectedNode(null)}
-        startConnecting={() => {
-            if (selectedNode) setConnectingNodeId(selectedNode.id);
-            setSelectedNode(null);
-        }}
-        onDeleteNode={() => {
-            if (selectedNode) onDeleteNode(selectedNode.id);
-        }}
-        onCenterNode={() => {
-            if(selectedNode) {
-                const { x, y } = selectedNode.position;
-                const zoom = 1.2;
-                setCenter(x + (selectedNode.width || 0) / 2, y + (selectedNode.height || 0) / 2, { zoom, duration: 500 });
-            }
-        }}
-      />
-
+        <NodeEditor
+          selectedNode={selectedNode}
+          onNodeDataChange={onNodeDataChange}
+          closeEditor={() => setSelectedNode(null)}
+          startConnecting={() => {
+              if (selectedNode) setConnectingNodeId(selectedNode.id);
+              setSelectedNode(null);
+          }}
+          onDeleteNode={() => {
+              if (selectedNode) onDeleteNode(selectedNode.id);
+          }}
+          onCenterNode={() => onFocusNode(selectedNode!.id)}
+        />
+      </div>
+      
+      <div className="px-4 md:px-8 mt-8 flex-shrink-0">
+          <LifePlanTimeline nodes={sortedNodes} onNodeSelect={onFocusNode} />
+          <AIPlanGenerator onGenerate={handleAIGenerate} />
+      </div>
+      
       <style jsx global>{`
         .react-flow__edge-path {
           filter: drop-shadow(0 0 5px hsl(var(--primary)));
@@ -485,26 +512,8 @@ function LifePlanCanvas() {
 
 export default function LifePlanPage() {
   return (
-    <div className="flex flex-col gap-8 h-full">
-      <div className="flex-shrink-0 px-4 md:px-8">
-        <h1 className="text-4xl font-bold text-primary">Life Plan</h1>
-        <p className="text-muted-foreground mt-2">
-          Visualize and map out your financial future. Drag, drop, and connect
-          the dots.
-        </p>
-      </div>
-      <div className="flex-grow h-[calc(100vh-240px)]">
-        <ReactFlowProvider>
-            <LifePlanCanvas />
-        </ReactFlowProvider>
-      </div>
-      <div className="px-4 md:px-8 pb-8 flex-shrink-0">
-        <AIPlanGenerator onGenerate={() => {
-            // This function is passed to the AI component, but the state is managed within LifePlanCanvas.
-            // We'll need to lift state up or use context/zustand for this to work properly.
-            // For now, this is a placeholder. A more robust solution is needed.
-        }} />
-      </div>
-    </div>
+    <ReactFlowProvider>
+        <LifePlanCanvas />
+    </ReactFlowProvider>
   );
 }
