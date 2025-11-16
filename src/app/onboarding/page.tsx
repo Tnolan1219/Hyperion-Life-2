@@ -7,9 +7,20 @@ import { GoalsStep } from '@/components/onboarding/GoalsStep';
 import { PlanningStep } from '@/components/onboarding/PlanningStep';
 import { InitialGoalsStep } from '@/components/onboarding/InitialGoalsStep';
 import { SummaryStep } from '@/components/onboarding/SummaryStep';
+import { useUser } from '@/firebase';
+import { useRouter } from 'next/navigation';
 
 export default function OnboardingPage() {
   const { currentStep } = useOnboardingStore();
+  const { user, isUserLoading, onboardingComplete } = useUser();
+  const router = useRouter();
+
+  React.useEffect(() => {
+    // If user is loaded, not onboarding, but onboarding is complete, push to dashboard.
+    if (!isUserLoading && user && onboardingComplete) {
+      router.push('/dashboard');
+    }
+  }, [user, isUserLoading, onboardingComplete, router]);
 
   const renderStep = () => {
     switch (currentStep) {
