@@ -50,11 +50,11 @@ export function WelcomeStep() {
             </CardHeader>
             <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-2">
+                    <div className="space-y-2 cursor-pointer" onClick={() => document.getElementById('full-name')?.focus()}>
                         <Label htmlFor="full-name">Full Name</Label>
                         <Input id="full-name" placeholder="John Doe" value={fullName} onChange={(e) => setFullName(e.target.value)} />
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-2 cursor-pointer" onClick={() => document.getElementById('age')?.focus()}>
                         <Label htmlFor="age">Age</Label>
                         <Input id="age" type="number" placeholder="30" value={age} onChange={(e) => setAge(e.target.value)} />
                     </div>
