@@ -18,7 +18,7 @@ const nodeIcons = {
 };
 
 const formatCurrency = (value: number) => {
-    if (value === 0) return '$0';
+    if (!value) return null;
     const isNegative = value < 0;
     const absValue = Math.abs(value);
     let formattedValue;
@@ -69,14 +69,15 @@ export function LifePlanTimeline({ nodes, onNodeSelect }: LifePlanTimelineProps)
         <CardDescription>A chronological view of your life plan events and milestones.</CardDescription>
       </CardHeader>
       <CardContent>
-        <Accordion type="multiple" className="w-full">
+        <Accordion type="multiple" defaultValue={sortedYears} className="w-full">
           {sortedYears.map(year => (
             <AccordionItem value={year.toString()} key={year}>
               <AccordionTrigger className="text-lg font-bold text-primary/80">{year}</AccordionTrigger>
               <AccordionContent>
                 <div className="space-y-4 pl-4 border-l-2 border-primary/20 ml-2">
-                    {groupedByYear[year].map((node, index) => {
+                    {groupedByYear[year].map((node) => {
                         const { icon: Icon, color } = nodeIcons[node.type as keyof typeof nodeIcons] || nodeIcons.other;
+                        const formattedAmount = formatCurrency(node.data.amount);
                         return (
                             <div key={node.id} className="relative pl-8 group">
                                 <div className={cn("absolute left-[-9px] top-1 h-4 w-4 rounded-full bg-background border-2", `border-primary/50`)}></div>
@@ -87,13 +88,13 @@ export function LifePlanTimeline({ nodes, onNodeSelect }: LifePlanTimelineProps)
                                         </div>
                                         <div>
                                             <h4 className="font-semibold">{node.data.title}</h4>
-                                            <p className="text-sm text-muted-foreground">{node.type}</p>
+                                            <p className="text-sm text-muted-foreground capitalize">{node.type}</p>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-4">
-                                        {node.data.amount !== 0 && (
+                                        {formattedAmount && (
                                              <div className={cn("font-semibold", node.data.amount > 0 ? "text-green-400" : "text-red-400")}>
-                                                {formatCurrency(node.data.amount)}
+                                                {formattedAmount}
                                                 {node.data.frequency === 'yearly' && <span className="text-xs text-muted-foreground ml-1">/yr</span>}
                                             </div>
                                         )}
