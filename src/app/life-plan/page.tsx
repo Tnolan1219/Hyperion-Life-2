@@ -222,7 +222,7 @@ function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSe
 
 
   return (
-    <div className="flex-grow h-full relative">
+    <div className="flex-grow h-full relative border border-border/20 rounded-xl overflow-hidden">
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -333,6 +333,10 @@ function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSe
             }
             .react-flow-controls svg {
                 fill: hsl(var(--foreground));
+            }
+            .react-flow__node.connecting {
+                --glow-color: hsl(var(--primary));
+                box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px var(--glow-color), 0 0 15px var(--glow-color);
             }
         `}</style>
     </div>
@@ -460,8 +464,8 @@ function LifePlanPageContent({
         switch(activeTab) {
             case 'life-plan':
                 return (
-                    <div className="flex-grow flex flex-col min-h-0">
-                        <div className="flex-grow relative h-[calc(100vh-280px)]">
+                    <div className={cn("flex flex-col flex-grow min-h-0", !isExpanded && "px-4 md:px-8")}>
+                        <div className={cn("flex-grow relative", isExpanded ? "h-screen" : "h-[calc(100vh-250px)]")}>
                              <LifePlanCanvas 
                                 nodes={nodes}
                                 edges={edges}
@@ -481,7 +485,7 @@ function LifePlanPageContent({
                                 setIsExpanded={setIsExpanded}
                             />
                         </div>
-                        <div className={cn("px-4 md:px-8 mt-8 w-full max-w-2xl mx-auto flex-shrink-0", isExpanded && 'hidden')}>
+                        <div className={cn("pt-8 flex-shrink-0 w-full max-w-2xl mx-auto", isExpanded && 'hidden')}>
                            <AIPlanGenerator onGenerate={handleAIGenerate} />
                         </div>
                     </div>
@@ -507,7 +511,7 @@ export default function LifePlanPage() {
 
   return (
     <div className={cn(
-        "flex flex-col",
+        "flex flex-col h-full",
         isExpanded ? "fixed inset-0 bg-background z-50 h-screen" : "relative"
     )}>
         <div className={cn("px-4 md:px-8 flex-shrink-0", isExpanded ? "pt-4" : "pt-0")}>
@@ -517,7 +521,7 @@ export default function LifePlanPage() {
             </p>
         </div>
 
-        <div className="px-4 md:px-8 flex items-center justify-center gap-2 flex-shrink-0 my-4">
+        <div className={cn("px-4 md:px-8 flex items-center justify-center gap-2 flex-shrink-0 my-4", isExpanded && 'hidden')}>
             {tabOptions.map(tab => (
                 <Button 
                     key={tab.id}
@@ -525,8 +529,7 @@ export default function LifePlanPage() {
                     className={cn(
                         'rounded-full gap-2 transition-all duration-300',
                         activeTab === tab.id ? 'w-32' : 'w-14 h-14',
-                        activeTab !== tab.id && 'glass text-muted-foreground',
-                        isExpanded && 'hidden'
+                        activeTab !== tab.id && 'glass text-muted-foreground'
                     )}
                     onClick={() => {
                         setActiveTab(tab.id as any);
