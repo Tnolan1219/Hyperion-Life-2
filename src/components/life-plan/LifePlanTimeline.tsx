@@ -49,7 +49,11 @@ export function LifePlanTimeline({ nodes, onNodeSelect }: LifePlanTimelineProps)
     }, {} as Record<string, Node[]>);
   }, [nodes]);
 
-  const sortedYears = Object.keys(groupedByYear).sort((a, b) => (a === 'Undated' ? 1 : b === 'Undated' ? -1 : parseInt(a) - parseInt(b)));
+  const sortedYears = Object.keys(groupedByYear).sort((a, b) => {
+    if (a === 'Undated') return 1;
+    if (b === 'Undated') return -1;
+    return parseInt(a) - parseInt(b);
+  });
   
   if (nodes.length === 0) {
       return null;
