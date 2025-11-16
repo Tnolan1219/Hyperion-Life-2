@@ -26,16 +26,16 @@ const colorMap = {
 type CustomNodeProps = {
   data: {
     title: string;
-    amount: number;
-    frequency: 'one-time' | 'yearly';
+    amount?: number;
+    frequency?: 'one-time' | 'yearly';
     linkedContact?: { id: string, name: string };
   };
   type: keyof typeof iconMap;
   selected: boolean;
 };
 
-const formatCurrency = (value: number) => {
-    if (value === 0) return '$0';
+const formatCurrency = (value?: number) => {
+    if (value === undefined || value === 0) return null;
     const isNegative = value < 0;
     const absValue = Math.abs(value);
     let formattedValue;
@@ -56,6 +56,8 @@ const CustomNode = ({ data, type, selected }: CustomNodeProps) => {
   const borderColorClass = `border-${color}-400/50`;
   const textColorClass = `text-${color}-400`;
   const shadowColorClass = `hover:shadow-${color}-400/20`;
+
+  const formattedAmount = formatCurrency(data.amount);
 
   return (
     <Card
@@ -87,10 +89,10 @@ const CustomNode = ({ data, type, selected }: CustomNodeProps) => {
           )}
         </div>
       </CardHeader>
-      {data.amount !== 0 && (
+      {formattedAmount && (
           <CardContent className="p-3 pt-0">
-            <div className={cn("text-lg font-bold", data.amount > 0 ? "text-green-400" : "text-red-400")}>
-                {formatCurrency(data.amount)}
+            <div className={cn("text-lg font-bold", data.amount && data.amount > 0 ? "text-green-400" : "text-red-400")}>
+                {formattedAmount}
                 {data.frequency === 'yearly' && <span className="text-xs text-muted-foreground ml-1">/yr</span>}
             </div>
           </CardContent>
@@ -117,3 +119,5 @@ export const EducationNode = (props: any) => (
 export const CareerNode = (props: any) => <CustomNode {...props} type="career" />;
 export const GoalNode = (props: any) => <CustomNode {...props} type="goal" />;
 export const OtherNode = (props: any) => <CustomNode {...props} type="other" />;
+
+    

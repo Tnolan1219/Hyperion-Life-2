@@ -17,8 +17,8 @@ const nodeIcons = {
   other: { icon: Zap, color: 'text-teal-400' },
 };
 
-const formatCurrency = (value: number) => {
-    if (!value) return null;
+const formatCurrency = (value?: number) => {
+    if (value === undefined || value === null) return null;
     const isNegative = value < 0;
     const absValue = Math.abs(value);
     let formattedValue;
@@ -101,7 +101,7 @@ export function LifePlanTimeline({ nodes, onNodeSelect }: LifePlanTimelineProps)
                                     </div>
                                     <div className="flex items-center gap-4">
                                         {formattedAmount && (
-                                             <div className={cn("font-semibold", node.data.amount > 0 ? "text-green-400" : "text-red-400")}>
+                                             <div className={cn("font-semibold", node.data.amount && node.data.amount > 0 ? "text-green-400" : "text-red-400")}>
                                                 {formattedAmount}
                                                 {node.data.frequency === 'yearly' && <span className="text-xs text-muted-foreground ml-1">/yr</span>}
                                             </div>
@@ -125,3 +125,5 @@ export function LifePlanTimeline({ nodes, onNodeSelect }: LifePlanTimelineProps)
     </Card>
   );
 }
+
+    

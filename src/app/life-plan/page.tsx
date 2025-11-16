@@ -246,7 +246,7 @@ function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSe
           nodes={nodes}
           edges={edges}
           onNodesChange={handleNodesChange}
-          onEdgesChange={(changes) => setEdges(changes)}
+          onEdgesChange={(changes) => setEdges((prevEdges: any) => onEdgesChange(changes, prevEdges))}
           onConnect={(params) => setEdges((eds: Edge[]) => addEdge({ ...params, type: 'smoothstep', animated: true }, eds))}
           onNodeClick={(e, node) => {
             if (connectingNodeId && connectingNodeId !== node.id) {
@@ -534,3 +534,5 @@ export default function LifePlanPage() {
     </div>
   );
 }
+
+    

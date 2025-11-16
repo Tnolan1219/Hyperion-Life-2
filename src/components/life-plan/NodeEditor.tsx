@@ -98,6 +98,8 @@ export function NodeEditor({ selectedNode, onNodeDataChange, closeEditor, startC
       <div className="w-0" style={{ transition: 'width 300ms ease-in-out' }}></div>
     );
   }
+  
+  const isOtherNode = selectedNode.type === 'other';
 
   return (
     <div 
@@ -138,31 +140,33 @@ export function NodeEditor({ selectedNode, onNodeDataChange, closeEditor, startC
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-                <Label htmlFor="amount">Amount</Label>
-                <Input
-                    id="amount"
-                    name="amount"
-                    type="number"
-                    value={formData.amount}
-                    onChange={handleAmountChange}
-                    placeholder="e.g., 50000 or -2500"
-                />
+        {!isOtherNode && (
+            <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <Label htmlFor="amount">Amount</Label>
+                    <Input
+                        id="amount"
+                        name="amount"
+                        type="number"
+                        value={formData.amount}
+                        onChange={handleAmountChange}
+                        placeholder="e.g., 50000 or -2500"
+                    />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="frequency">Frequency</Label>
+                    <Select name="frequency" value={formData.frequency} onValueChange={handleFrequencyChange}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select frequency" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="one-time">One-Time</SelectItem>
+                            <SelectItem value="yearly">Yearly</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
             </div>
-            <div className="space-y-2">
-                <Label htmlFor="frequency">Frequency</Label>
-                 <Select name="frequency" value={formData.frequency} onValueChange={handleFrequencyChange}>
-                    <SelectTrigger>
-                        <SelectValue placeholder="Select frequency" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="one-time">One-Time</SelectItem>
-                        <SelectItem value="yearly">Yearly</SelectItem>
-                    </SelectContent>
-                </Select>
-            </div>
-        </div>
+        )}
 
         <div className="space-y-2">
             <Label>Linked Contact</Label>
@@ -239,3 +243,5 @@ export function NodeEditor({ selectedNode, onNodeDataChange, closeEditor, startC
     </div>
   );
 }
+
+    
