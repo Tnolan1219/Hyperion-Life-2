@@ -459,8 +459,8 @@ function LifePlanPageContent({
         switch(activeTab) {
             case 'life-plan':
                 return (
-                    <div className="flex-grow flex flex-col min-h-0 relative">
-                        <div className="flex-grow">
+                    <div className="flex-grow flex flex-col min-h-0">
+                        <div className="flex-grow h-full relative">
                              <LifePlanCanvas 
                                 nodes={nodes}
                                 edges={edges}
@@ -481,9 +481,9 @@ function LifePlanPageContent({
                             />
                         </div>
                         {!isExpanded && (
-                          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-full max-w-2xl px-4 z-20">
-                            <AIPlanGenerator onGenerate={handleAIGenerate} />
-                          </div>
+                            <div className="flex-shrink-0 px-4 md:px-8 mt-4 w-full max-w-2xl mx-auto">
+                                <AIPlanGenerator onGenerate={handleAIGenerate} />
+                            </div>
                         )}
                     </div>
                 )
@@ -511,7 +511,7 @@ export default function LifePlanPage() {
         "flex flex-col h-full",
         isExpanded ? "fixed inset-0 bg-background z-50" : "relative"
     )}>
-        <div className={cn("px-4 md:px-8 flex-shrink-0 pt-0", isExpanded && "pt-4")}>
+        <div className={cn("px-4 md:px-8 flex-shrink-0", isExpanded ? "pt-4" : "pt-0")}>
             <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">Life Plan</h1>
             <p className="text-muted-foreground mt-2">
                 Visualize and map out your financial future. Drag, drop, and connect the dots.
@@ -557,3 +557,4 @@ export default function LifePlanPage() {
     </div>
   );
 }
+
