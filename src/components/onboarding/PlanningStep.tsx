@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useOnboardingStore } from '@/store/onboarding-store';
-import { Map, ListChecks, Bot, BarChart, Trophy, Orbit, Budget } from 'lucide-react';
+import { Map, ListChecks, Bot, BarChart, Trophy, Orbit, Wallet } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const planningOptions = [
@@ -19,7 +19,7 @@ const planningOptions = [
   { id: 'data_dashboards', label: 'Data dashboards & charts', icon: BarChart },
   { id: 'milestone_tracking', label: 'Milestone tracking', icon: Trophy },
   { id: 'scenario_simulations', label: 'Scenario simulations', icon: Orbit },
-  { id: 'budgeting_tools', label: 'Budgeting tools', icon: Budget },
+  { id: 'budgeting_tools', label: 'Budgeting tools', icon: Wallet },
 ];
 
 export function PlanningStep() {
