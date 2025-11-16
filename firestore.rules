@@ -166,6 +166,15 @@ service cloud.firestore {
     }
 
     /**
+     * @description Rules for the /users/{userId}/contacts/{contactId} collection.
+     * @path /users/{userId}/contacts/{contactId}
+     * @principle Enforces document ownership for writes.
+     */
+    match /users/{userId}/contacts/{contactId} {
+        allow get, list, create, update, delete: if isOwner(userId);
+    }
+
+    /**
      * @description Rules for the /tips/{tipId} collection.
      * @path /tips/{tipId}
      * @allow (get, list) - Anyone can read tips.

@@ -56,6 +56,8 @@ import dagre from 'dagre';
 import { Textarea } from '@/components/ui/textarea';
 import { LifePlanTimeline } from '@/components/life-plan/LifePlanTimeline';
 import { SearchNodes } from '@/components/life-plan/SearchNodes';
+import { ContactManager } from '@/components/life-plan/resources/ContactManager';
+
 
 const initialNodes: Node[] = lifePlanTemplates.default.nodes;
 const initialEdges: Edge[] = lifePlanTemplates.default.edges;
@@ -201,19 +203,11 @@ const TimelineView = ({ nodes, onFocusNode }: { nodes: Node[], onFocusNode: (nod
 
 const ResourcesView = () => (
     <div className="mt-8 px-4 md:px-8">
-        <Card className="glass">
-            <CardHeader>
-                <CardTitle>Resources & People</CardTitle>
-                <CardDescription>Manage your network of mentors, partners, and contacts.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <p className="text-muted-foreground">Contact management and resource tracking is coming soon.</p>
-            </CardContent>
-        </Card>
+       <ContactManager />
     </div>
 );
 
-function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSelectedNode, onFocusNode, onLayout, onAIGenerate, onTemplateLoad, selectedNode, connectingNodeId, setConnectingNodeId }: any) {
+function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSelectedNode, onFocusNode, onAIGenerate, onTemplateLoad, selectedNode, connectingNodeId, setConnectingNodeId }: any) {
   const { fitView } = useReactFlow();
 
   const handleNodesChange = useCallback(
@@ -237,6 +231,14 @@ function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSe
     handleNodesChange([{type: 'remove', id: nodeId}]);
   }
 
+  const onLayout = useCallback((direction: 'TB' | 'LR') => {
+    const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(nodes, edges, direction);
+    setNodes([...layoutedNodes]);
+    setEdges([...layoutedEdges]);
+    window.requestAnimationFrame(() => fitView({ duration: 500 }));
+  }, [nodes, edges, setNodes, setEdges, fitView]);
+
+
   return (
     <>
       <div className="flex-grow h-full relative">
@@ -244,7 +246,7 @@ function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSe
           nodes={nodes}
           edges={edges}
           onNodesChange={handleNodesChange}
-          onEdgesChange={setEdges}
+          onEdgesChange={(changes) => setEdges(changes)}
           onConnect={(params) => setEdges((eds: Edge[]) => addEdge({ ...params, type: 'smoothstep', animated: true }, eds))}
           onNodeClick={(e, node) => {
             if (connectingNodeId && connectingNodeId !== node.id) {
