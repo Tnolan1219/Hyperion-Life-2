@@ -116,15 +116,15 @@
     background-image:
       radial-gradient(circle at 1px 1px, hsl(0 0% 100% / 0.1) 1px, transparent 0);
     background-size: 40px 40px;
-    animation: pan-bg 60s linear infinite;
+    animation: pan-bg 120s linear infinite;
   }
 
   @keyframes pan-bg {
     0% {
-      background-position: 0% 0%;
+      background-position: 0% 100%;
     }
     100% {
-      background-position: 0% 100%;
+      background-position: 0% 0%;
     }
   }
 }
