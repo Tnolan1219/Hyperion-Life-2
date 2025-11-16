@@ -4,14 +4,14 @@
 
 @layer base {
   :root {
-    --background: 220 17% 5%;
-    --foreground: 210 40% 98%;
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
 
-    --card: 221 44% 13%;
-    --card-foreground: 210 40% 98%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
 
-    --popover: 219 50% 9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
 
     --primary: 278 89% 65%;
     --primary-foreground: 210 40% 98%;
@@ -19,19 +19,19 @@
     --secondary: 194 100% 36%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 221 44% 13%;
-    --muted-foreground: 220 15% 60%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 221 44% 13%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
 
-    --destructive: 0 63% 31%;
+    --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
-
+    
     --success: 140 70% 45%;
 
-    --border: 221 34% 20%;
-    --input: 221 34% 20%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
     --ring: 278 89% 65%;
     
     --radius: 1.5rem;
@@ -81,7 +81,7 @@
 
   .glass {
      background: linear-gradient(180deg, hsl(var(--card) / 0.8), hsl(var(--background) / 0.8));
-     @apply rounded-3xl border border-white/5 shadow-2xl shadow-black/40 backdrop-blur-lg;
+     @apply rounded-3xl border border-black/5 dark:border-white/5 shadow-2xl shadow-black/20 dark:shadow-black/40 backdrop-blur-lg;
   }
 
   .onboarding-card {
@@ -114,10 +114,17 @@
   .animated-background {
     background-color: hsl(var(--background));
     background-image:
-      radial-gradient(circle at 1px 1px, hsl(0 0% 100% / 0.1) 1px, transparent 0);
-    background-size: 40px 40px;
+      radial-gradient(circle at 1px 1px, hsl(0 0% 0% / 0.1) 1px, transparent 0),
+      radial-gradient(circle at 1px 1px, hsl(0 0% 0% / 0.05) 1px, transparent 0);
+    background-size: 80px 80px, 40px 40px;
     animation: pan-bg 120s linear infinite;
   }
+  .dark .animated-background {
+    background-image:
+      radial-gradient(circle at 1px 1px, hsl(0 0% 100% / 0.1) 1px, transparent 0);
+    background-size: 40px 40px;
+  }
+
 
   @keyframes pan-bg {
     0% {
