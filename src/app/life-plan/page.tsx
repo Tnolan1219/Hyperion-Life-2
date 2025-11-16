@@ -42,6 +42,7 @@ import {
   Calendar,
   Users,
   Rows,
+  Maximize,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { NodeEditor } from '@/components/life-plan/NodeEditor';
@@ -207,7 +208,7 @@ const ResourcesView = () => (
     </div>
 );
 
-function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSelectedNode, onFocusNode, onAIGenerate, onTemplateLoad, selectedNode, connectingNodeId, setConnectingNodeId, onDeleteNode }: any) {
+function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSelectedNode, onFocusNode, onAIGenerate, onTemplateLoad, selectedNode, connectingNodeId, setConnectingNodeId, onDeleteNode, isExpanded, setIsExpanded }: any) {
   const { fitView } = useReactFlow();
 
   const onLayout = useCallback((direction: 'TB' | 'LR') => {
@@ -284,7 +285,7 @@ function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSe
           </div>
           <Background gap={24} size={1} color="hsl(var(--border))" />
           <Controls className="react-flow-controls" position='bottom-left'>
-              <button onClick={() => fitView({ duration: 500 })}>
+              <button onClick={() => fitView({ duration: 500 })} title="Fit View">
                   <ZoomIn />
               </button>
               <button onClick={() => onLayout('TB')} title="Top-to-Bottom Layout">
@@ -292,6 +293,9 @@ function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSe
               </button>
               <button onClick={() => onLayout('LR')} title="Left-to-Right Layout">
                   <Rows />
+              </button>
+              <button onClick={() => setIsExpanded(!isExpanded)} title={isExpanded ? "Collapse" : "Expand"}>
+                  <Maximize />
               </button>
           </Controls>
         </ReactFlow>
@@ -356,6 +360,8 @@ function LifePlanPageContent({
   setEdges,
   onEdgesChange,
   activeTab,
+  isExpanded,
+  setIsExpanded,
   ...props
 }: any) {
     const { fitView, setCenter, getNode } = useReactFlow();
@@ -452,7 +458,7 @@ function LifePlanPageContent({
         switch(activeTab) {
             case 'life-plan':
                 return (
-                    <div className="flex-grow flex flex-col">
+                    <div className="flex-grow flex flex-col min-h-0">
                         <div className="flex-grow">
                              <LifePlanCanvas 
                                 nodes={nodes}
@@ -469,11 +475,15 @@ function LifePlanPageContent({
                                 onDeleteNode={onDeleteNode}
                                 connectingNodeId={connectingNodeId}
                                 setConnectingNodeId={setConnectingNodeId}
+                                isExpanded={isExpanded}
+                                setIsExpanded={setIsExpanded}
                             />
                         </div>
-                        <div className="px-4 md:px-8 mt-8 flex-shrink-0">
-                           <AIPlanGenerator onGenerate={handleAIGenerate} />
-                        </div>
+                        {!isExpanded && (
+                          <div className="px-4 md:px-8 mt-8 flex-shrink-0">
+                            <AIPlanGenerator onGenerate={handleAIGenerate} />
+                          </div>
+                        )}
                     </div>
                 )
             case 'timeline':
@@ -492,10 +502,15 @@ export default function LifePlanPage() {
     const [activeTab, setActiveTab] = useState<'life-plan' | 'timeline' | 'resources'>('life-plan');
     const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+    const [isExpanded, setIsExpanded] = useState(false);
+
 
   return (
-    <div className="flex flex-col h-full space-y-4">
-        <div className="px-4 md:px-8 flex-shrink-0">
+    <div className={cn(
+        "flex flex-col h-full space-y-4",
+        isExpanded && "fixed inset-0 bg-background z-50"
+    )}>
+        <div className={cn("px-4 md:px-8 flex-shrink-0", isExpanded && "pt-4")}>
             <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">Life Plan</h1>
             <p className="text-muted-foreground mt-2">
                 Visualize and map out your financial future. Drag, drop, and connect the dots.
@@ -510,9 +525,13 @@ export default function LifePlanPage() {
                     className={cn(
                         'rounded-full gap-2 transition-all duration-300',
                         activeTab === tab.id ? 'w-32' : 'w-14 h-14',
-                        activeTab !== tab.id && 'glass text-muted-foreground'
+                        activeTab !== tab.id && 'glass text-muted-foreground',
+                        isExpanded && 'hidden'
                     )}
-                    onClick={() => setActiveTab(tab.id as any)}
+                    onClick={() => {
+                        setActiveTab(tab.id as any);
+                        if (isExpanded) setIsExpanded(false);
+                    }}
                 >
                     <tab.icon className="h-6 w-6" />
                     <span className={cn('transition-all', activeTab === tab.id ? 'block' : 'hidden')}>{tab.label}</span>
@@ -530,8 +549,12 @@ export default function LifePlanPage() {
               onEdgesChange={onEdgesChange}
               activeTab={activeTab}
               setActiveTab={setActiveTab}
+              isExpanded={isExpanded}
+              setIsExpanded={setIsExpanded}
             />
         </div>
     </div>
   );
 }
+
+    
