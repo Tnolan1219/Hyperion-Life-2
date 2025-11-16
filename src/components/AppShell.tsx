@@ -119,15 +119,22 @@ function NavLink({
 }
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const { user, isUserLoading } = useUser();
+  const { user, isUserLoading, onboardingComplete } = useUser();
   const router = useRouter();
   const pathname = usePathname();
 
   React.useEffect(() => {
-    if (!isUserLoading && !user) {
-      router.push('/');
+    if (!isUserLoading && !user && pathname !== '/') {
+        router.push('/');
     }
-  }, [user, isUserLoading, router]);
+    if (!isUserLoading && user && !onboardingComplete && pathname !== '/onboarding') {
+        router.push('/onboarding');
+    }
+  }, [user, isUserLoading, onboardingComplete, router, pathname]);
+  
+  if (pathname === '/onboarding') {
+    return <main>{children}</main>;
+  }
 
   if (isUserLoading || (!user && pathname !== '/')) {
     return (

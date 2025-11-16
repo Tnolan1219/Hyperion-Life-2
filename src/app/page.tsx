@@ -53,14 +53,18 @@ const SignInPrompt = () => {
 };
 
 export default function LandingPage() {
-  const { user, isUserLoading } = useUser();
+  const { user, isUserLoading, onboardingComplete } = useUser();
   const router = useRouter();
 
   React.useEffect(() => {
     if (!isUserLoading && user) {
-      router.push('/dashboard');
+      if (onboardingComplete) {
+        router.push('/dashboard');
+      } else {
+        router.push('/onboarding');
+      }
     }
-  }, [user, isUserLoading, router]);
+  }, [user, isUserLoading, onboardingComplete, router]);
 
   if (isUserLoading || user) {
     return (
