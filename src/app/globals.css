@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -54,7 +55,7 @@
     --secondary-foreground: 210 40% 98%;
 
     --muted: 221 44% 13%;
-    --muted-foreground: 220 15% 60%;
+    --muted-foreground: 220 15% 65%;
 
     --accent: 221 44% 13%;
     --accent-foreground: 210 40% 98%;
@@ -114,17 +115,10 @@
   .animated-background {
     background-color: hsl(var(--background));
     background-image:
-      radial-gradient(circle at 1px 1px, hsl(0 0% 0% / 0.1) 1px, transparent 0),
-      radial-gradient(circle at 1px 1px, hsl(0 0% 0% / 0.05) 1px, transparent 0);
-    background-size: 80px 80px, 40px 40px;
+      radial-gradient(circle at 1px 1px, hsl(0 0% 100% / 0.1) 1px, transparent 0);
+    background-size: 80px 80px;
     animation: pan-bg 120s linear infinite;
   }
-  .dark .animated-background {
-    background-image:
-      radial-gradient(circle at 1px 1px, hsl(0 0% 100% / 0.1) 1px, transparent 0);
-    background-size: 40px 40px;
-  }
-
 
   @keyframes pan-bg {
     0% {

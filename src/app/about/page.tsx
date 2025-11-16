@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Map, Brain, Wallet, Zap } from "lucide-react";
 
@@ -42,6 +43,7 @@ export default function AboutPage() {
                 <CardContent className="space-y-4 text-muted-foreground text-lg">
                     <p>For too long, personal finance has been about restriction. About cutting back. About saying "no." It's been a game of defense, focused on spreadsheets and scarcity.</p>
                     <p>We see a different path. A future where financial planning is an act of creation—an offensive strategy for achieving your most ambitious goals. It’s not just about managing money; it’s about deploying capital to build the life you envision. Whether that means launching a business, achieving financial independence, or creating a lasting legacy, Hyperion Life provides the strategic framework.</p>
+                    <p className="font-semibold text-foreground">Hyperion Life is the flagship platform from <span className="text-primary">Valentor Financial</span>, a company dedicated to empowering individuals through financial clarity. While our specialized sites like Valentor Financial Military and Valentor RE serve specific communities, Hyperion Life is our comprehensive solution for anyone ready to take command of their entire life's trajectory.</p>
                     <p className="font-semibold text-foreground">Our mission is to give you the clarity and confidence to make bold decisions, navigate trade-offs, and build a future with intention.</p>
                 </CardContent>
             </Card>
