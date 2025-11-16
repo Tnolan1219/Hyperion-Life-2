@@ -167,7 +167,7 @@ function AIPlanGenerator({ onGenerate }: { onGenerate: (nodes: Node[], edges: Ed
     }
 
     return (
-        <Card className="glass mt-8">
+        <Card className="glass">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                     <Sparkles className="text-primary" />
@@ -207,29 +207,8 @@ const ResourcesView = () => (
     </div>
 );
 
-function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSelectedNode, onFocusNode, onAIGenerate, onTemplateLoad, selectedNode, connectingNodeId, setConnectingNodeId }: any) {
+function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSelectedNode, onFocusNode, onAIGenerate, onTemplateLoad, selectedNode, connectingNodeId, setConnectingNodeId, onDeleteNode }: any) {
   const { fitView } = useReactFlow();
-
-  const handleNodesChange = useCallback(
-    (changes: NodeChange[]) => {
-      const deletedNodeIds = changes
-        .filter(change => change.type === 'remove')
-        .map(change => (change as any).id);
-
-      if (deletedNodeIds.length > 0) {
-        setEdges((eds: Edge[]) => eds.filter(edge => !deletedNodeIds.includes(edge.source) && !deletedNodeIds.includes(edge.target)));
-        if (selectedNode && deletedNodeIds.includes(selectedNode.id)) {
-            setSelectedNode(null);
-        }
-      }
-      onNodesChange(changes);
-    },
-    [onNodesChange, setEdges, selectedNode, setSelectedNode]
-  );
-  
-  const onDeleteNode = (nodeId: string) => {
-    handleNodesChange([{type: 'remove', id: nodeId}]);
-  }
 
   const onLayout = useCallback((direction: 'TB' | 'LR') => {
     const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(nodes, edges, direction);
@@ -240,13 +219,12 @@ function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSe
 
 
   return (
-    <>
-      <div className="flex-grow h-full relative">
+    <div className="flex-grow h-full relative">
         <ReactFlow
           nodes={nodes}
           edges={edges}
-          onNodesChange={handleNodesChange}
-          onEdgesChange={(changes) => setEdges((prevEdges: any) => onEdgesChange(changes, prevEdges))}
+          onNodesChange={onNodesChange}
+          onEdgesChange={(changes) => setEdges((prevEdges: any) => addEdge(changes, prevEdges))}
           onConnect={(params) => setEdges((eds: Edge[]) => addEdge({ ...params, type: 'smoothstep', animated: true }, eds))}
           onNodeClick={(e, node) => {
             if (connectingNodeId && connectingNodeId !== node.id) {
@@ -335,29 +313,23 @@ function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSe
               }}
             />
         </div>
-      </div>
-      
-      <div className="px-4 md:px-8 mt-8 flex-shrink-0">
-          <AIPlanGenerator onGenerate={onAIGenerate} />
-      </div>
-      
-      <style jsx global>{`
-        .react-flow__edge-path {
-          filter: drop-shadow(0 0 5px hsl(var(--primary)));
-        }
-        .react-flow-controls button {
-          background-color: hsl(var(--card));
-          border-bottom: 1px solid hsl(var(--border));
-          border-radius: 4px;
-        }
-        .react-flow-controls button:hover {
-          background-color: hsl(var(--muted));
-        }
-        .react-flow-controls svg {
-          fill: hsl(var(--foreground));
-        }
-      `}</style>
-    </>
+        <style jsx global>{`
+            .react-flow__edge-path {
+                filter: drop-shadow(0 0 5px hsl(var(--primary)));
+            }
+            .react-flow-controls button {
+                background-color: hsl(var(--card));
+                border-bottom: 1px solid hsl(var(--border));
+                border-radius: 4px;
+            }
+            .react-flow-controls button:hover {
+                background-color: hsl(var(--muted));
+            }
+            .react-flow-controls svg {
+                fill: hsl(var(--foreground));
+            }
+        `}</style>
+    </div>
   );
 }
 
@@ -367,12 +339,10 @@ const tabOptions = [
     { id: 'resources', label: 'Resources', icon: Users },
 ]
 
-function LifePlanFlowProvider({ children, ...props } : any) {
+function LifePlanFlowProvider(props: any) {
   return (
     <ReactFlowProvider>
-      <LifePlanPageContent {...props}>
-        {children}
-      </LifePlanPageContent>
+      <LifePlanPageContent {...props} />
     </ReactFlowProvider>
   )
 }
@@ -384,14 +354,35 @@ function LifePlanPageContent({
   onNodesChange,
   setNodes,
   setEdges,
+  onEdgesChange,
   activeTab,
-  onFocusNode,
   ...props
 }: any) {
     const { fitView, setCenter, getNode } = useReactFlow();
     const [selectedNode, setSelectedNode] = useState<Node | null>(null);
     const [connectingNodeId, setConnectingNodeId] = useState<string | null>(null);
     const [layoutDirection, setLayoutDirection] = useState<'TB' | 'LR'>('TB');
+
+    const handleNodesChange = useCallback(
+    (changes: NodeChange[]) => {
+      const deletedNodeIds = changes
+        .filter(change => change.type === 'remove')
+        .map(change => (change as any).id);
+
+      if (deletedNodeIds.length > 0) {
+        setEdges((eds: Edge[]) => eds.filter(edge => !deletedNodeIds.includes(edge.source) && !deletedNodeIds.includes(edge.target)));
+        if (selectedNode && deletedNodeIds.includes(selectedNode.id)) {
+            setSelectedNode(null);
+        }
+      }
+      onNodesChange(changes);
+    },
+    [onNodesChange, setEdges, selectedNode, setSelectedNode]
+    );
+
+    const onDeleteNode = (nodeId: string) => {
+        handleNodesChange([{type: 'remove', id: nodeId}]);
+    }
 
     const onNodeDataChange = (nodeId: string, newData: any) => {
         setNodes((nds: Node[]) =>
@@ -460,21 +451,31 @@ function LifePlanPageContent({
     const renderContent = () => {
         switch(activeTab) {
             case 'life-plan':
-                return <LifePlanCanvas 
-                            nodes={nodes}
-                            edges={edges}
-                            onNodesChange={onNodesChange}
-                            setNodes={setNodes}
-                            setEdges={setEdges}
-                            setSelectedNode={setSelectedNode}
-                            onFocusNode={handleFocusNode}
-                            onLayout={onLayout}
-                            onAIGenerate={handleAIGenerate}
-                            onTemplateLoad={handleTemplateLoad}
-                            selectedNode={selectedNode}
-                            connectingNodeId={connectingNodeId}
-                            setConnectingNodeId={setConnectingNodeId}
-                        />;
+                return (
+                    <div className="flex-grow flex flex-col">
+                        <div className="flex-grow">
+                             <LifePlanCanvas 
+                                nodes={nodes}
+                                edges={edges}
+                                onNodesChange={handleNodesChange}
+                                setNodes={setNodes}
+                                setEdges={setEdges}
+                                setSelectedNode={setSelectedNode}
+                                onFocusNode={handleFocusNode}
+                                onLayout={onLayout}
+                                onAIGenerate={handleAIGenerate}
+                                onTemplateLoad={handleTemplateLoad}
+                                selectedNode={selectedNode}
+                                onDeleteNode={onDeleteNode}
+                                connectingNodeId={connectingNodeId}
+                                setConnectingNodeId={setConnectingNodeId}
+                            />
+                        </div>
+                        <div className="px-4 md:px-8 mt-8 flex-shrink-0">
+                           <AIPlanGenerator onGenerate={handleAIGenerate} />
+                        </div>
+                    </div>
+                )
             case 'timeline':
                 return <TimelineView nodes={nodes} onFocusNode={handleFocusNode} />;
             case 'resources':
@@ -494,14 +495,14 @@ export default function LifePlanPage() {
 
   return (
     <div className="flex flex-col h-full space-y-4">
-        <div className="px-4 md:px-8">
+        <div className="px-4 md:px-8 flex-shrink-0">
             <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">Life Plan</h1>
             <p className="text-muted-foreground mt-2">
                 Visualize and map out your financial future. Drag, drop, and connect the dots.
             </p>
         </div>
 
-        <div className="px-4 md:px-8 flex items-center justify-center gap-2">
+        <div className="px-4 md:px-8 flex items-center justify-center gap-2 flex-shrink-0">
             {tabOptions.map(tab => (
                 <Button 
                     key={tab.id}
@@ -519,7 +520,7 @@ export default function LifePlanPage() {
             ))}
         </div>
         
-        <div className="flex-grow flex flex-col">
+        <div className="flex-grow flex flex-col min-h-0">
             <LifePlanFlowProvider
               nodes={nodes}
               edges={edges}
@@ -534,5 +535,3 @@ export default function LifePlanPage() {
     </div>
   );
 }
-
-    
