@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from "@/components/ui/label";
 import { Lightbulb, User, Bot, Loader2, Sparkles, Wand2 } from 'lucide-react';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { collection, doc, updateDoc } from 'firebase/firestore';
 import { synthesizeUserPersona } from '@/ai/flows/synthesize-user-persona';
 import { generatePersonalizedFinancialAdvice } from '@/ai/flows/generate-personalized-financial-advice';
 import { simulateFinancialScenario } from '@/ai/flows/simulate-financial-scenarios';
@@ -56,7 +56,7 @@ export default function AICoachPage() {
     if (dataIsLoading || !assets || !debts) {
       return { assetsSummary: 'Loading...', debtsSummary: 'Loading...' };
     }
-    const totalAssets = assets.reduce((acc, asset) => acc + (asset.balance * (asset.price || 1)), 0);
+    const totalAssets = assets.reduce((acc, asset) => acc + asset.balance * (asset.price || 1), 0);
     const totalDebts = debts.reduce((acc, debt) => acc + debt.balance, 0);
     return {
       assetsSummary: `Total assets of ${formatCurrency(totalAssets)} across ${assets.length} holdings.`,
@@ -66,7 +66,7 @@ export default function AICoachPage() {
 
 
   const handleGeneratePersona = async () => {
-    if (!user || !goals || !assets || !debts) return;
+    if (!user || !goals || !assets || !debts || !firestore) return;
     setIsPersonaLoading(true);
     setPersona(null);
 
@@ -97,6 +97,9 @@ export default function AICoachPage() {
     try {
       const result = await synthesizeUserPersona(input);
       setPersona(result.aiPersonaSummary);
+      // Save persona to user document
+      const userDocRef = doc(firestore, 'users', user.uid);
+      await updateDoc(userDocRef, { persona: result.aiPersonaSummary });
     } catch (e) {
       console.error(e);
       setPersona("Sorry, I couldn't generate your persona right now.");
@@ -275,3 +278,5 @@ export default function AICoachPage() {
     </div>
   );
 }
+
+    
