@@ -1,3 +1,4 @@
+
 'use client';
 import React, { useState, useCallback, useMemo } from 'react';
 import ReactFlow, {
@@ -458,7 +459,7 @@ function LifePlanPageContent({
         switch(activeTab) {
             case 'life-plan':
                 return (
-                    <div className="flex-grow flex flex-col min-h-0">
+                    <div className="flex-grow flex flex-col min-h-0 relative">
                         <div className="flex-grow">
                              <LifePlanCanvas 
                                 nodes={nodes}
@@ -480,7 +481,7 @@ function LifePlanPageContent({
                             />
                         </div>
                         {!isExpanded && (
-                          <div className="px-4 md:px-8 mt-8 flex-shrink-0">
+                          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-full max-w-2xl px-4 z-20">
                             <AIPlanGenerator onGenerate={handleAIGenerate} />
                           </div>
                         )}
@@ -507,17 +508,17 @@ export default function LifePlanPage() {
 
   return (
     <div className={cn(
-        "flex flex-col h-full space-y-4",
-        isExpanded && "fixed inset-0 bg-background z-50"
+        "flex flex-col h-full",
+        isExpanded ? "fixed inset-0 bg-background z-50" : "relative"
     )}>
-        <div className={cn("px-4 md:px-8 flex-shrink-0", isExpanded && "pt-4")}>
+        <div className={cn("px-4 md:px-8 flex-shrink-0 pt-0", isExpanded && "pt-4")}>
             <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">Life Plan</h1>
             <p className="text-muted-foreground mt-2">
                 Visualize and map out your financial future. Drag, drop, and connect the dots.
             </p>
         </div>
 
-        <div className="px-4 md:px-8 flex items-center justify-center gap-2 flex-shrink-0">
+        <div className="px-4 md:px-8 flex items-center justify-center gap-2 flex-shrink-0 my-4">
             {tabOptions.map(tab => (
                 <Button 
                     key={tab.id}
@@ -556,5 +557,3 @@ export default function LifePlanPage() {
     </div>
   );
 }
-
-    
