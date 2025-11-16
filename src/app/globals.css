@@ -86,7 +86,7 @@
 
   .onboarding-card {
     @apply relative overflow-hidden;
-    background: linear-gradient(180deg, hsl(var(--card) / 0.95), hsl(var(--background) / 0.95));
+     background: linear-gradient(180deg, hsl(var(--card) / 0.95), hsl(var(--background) / 0.95));
   }
 
   .onboarding-card::before {
@@ -114,33 +114,17 @@
   .animated-background {
     background-color: hsl(var(--background));
     background-image:
-      radial-gradient(circle at 1px 1px, hsl(0 0% 100% / 0.4) 1px, transparent 0),
-      radial-gradient(circle at 15px 15px, hsl(0 0% 100% / 0.3) 1px, transparent 0);
-    background-size: 30px 30px;
-    animation: pan-bg 180s linear infinite;
+      radial-gradient(circle at 1px 1px, hsl(0 0% 100% / 0.1) 1px, transparent 0);
+    background-size: 40px 40px;
+    animation: pan-bg 60s linear infinite;
   }
-  
-  .animated-background::before {
-      content: '';
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      z-index: -1;
-      background-image: 
-        radial-gradient(circle at 1px 1px, hsl(0 0% 100% / 0.4) 1px, transparent 0),
-        radial-gradient(circle at 15px 15px, hsl(0 0% 100% / 0.3) 1px, transparent 0);
-      background-size: 30px 30px;
-      filter: blur(1px) drop-shadow(0 0 2px hsl(0 0% 100% / 0.5));
-      animation: pan-bg 180s linear infinite;
-  }
-
 
   @keyframes pan-bg {
     0% {
       background-position: 0% 0%;
     }
     100% {
-      background-position: 100% 100%;
+      background-position: 0% 100%;
     }
   }
 }
