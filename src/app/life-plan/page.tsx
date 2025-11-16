@@ -13,7 +13,6 @@ import ReactFlow, {
   useReactFlow,
   Panel,
   NodeChange,
-  applyNodeChanges,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { lifePlanTemplates } from '@/lib/life-plan-templates';
@@ -39,6 +38,10 @@ import {
   Layout,
   Sparkles,
   Loader2,
+  Map,
+  Calendar,
+  Users,
+  Rows,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { NodeEditor } from '@/components/life-plan/NodeEditor';
@@ -188,6 +191,32 @@ function AIPlanGenerator({ onGenerate }: { onGenerate: (nodes: Node[], edges: Ed
     );
 }
 
+const TimelineView = ({ nodes, onFocusNode }: { nodes: Node[], onFocusNode: (nodeId: string) => void }) => {
+    const sortedNodes = useMemo(() => {
+        return [...nodes].sort((a,b) => (a.data.year || 0) - (b.data.year || 0));
+    }, [nodes]);
+
+    return (
+        <div className="mt-8">
+            <LifePlanTimeline nodes={sortedNodes} onNodeSelect={onFocusNode} />
+        </div>
+    );
+};
+
+const ResourcesView = () => (
+    <div className="mt-8">
+        <Card className="glass">
+            <CardHeader>
+                <CardTitle>Resources & People</CardTitle>
+                <CardDescription>Manage your network of mentors, partners, and contacts.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <p className="text-muted-foreground">Contact management and resource tracking is coming soon.</p>
+            </CardContent>
+        </Card>
+    </div>
+);
+
 function LifePlanCanvas() {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
@@ -198,6 +227,7 @@ function LifePlanCanvas() {
 
   const [netWorth, setNetWorth] = useState(0);
   const [annualIncome, setAnnualIncome] = useState(0);
+  const [layoutDirection, setLayoutDirection] = useState<'TB' | 'LR'>('TB');
   
   const handleNodesChange = useCallback(
     (changes: NodeChange[]) => {
@@ -233,14 +263,14 @@ function LifePlanCanvas() {
   }, [nodes]);
 
   useEffect(() => {
-    const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(initialNodes, initialEdges);
+    const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(initialNodes, initialEdges, layoutDirection);
     setNodes(layoutedNodes);
     setEdges(layoutedEdges);
     
     window.requestAnimationFrame(() => {
         fitView({ duration: 300 });
     });
-  }, [fitView, setNodes, setEdges]);
+  }, [fitView, setNodes, setEdges, layoutDirection]);
 
   const onConnect = useCallback(
     (params: Connection | Edge) => {
@@ -320,7 +350,7 @@ function LifePlanCanvas() {
   
   const handleLoadTemplate = (templateName: keyof typeof lifePlanTemplates) => {
     const template = lifePlanTemplates[templateName];
-    const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(template.nodes, template.edges);
+    const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(template.nodes, template.edges, layoutDirection);
     
     setNodes(layoutedNodes);
     setEdges(layoutedEdges);
@@ -332,7 +362,7 @@ function LifePlanCanvas() {
   }
   
   const handleAIGenerate = (aiNodes: Node[], aiEdges: Edge[]) => {
-      const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(aiNodes, aiEdges);
+      const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(aiNodes, aiEdges, layoutDirection);
       setNodes(layoutedNodes);
       setEdges(layoutedEdges);
       setSelectedNode(null);
@@ -358,6 +388,7 @@ function LifePlanCanvas() {
 
   const onLayout = useCallback(
     (direction: 'TB' | 'LR') => {
+      setLayoutDirection(direction);
       const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
         nodes,
         edges,
@@ -373,26 +404,10 @@ function LifePlanCanvas() {
     },
     [nodes, edges, setNodes, setEdges, fitView]
   );
-  
-  const sortedNodes = useMemo(() => {
-    return [...nodes].sort((a,b) => (a.data.year || 0) - (b.data.year || 0));
-  }, [nodes]);
 
   return (
-    <div className="flex flex-col h-full">
-        <div className="flex-shrink-0 px-4 md:px-8">
-            <div className="flex justify-between items-center">
-                <div>
-                    <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">Life Plan</h1>
-                    <p className="text-muted-foreground mt-2">
-                        Visualize and map out your financial future. Drag, drop, and connect
-                        the dots.
-                    </p>
-                </div>
-                <SearchNodes nodes={nodes} onFocusNode={onFocusNode} />
-            </div>
-      </div>
-      <div className="flex-grow h-[calc(100vh-240px)] mt-8">
+    <>
+      <div className="flex-grow h-[calc(100vh-340px)] relative">
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -452,8 +467,11 @@ function LifePlanCanvas() {
               <button onClick={() => fitView({ duration: 500 })}>
                   <ZoomIn />
               </button>
-              <button onClick={() => onLayout('TB')}>
+              <button onClick={() => onLayout('TB')} title="Top-to-Bottom Layout">
                   <Layout />
+              </button>
+              <button onClick={() => onLayout('LR')} title="Left-to-Right Layout">
+                  <Rows />
               </button>
           </Controls>
           <Panel position="bottom-center">
@@ -470,23 +488,26 @@ function LifePlanCanvas() {
           </Panel>
         </ReactFlow>
 
-        <NodeEditor
-          selectedNode={selectedNode}
-          onNodeDataChange={onNodeDataChange}
-          closeEditor={() => setSelectedNode(null)}
-          startConnecting={() => {
-              if (selectedNode) setConnectingNodeId(selectedNode.id);
-              setSelectedNode(null);
-          }}
-          onDeleteNode={() => {
-              if (selectedNode) onDeleteNode(selectedNode.id);
-          }}
-          onCenterNode={() => onFocusNode(selectedNode!.id)}
-        />
+        <div className="absolute top-0 right-0 h-full w-auto pointer-events-none">
+            <NodeEditor
+              selectedNode={selectedNode}
+              onNodeDataChange={onNodeDataChange}
+              closeEditor={() => setSelectedNode(null)}
+              startConnecting={() => {
+                  if (selectedNode) setConnectingNodeId(selectedNode.id);
+                  setSelectedNode(null);
+              }}
+              onDeleteNode={() => {
+                  if (selectedNode) onDeleteNode(selectedNode.id);
+              }}
+              onCenterNode={() => {
+                  if (selectedNode) onFocusNode(selectedNode.id);
+              }}
+            />
+        </div>
       </div>
       
       <div className="px-4 md:px-8 mt-8 flex-shrink-0">
-          <LifePlanTimeline nodes={sortedNodes} onNodeSelect={onFocusNode} />
           <AIPlanGenerator onGenerate={handleAIGenerate} />
       </div>
       
@@ -506,14 +527,73 @@ function LifePlanCanvas() {
           fill: hsl(var(--foreground));
         }
       `}</style>
-    </div>
+    </>
   );
 }
 
+const tabOptions = [
+    { id: 'life-plan', label: 'Life Plan', icon: Map },
+    { id: 'timeline', label: 'Timeline', icon: Calendar },
+    { id: 'resources', label: 'Resources', icon: Users },
+]
+
 export default function LifePlanPage() {
+    const [activeTab, setActiveTab] = useState<'life-plan' | 'timeline' | 'resources'>('life-plan');
+    const [nodes, setNodes] = useState<Node[]>(initialNodes);
+    
+    // This is a mock function, replace with actual focus logic
+    const onFocusNode = (nodeId: string) => {
+        console.log("Focusing on node:", nodeId);
+        // In a real implementation, you would use the ReactFlow instance to focus the node
+    };
+
+    const renderContent = () => {
+        switch(activeTab) {
+            case 'life-plan':
+                return (
+                     <ReactFlowProvider>
+                        <LifePlanCanvas />
+                    </ReactFlowProvider>
+                );
+            case 'timeline':
+                return <TimelineView nodes={nodes} onFocusNode={onFocusNode} />;
+            case 'resources':
+                return <ResourcesView />;
+            default:
+                return null;
+        }
+    }
+
   return (
-    <ReactFlowProvider>
-        <LifePlanCanvas />
-    </ReactFlowProvider>
+    <div className="flex flex-col h-full space-y-4">
+        <div className="px-4 md:px-8">
+            <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">Life Plan</h1>
+            <p className="text-muted-foreground mt-2">
+                Visualize and map out your financial future. Drag, drop, and connect the dots.
+            </p>
+        </div>
+
+        <div className="px-4 md:px-8 flex items-center justify-center gap-2">
+            {tabOptions.map(tab => (
+                <Button 
+                    key={tab.id}
+                    variant={activeTab === tab.id ? 'default' : 'outline'}
+                    className={cn(
+                        'rounded-full gap-2 transition-all duration-300',
+                        activeTab === tab.id ? 'w-32' : 'w-14 h-14',
+                        activeTab !== tab.id && 'glass text-muted-foreground'
+                    )}
+                    onClick={() => setActiveTab(tab.id as any)}
+                >
+                    <tab.icon className="h-6 w-6" />
+                    <span className={cn('transition-all', activeTab === tab.id ? 'block' : 'hidden')}>{tab.label}</span>
+                </Button>
+            ))}
+        </div>
+        
+        <div className="flex-grow">
+            {renderContent()}
+        </div>
+    </div>
   );
 }

@@ -70,7 +70,7 @@ export function NodeEditor({ selectedNode, onNodeDataChange, closeEditor, startC
 
   return (
     <div 
-        className="w-96 h-full glass !rounded-3xl !border-l flex flex-col" 
+        className="w-96 h-full glass !rounded-l-3xl !rounded-r-none !border-l-0 flex flex-col pointer-events-auto" 
         style={{ transition: 'width 300ms ease-in-out' }}
         onKeyDown={handleKeyDown}
     >
