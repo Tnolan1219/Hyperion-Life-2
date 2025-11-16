@@ -75,7 +75,9 @@ export const Header = () => {
   const { theme, setTheme } = useTheme();
   const pathname = usePathname();
   
-  if (!user && pathname === '/') {
+  const noHeaderPaths = ['/','/about','/terms','/policy'];
+
+  if (!user && noHeaderPaths.includes(pathname)) {
     return null;
   }
 
@@ -95,7 +97,7 @@ export const Header = () => {
               className="flex items-center gap-2 text-lg font-semibold mb-4"
             >
               <Logo className="h-6 w-6 text-primary" />
-              <span>Net Worth Max</span>
+              <span>Hyperion Life</span>
             </Link>
             {navItems.map(item => (
               <MobileNavLink key={item.href} {...item} />

@@ -21,6 +21,7 @@ import { FcGoogle } from 'react-icons/fc';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import Link from 'next/link';
 
 const SignInForm = () => {
   const auth = useAuth();
@@ -132,11 +133,11 @@ const SignInPrompt = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center animated-background p-4">
+    <div className="min-h-screen flex flex-col items-center justify-center animated-background p-4">
       <Card className="w-full max-w-sm glass">
         <CardHeader className="text-center">
           <CardTitle className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary py-2">
-            Net Worth Max
+            Hyperion Life
           </CardTitle>
           <CardDescription className="text-muted-foreground pt-2">
             Your AI-powered financial co-pilot.
@@ -173,6 +174,13 @@ const SignInPrompt = () => {
             </Button>
         </CardFooter>
       </Card>
+      <footer className="absolute bottom-4 text-center text-sm text-muted-foreground">
+        <div className="flex gap-x-4">
+            <Link href="/about" className="hover:text-primary">About</Link>
+            <Link href="/terms" className="hover:text-primary">Terms of Use</Link>
+            <Link href="/policy" className="hover:text-primary">Privacy Policy</Link>
+        </div>
+      </footer>
     </div>
   );
 };

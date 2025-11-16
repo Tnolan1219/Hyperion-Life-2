@@ -13,7 +13,7 @@ export default function OnboardingLayout({
       <div className="absolute top-8 flex items-center gap-3">
         <Logo className="h-8 w-8 text-primary" />
         <h1 className="text-2xl font-bold text-foreground">
-          Welcome to Net Worth Max
+          Welcome to Hyperion Life
         </h1>
       </div>
       {children}

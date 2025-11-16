@@ -4,7 +4,7 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "User",
       "type": "object",
-      "description": "Represents a user of the Net Worth Max platform.",
+      "description": "Represents a user of the Hyperion Life platform.",
       "properties": {
         "id": {
           "type": "string",

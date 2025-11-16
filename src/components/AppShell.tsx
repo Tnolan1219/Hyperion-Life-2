@@ -17,6 +17,7 @@ import { Header } from '@/components/landing/header';
 import { AiChatBox } from '@/components/dashboard/ai-chat-box';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { Logo } from './icons/logo';
+import { Footer } from './landing/footer';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: Home, color: 'sky' },
@@ -123,20 +124,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
 
+  const isAuthPage = ['/', '/about', '/terms', '/policy'].includes(pathname);
+
   React.useEffect(() => {
-    if (!isUserLoading && !user && pathname !== '/') {
+    if (!isUserLoading && !user && !isAuthPage) {
         router.push('/');
     }
     if (!isUserLoading && user && !onboardingComplete && pathname !== '/onboarding') {
         router.push('/onboarding');
     }
-  }, [user, isUserLoading, onboardingComplete, router, pathname]);
+  }, [user, isUserLoading, onboardingComplete, router, pathname, isAuthPage]);
   
   if (pathname === '/onboarding') {
     return <main>{children}</main>;
   }
 
-  if (isUserLoading || (!user && pathname !== '/')) {
+  if (isUserLoading || (!user && !isAuthPage)) {
     return (
       <div className="min-h-screen flex items-center justify-center animated-background">
         <div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-primary"></div>
@@ -144,8 +147,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!user) {
-     return <main className="flex-1 overflow-y-auto p-4 md:p-8">{children}</main>
+  if (!user && isAuthPage) {
+     return <main className="flex-1 overflow-y-auto">{children}</main>
   }
 
   return (
@@ -170,6 +173,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <Header />
         <main className="flex-1 overflow-y-auto p-4 pt-20 md:p-8 md:pt-8">{children}</main>
         <AiChatBox />
+        <Footer />
       </div>
     </div>
   );

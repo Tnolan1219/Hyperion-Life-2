@@ -23,7 +23,7 @@ const chatFlow = ai.defineFlow(
     const response = await ai.generate({
       model: llm,
       history,
-      prompt: `You are a friendly, encouraging financial assistant chatbot for Net Worth Max.
+      prompt: `You are a friendly, encouraging financial assistant chatbot for Hyperion Life.
         Your goal is to provide helpful and accurate information about personal finance, investing, and wealth management.
         Always respond in a supportive and friendly tone. Keep your answers short and concise.
         Use markdown bullet points (and sub-bullets if necessary) to keep your answers clear and easy to read.

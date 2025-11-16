@@ -12,8 +12,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'Net Worth Max',
-  description: 'Personal finance dashboard.',
+  title: 'Hyperion Life',
+  description: 'Your AI-powered financial co-pilot for life planning.',
 };
 
 export default function RootLayout({
