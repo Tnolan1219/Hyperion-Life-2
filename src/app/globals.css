@@ -112,8 +112,8 @@
   .animated-background {
     background-color: hsl(var(--background));
     background-image:
-      radial-gradient(circle at 1px 1px, hsl(var(--foreground) / 0.1) 1px, transparent 0),
-      radial-gradient(circle at 15px 15px, hsl(var(--foreground) / 0.05) 1px, transparent 0);
+      radial-gradient(circle at 1px 1px, hsl(var(--primary) / 0.2) 1px, transparent 0),
+      radial-gradient(circle at 15px 15px, hsl(var(--primary) / 0.1) 1px, transparent 0);
     background-size: 30px 30px;
     animation: pan-bg 240s linear infinite;
   }
