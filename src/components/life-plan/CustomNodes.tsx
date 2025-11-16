@@ -1,10 +1,9 @@
-
 'use client';
 import React from 'react';
 import { Handle, Position } from 'reactflow';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { Briefcase, GraduationCap, PiggyBank, Heart, Flag, Zap } from 'lucide-react';
+import { Briefcase, GraduationCap, PiggyBank, Heart, Flag, Zap, Users } from 'lucide-react';
 
 const iconMap = {
   career: Briefcase,
@@ -29,6 +28,7 @@ type CustomNodeProps = {
     title: string;
     amount: number;
     frequency: 'one-time' | 'yearly';
+    linkedContact?: { id: string, name: string };
   };
   type: keyof typeof iconMap;
   selected: boolean;
@@ -68,16 +68,23 @@ const CustomNode = ({ data, type, selected }: CustomNodeProps) => {
     >
       <Handle type="target" position={Position.Top} className="!bg-primary/50" isConnectable={true} />
       <CardHeader className="p-3">
-        <div className="flex items-center gap-2">
-          <div
-            className={cn(
-              'flex h-8 w-8 items-center justify-center rounded-full bg-primary/10',
-              textColorClass
-            )}
-          >
-            <Icon className="h-5 w-5" />
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-2">
+            <div
+              className={cn(
+                'flex h-8 w-8 items-center justify-center rounded-full bg-primary/10',
+                textColorClass
+              )}
+            >
+              <Icon className="h-5 w-5" />
+            </div>
+            <CardTitle className="text-sm font-semibold truncate leading-tight">{data.title}</CardTitle>
           </div>
-          <CardTitle className="text-sm font-semibold truncate">{data.title}</CardTitle>
+          {data.linkedContact && (
+             <div className="text-muted-foreground" title={`Linked to: ${data.linkedContact.name}`}>
+                <Users className="h-4 w-4" />
+            </div>
+          )}
         </div>
       </CardHeader>
       {data.amount !== 0 && (
@@ -110,4 +117,3 @@ export const EducationNode = (props: any) => (
 export const CareerNode = (props: any) => <CustomNode {...props} type="career" />;
 export const GoalNode = (props: any) => <CustomNode {...props} type="goal" />;
 export const OtherNode = (props: any) => <CustomNode {...props} type="other" />;
-    

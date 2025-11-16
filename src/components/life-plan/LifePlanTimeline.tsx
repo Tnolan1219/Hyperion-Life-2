@@ -4,7 +4,7 @@ import React, { useMemo } from 'react';
 import { Node } from 'reactflow';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Briefcase, GraduationCap, PiggyBank, Heart, Flag, Zap, Calendar, MapPin } from 'lucide-react';
+import { Briefcase, GraduationCap, PiggyBank, Heart, Flag, Zap, Calendar, MapPin, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '../ui/button';
 
@@ -88,7 +88,15 @@ export function LifePlanTimeline({ nodes, onNodeSelect }: LifePlanTimelineProps)
                                         </div>
                                         <div>
                                             <h4 className="font-semibold">{node.data.title}</h4>
-                                            <p className="text-sm text-muted-foreground capitalize">{node.type}</p>
+                                            <div className="flex items-center gap-2">
+                                                <p className="text-sm text-muted-foreground capitalize">{node.type}</p>
+                                                {node.data.linkedContact && (
+                                                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                                        <Users className="h-3 w-3" />
+                                                        <span>{node.data.linkedContact.name}</span>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-4">

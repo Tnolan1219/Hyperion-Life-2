@@ -8,8 +8,12 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { X, Zap, Trash2, LocateFixed } from 'lucide-react';
+import { X, Zap, Trash2, LocateFixed, Users, Link as LinkIcon, XCircle } from 'lucide-react';
 import { Separator } from '../ui/separator';
+import { useCollection, useUser, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection } from 'firebase/firestore';
+import { Contact } from './resources/contact-types';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 
 interface NodeEditorProps {
   selectedNode: Node | null;
@@ -22,6 +26,17 @@ interface NodeEditorProps {
 
 export function NodeEditor({ selectedNode, onNodeDataChange, closeEditor, startConnecting, onDeleteNode, onCenterNode }: NodeEditorProps) {
   const [formData, setFormData] = useState(selectedNode?.data);
+  const { user } = useUser();
+  const firestore = useFirestore();
+
+  const contactsCollection = useMemoFirebase(() => {
+    if (firestore && user) {
+        return collection(firestore, `users/${user.uid}/contacts`);
+    }
+    return null;
+  }, [firestore, user]);
+
+  const { data: contacts } = useCollection<Contact>(contactsCollection);
 
   useEffect(() => {
     if (selectedNode) {
@@ -56,6 +71,22 @@ export function NodeEditor({ selectedNode, onNodeDataChange, closeEditor, startC
     }
   };
   
+  const handleLinkContact = (contact: Contact) => {
+      const newFormData = { ...formData, linkedContact: { id: contact.id, name: contact.name } };
+      setFormData(newFormData);
+      if(selectedNode) {
+        onNodeDataChange(selectedNode.id, newFormData);
+    }
+  }
+  
+  const handleUnlinkContact = () => {
+    const { linkedContact, ...rest } = formData;
+    setFormData(rest);
+    if(selectedNode) {
+        onNodeDataChange(selectedNode.id, rest);
+    }
+  }
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
       if (e.key === 'Escape') {
           closeEditor();
@@ -132,6 +163,49 @@ export function NodeEditor({ selectedNode, onNodeDataChange, closeEditor, startC
                 </Select>
             </div>
         </div>
+
+        <div className="space-y-2">
+            <Label>Linked Contact</Label>
+            {formData.linkedContact ? (
+                <div className="flex items-center justify-between rounded-md border border-input bg-background/50 px-3 py-2">
+                    <div className="flex items-center gap-2">
+                        <Users className="h-4 w-4 text-primary" />
+                        <span className="text-sm font-medium">{formData.linkedContact.name}</span>
+                    </div>
+                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleUnlinkContact}>
+                        <XCircle className="h-4 w-4 text-muted-foreground" />
+                    </Button>
+                </div>
+            ) : (
+                <Popover>
+                    <PopoverTrigger asChild>
+                        <Button variant="outline" className="w-full justify-start font-normal">
+                            <LinkIcon className="mr-2 h-4 w-4" />
+                            Link a contact...
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-80">
+                        <div className="space-y-1">
+                            {contacts && contacts.length > 0 ? (
+                                contacts.map(contact => (
+                                    <Button
+                                        key={contact.id}
+                                        variant="ghost"
+                                        className="w-full justify-start"
+                                        onClick={() => handleLinkContact(contact)}
+                                    >
+                                        {contact.name}
+                                    </Button>
+                                ))
+                            ) : (
+                                <p className="text-sm text-muted-foreground p-2">No contacts found. Add one in the Resources tab.</p>
+                            )}
+                        </div>
+                    </PopoverContent>
+                </Popover>
+            )}
+        </div>
+
 
         <div className="space-y-2">
           <Label htmlFor="notes">Notes</Label>
