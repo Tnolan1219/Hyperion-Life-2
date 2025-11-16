@@ -10,6 +10,7 @@ import {
   Brain,
   Star,
   Settings,
+  User,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUser } from '@/firebase';
@@ -25,7 +26,7 @@ const navItems = [
   { href: '/portfolio', label: 'Net Worth', icon: Wallet, color: 'amber' },
   { href: '/ai-coach', label: 'AI Coach', icon: Brain, color: 'cyan' },
   { href: '/goals', label: 'Goals', icon: Star, color: 'rose' },
-  { href: '/settings', label: 'Settings', icon: Settings, color: 'slate' },
+  { href: '/profile', label: 'Profile', icon: User, color: 'slate' },
 ];
 
 const colorClasses: { [key: string]: { [key: string]: string } } = {
