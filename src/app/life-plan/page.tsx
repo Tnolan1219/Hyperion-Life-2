@@ -460,7 +460,7 @@ function LifePlanPageContent({
             case 'life-plan':
                 return (
                     <div className="flex-grow flex flex-col min-h-0">
-                        <div className="flex-grow h-full relative">
+                        <div className="flex-grow relative">
                              <LifePlanCanvas 
                                 nodes={nodes}
                                 edges={edges}
@@ -481,7 +481,7 @@ function LifePlanPageContent({
                             />
                         </div>
                         {!isExpanded && (
-                            <div className="flex-shrink-0 px-4 md:px-8 mt-4 w-full max-w-2xl mx-auto">
+                            <div className="flex-shrink-0 px-4 md:px-8 mt-8 w-full max-w-2xl mx-auto">
                                 <AIPlanGenerator onGenerate={handleAIGenerate} />
                             </div>
                         )}
@@ -508,8 +508,8 @@ export default function LifePlanPage() {
 
   return (
     <div className={cn(
-        "flex flex-col h-full",
-        isExpanded ? "fixed inset-0 bg-background z-50" : "relative"
+        "flex flex-col",
+        isExpanded ? "fixed inset-0 bg-background z-50 h-screen" : "relative h-full"
     )}>
         <div className={cn("px-4 md:px-8 flex-shrink-0", isExpanded ? "pt-4" : "pt-0")}>
             <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">Life Plan</h1>
