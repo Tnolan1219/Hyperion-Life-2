@@ -283,16 +283,14 @@ function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSe
           onEdgesChange={(changes) => setEdges((prevEdges: any) => addEdge(changes, prevEdges))}
           onConnect={(params) => setEdges((eds: Edge[]) => addEdge({ ...params, type: 'smoothstep', animated: true }, eds))}
           onNodeClick={(e, node) => {
-            if (connectingNodeId && connectingNodeId !== node.id) {
+            if (connectingNodeId) {
                 setEdges((eds: Edge[]) => addEdge({ source: connectingNodeId, target: node.id, type: 'smoothstep', animated: true }, eds));
-                
                 setNodes((prevNodes: Node[]) =>
                     prevNodes.map(n => 
                         n.id === connectingNodeId ? { ...n, data: { ...n.data, connecting: false } } : n
                     )
                 );
                 setConnectingNodeId(null);
-
             } else {
                 setSelectedNode(node);
             }
@@ -300,7 +298,6 @@ function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSe
           onPaneClick={() => {
             setSelectedNode(null);
             if (connectingNodeId) {
-                
                 setNodes((prevNodes: Node[]) =>
                     prevNodes.map(n => 
                         n.id === connectingNodeId ? { ...n, data: { ...n.data, connecting: false } } : n
@@ -579,8 +576,8 @@ function LifePlanPageContent({
             type: 'system',
             position: { x: xPos, y: 10 },
             data: { title: 'Weekly Investment', amount: 100, frequency: 'weekly', notes: 'Auto-invest into VTI' },
-            width: 208,
-            height: 88,
+            width: 250,
+            height: 64,
         };
         setNodes((nds: Node[]) => nds.concat(newNode));
     }
@@ -652,7 +649,7 @@ function LifePlanPageContent({
             </div>
           
             <TabsContent value="life-plan" className="flex-grow flex flex-col mt-4">
-                <div className={cn('relative border border-border/20 rounded-xl overflow-hidden flex-grow')}>
+                 <div className="relative border border-border/20 rounded-xl overflow-hidden h-[85vh]">
                   <LifePlanCanvas
                     nodes={nodes}
                     edges={edges}
