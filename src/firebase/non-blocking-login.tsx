@@ -1,3 +1,4 @@
+
 'use client';
 import {
   Auth,
@@ -9,18 +10,15 @@ import {
 } from 'firebase/auth';
 
 /** Initiate Google sign-in (non-blocking). */
-export function initiateGoogleSignIn(authInstance: Auth): void {
+export function initiateGoogleSignIn(authInstance: Auth) {
   const provider = new GoogleAuthProvider();
-  signInWithPopup(authInstance, provider).catch(error => {
-    // Although we don't block, we should still log popup errors
-    // as they might relate to popup blockers or other browser issues.
-    console.error("Google Sign-In Popup Error:", error);
-  });
+  // Return the promise so the caller can handle popup-related errors
+  return signInWithPopup(authInstance, provider);
 }
 
 /** Initiate anonymous sign-in (non-blocking). */
-export function initiateAnonymousSignIn(authInstance: Auth): void {
-  signInAnonymously(authInstance);
+export function initiateAnonymousSignIn(authInstance: Auth) {
+  return signInAnonymously(authInstance);
 }
 
 /** Initiate email/password sign-up (non-blocking). */
@@ -28,8 +26,8 @@ export function initiateEmailSignUp(
   authInstance: Auth,
   email: string,
   password: string
-): void {
-  createUserWithEmailAndPassword(authInstance, email, password);
+) {
+  return createUserWithEmailAndPassword(authInstance, email, password);
 }
 
 /** Initiate email/password sign-in (non-blocking). */
@@ -37,8 +35,6 @@ export function initiateEmailSignIn(
   authInstance: Auth,
   email: string,
   password: string
-): void {
-  signInWithEmailAndPassword(authInstance, email, password);
+) {
+  return signInWithEmailAndPassword(authInstance, email, password);
 }
-
-    

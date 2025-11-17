@@ -7,7 +7,8 @@ import { useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, Brain, Map, Wallet } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import Link from 'next/link';
+import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import { SignInPrompt } from '@/components/auth/SignInPrompt';
 
 const features = [
     {
@@ -63,11 +64,16 @@ export default function LandingPage() {
           Integrate your goals, finances, and career into a single, actionable roadmap.
         </p>
         <div className="mt-8 flex justify-center gap-4">
-            <Button size="lg" asChild>
-                <Link href="/dashboard">
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button size="lg">
                     Get Started Free <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
-            </Button>
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md glass">
+                  <SignInPrompt />
+              </DialogContent>
+            </Dialog>
         </div>
       </div>
 
