@@ -285,14 +285,14 @@ function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSe
           onNodeClick={(e, node) => {
             if (connectingNodeId && connectingNodeId !== node.id) {
                 setEdges((eds: Edge[]) => addEdge({ source: connectingNodeId, target: node.id, type: 'smoothstep', animated: true }, eds));
-                setConnectingNodeId(null);
-
-                // Reset the connecting state on the source node
+                
                 setNodes((prevNodes: Node[]) =>
                     prevNodes.map(n => 
                         n.id === connectingNodeId ? { ...n, data: { ...n.data, connecting: false } } : n
                     )
                 );
+                setConnectingNodeId(null);
+
             } else {
                 setSelectedNode(node);
             }
@@ -300,7 +300,7 @@ function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSe
           onPaneClick={() => {
             setSelectedNode(null);
             if (connectingNodeId) {
-                // Reset the connecting state if the connection is cancelled
+                
                 setNodes((prevNodes: Node[]) =>
                     prevNodes.map(n => 
                         n.id === connectingNodeId ? { ...n, data: { ...n.data, connecting: false } } : n
@@ -624,36 +624,35 @@ function LifePlanPageContent({
 
     return (
       <div className={cn("flex flex-col", isExpanded ? "h-screen" : "h-[calc(100vh-8rem)]")}>
-        <div className="flex flex-col items-center justify-center">
-            <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">
-                Life Plan
-            </h1>
-        </div>
-
         <Tabs
             value={activeTab}
             onValueChange={(value) => setActiveTab(value)}
             className="flex-grow flex flex-col h-full"
         >
-            <div className="flex items-center justify-center px-4 md:px-8">
-                <TabsList>
-                    <TabsTrigger value="life-plan">
-                        <Map className="mr-2 h-4 w-4" />
-                        Map
-                    </TabsTrigger>
-                    <TabsTrigger value="timeline">
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        Timeline
-                    </TabsTrigger>
-                    <TabsTrigger value="resources">
-                        <Users className="mr-2 h-4 w-4" />
-                        Resources
-                    </TabsTrigger>
-                </TabsList>
+            <div className="flex flex-col items-center justify-center">
+                <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">
+                    Life Plan
+                </h1>
+                <div className="flex items-center justify-center px-4 md:px-8 mt-4">
+                    <TabsList>
+                        <TabsTrigger value="life-plan">
+                            <Map className="mr-2 h-4 w-4" />
+                            Map
+                        </TabsTrigger>
+                        <TabsTrigger value="timeline">
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            Timeline
+                        </TabsTrigger>
+                        <TabsTrigger value="resources">
+                            <Users className="mr-2 h-4 w-4" />
+                            Resources
+                        </TabsTrigger>
+                    </TabsList>
+                </div>
             </div>
             
-            <TabsContent value="life-plan" className="flex-grow flex flex-col min-h-0 mt-4">
-                <div className={cn('flex-grow relative h-full border border-border/20 rounded-xl overflow-hidden', isExpanded ? 'h-screen !rounded-none !border-0' : 'h-[85vh]')}>
+            <TabsContent value="life-plan" className="flex-grow flex flex-col mt-4">
+                <div className={cn('flex-grow relative h-full border border-border/20 rounded-xl overflow-hidden')}>
                   <LifePlanCanvas
                     nodes={nodes}
                     edges={edges}
