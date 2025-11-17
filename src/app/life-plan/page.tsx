@@ -623,10 +623,14 @@ function LifePlanPageContent({
             <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">
               Life Plan
             </h1>
-            <Tabs
-              value={activeTab}
-              onValueChange={(value) => setActiveTab(value)}
-            >
+        </div>
+
+        <Tabs
+            value={activeTab}
+            onValueChange={(value) => setActiveTab(value)}
+            className="flex-grow flex flex-col min-h-0"
+        >
+            <div className="px-4 md:px-8">
               <TabsList>
                 <TabsTrigger value="life-plan">
                   <Map className="mr-2 h-4 w-4" />
@@ -641,11 +645,9 @@ function LifePlanPageContent({
                   Resources
                 </TabsTrigger>
               </TabsList>
-            </Tabs>
-        </div>
+            </div>
 
-        <div className="flex-grow flex flex-col min-h-0 mt-4">
-          <TabsContent value="life-plan" className="flex-grow flex flex-col min-h-0 mt-0">
+          <TabsContent value="life-plan" className="flex-grow flex flex-col min-h-0 mt-4">
             <div
               className={cn(
                 'flex-grow relative h-full border border-border/20 rounded-xl overflow-hidden',
@@ -686,7 +688,7 @@ function LifePlanPageContent({
           <TabsContent value="resources" className="flex-grow mt-0">
             <ResourcesView />
           </TabsContent>
-        </div>
+        </Tabs>
       </div>
     );
 }
@@ -713,4 +715,3 @@ export default function LifePlanPage() {
     </div>
   );
 }
-
