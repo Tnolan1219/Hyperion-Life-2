@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -83,8 +84,8 @@ export const Header = () => {
   const router = useRouter();
 
   return (
-    <header className="sticky top-0 z-40 flex h-14 items-center gap-4 border-b border-border/20 bg-background/80 backdrop-blur-lg px-4 lg:h-[60px] lg:px-6">
-      <div className="flex-1 md:flex-none">
+    <header className="sticky top-0 z-40 flex h-14 w-full items-center justify-between gap-4 border-b border-border/20 bg-background/80 px-4 backdrop-blur-lg lg:h-[60px] lg:px-6">
+      <div className="flex flex-1 items-center justify-start">
         <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
           <SheetTrigger asChild>
             <Button variant="outline" size="icon" className="shrink-0 md:hidden">
@@ -109,7 +110,7 @@ export const Header = () => {
         </Sheet>
       </div>
 
-       <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center">
+      <div className="flex items-center justify-center">
             <Link href="/" className="flex items-center justify-center gap-3 font-semibold text-foreground transition-opacity duration-300">
             <span className="text-primary">
                 <Logo className="h-7 w-7" />
