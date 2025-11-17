@@ -652,7 +652,7 @@ function LifePlanPageContent({
             </div>
             
             <TabsContent value="life-plan" className="flex-grow flex flex-col mt-4">
-                <div className={cn('flex-grow relative h-full border border-border/20 rounded-xl overflow-hidden')}>
+                <div className={cn('relative border border-border/20 rounded-xl overflow-hidden h-[85vh]')}>
                   <LifePlanCanvas
                     nodes={nodes}
                     edges={edges}
@@ -711,3 +711,6 @@ export default function LifePlanPage() {
   );
 }
 
+
+
+    
