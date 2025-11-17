@@ -46,6 +46,7 @@ import {
   Rows,
   Maximize,
   Calendar,
+  CalendarDays,
   Search as SearchIcon,
   Shrink,
   Repeat,
@@ -115,10 +116,13 @@ const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = 'TB') => 
     node.targetPosition = isHorizontal ? 'left' : 'top';
     node.sourcePosition = isHorizontal ? 'right' : 'bottom';
 
-    node.position = {
-      x: nodeWithPosition.x - nodeWidth / 2,
-      y: nodeWithPosition.y - nodeHeight / 2,
-    };
+    // We are searching for the system node as we don't want to layout it
+    if (node.type !== 'system') {
+      node.position = {
+        x: nodeWithPosition.x - nodeWidth / 2,
+        y: nodeWithPosition.y - nodeHeight / 2,
+      };
+    }
 
     return node;
   });
@@ -339,6 +343,12 @@ function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSe
               </DropdownMenu>
           </div>
           
+           <Panel position="top-left">
+              <Button variant="ghost" size="icon" onClick={() => setIsExpanded(!isExpanded)} title={isExpanded ? "Collapse" : "Expand"}>
+                    {isExpanded ? <Shrink className="h-5 w-5" /> : <Maximize className="h-5 w-5"/>}
+              </Button>
+          </Panel>
+
           <Panel position="bottom-left" className={cn(isExpanded && "block")}>
             <div className={cn("flex flex-col md:flex-row items-center gap-2 glass p-2 rounded-2xl")}>
               <SearchNodes nodes={nodes} onFocusNode={onFocusNode} />
@@ -355,18 +365,12 @@ function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSe
                 <Button variant="ghost" size="icon" onClick={() => setShowYearGuides(!showYearGuides)} title="Toggle Year Guides" className={cn(showYearGuides && 'text-primary bg-primary/10')}>
                     <Calendar className="h-5 w-5" />
                 </Button>
-                <Button variant="ghost" size="icon" onClick={() => setShowMonthGuides(!showMonthGuides)} title="Toggle Month Guides" className={cn(showMonthGuides && 'text-primary/10')}>
-                    <Calendar className="h-5 w-5" />
+                <Button variant="ghost" size="icon" onClick={() => setShowMonthGuides(!showMonthGuides)} title="Toggle Month Guides" className={cn(showMonthGuides && 'text-primary bg-primary/10')}>
+                    <CalendarDays className="h-5 w-5" />
                 </Button>
               </div>
             </div>
           </Panel>
-           <Panel position="bottom-right">
-              <Button variant="ghost" size="icon" onClick={() => setIsExpanded(!isExpanded)} title={isExpanded ? "Collapse" : "Expand"}>
-                    {isExpanded ? <Shrink className="h-5 w-5" /> : <Maximize className="h-5 w-5"/>}
-              </Button>
-          </Panel>
-
         </ReactFlow>
 
         <div className="absolute top-0 right-0 h-full w-auto pointer-events-none">
@@ -511,18 +515,21 @@ function LifePlanPageContent({
     };
     
     const addSystemNode = () => {
-         const position = {
-            x: 100,
-            y: 600, // Position it lower on the canvas
+         const systemNodes = getNodes().filter((node) => node.type === 'system');
+        const { x, y, zoom } = getViewport();
+
+        const position = {
+            x: 20,
+            y: -y / zoom + 500 / zoom + systemNodes.length * 100, // Stack new nodes
         };
 
         const newNode: Node = {
             id: `node_${+new Date()}`,
             type: 'system',
             position,
-            data: { title: 'Weekly Investment', amount: 100, frequency: 'weekly' },
-            draggable: false, // Make it non-movable
-            zIndex: -1, // Render it behind other nodes
+            data: { title: 'Weekly Investment', amount: 100, frequency: 'weekly', notes: 'Auto-invest into VTI' },
+            draggable: false,
+            zIndex: -1,
         };
         setNodes((nds: Node[]) => nds.concat(newNode));
         window.requestAnimationFrame(() => fitView({ duration: 500, nodes: [newNode] }));

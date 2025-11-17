@@ -31,6 +31,7 @@ type CustomNodeProps = {
     amount?: number;
     frequency?: 'one-time' | 'yearly' | 'weekly';
     linkedContact?: { id: string, name: string };
+    notes?: string;
   };
   type: keyof typeof iconMap;
   selected: boolean;
@@ -87,13 +88,18 @@ const CustomNode = ({ data, type, selected }: CustomNodeProps) => {
           )}
         </div>
       </CardHeader>
-      {formattedAmount && (
+      {(formattedAmount || (type === 'system' && data.notes)) && (
           <CardContent className="p-3 pt-0">
-            <div className={cn("text-lg font-bold", data.amount && data.amount > 0 ? "text-green-400" : "text-red-400")}>
-                {formattedAmount}
-                {data.frequency === 'yearly' && <span className="text-xs text-muted-foreground ml-1">/yr</span>}
-                {data.frequency === 'weekly' && <span className="text-xs text-muted-foreground ml-1">/wk</span>}
-            </div>
+            {formattedAmount && (
+                <div className={cn("text-lg font-bold", data.amount && data.amount > 0 ? "text-green-400" : "text-red-400")}>
+                    {formattedAmount}
+                    {data.frequency === 'yearly' && <span className="text-xs text-muted-foreground ml-1">/yr</span>}
+                    {data.frequency === 'weekly' && <span className="text-xs text-muted-foreground ml-1">/wk</span>}
+                </div>
+            )}
+            {type === 'system' && data.notes && (
+                <p className="text-xs text-muted-foreground mt-1">{data.notes}</p>
+            )}
           </CardContent>
       )}
       {type !== 'system' && <Handle
