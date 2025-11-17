@@ -30,7 +30,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Logo } from '../icons/logo';
-import { Dialog, DialogContent, DialogTrigger } from '../ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from '../ui/dialog';
 import { SignInPrompt } from '../auth/SignInPrompt';
 
 
@@ -182,6 +182,8 @@ export const Header = () => {
                 <Button>Log In</Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-md glass">
+                <DialogTitle className="sr-only">Log In or Sign Up</DialogTitle>
+                <DialogDescription className="sr-only">Log in to your Hyperion Life account or create a new one.</DialogDescription>
                 <SignInPrompt />
             </DialogContent>
         </Dialog>

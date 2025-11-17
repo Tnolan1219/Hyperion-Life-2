@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React from 'react';
@@ -7,7 +8,7 @@ import { useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, Brain, Map, Wallet } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { SignInPrompt } from '@/components/auth/SignInPrompt';
 
 const features = [
@@ -50,6 +51,8 @@ function LandingPageContent() {
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-md glass">
+                  <DialogTitle className="sr-only">Sign In or Sign Up</DialogTitle>
+                  <DialogDescription className="sr-only">A dialog to sign in or create a new account for Hyperion Life.</DialogDescription>
                   <SignInPrompt />
               </DialogContent>
             </Dialog>
