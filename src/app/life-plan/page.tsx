@@ -315,7 +315,7 @@ function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSe
           proOptions={{ hideAttribution: true }}
           deleteKeyCode={['Backspace', 'Delete']}
           minZoom={0.1}
-          connectionRadius={80}
+          connectionRadius={120}
           onNodeDragStop={onNodeDragStop}
         >
           <Background gap={24} size={1} color="hsl(var(--border))" />
@@ -623,13 +623,13 @@ function LifePlanPageContent({
     };
 
     return (
-      <div className={cn("flex flex-col", isExpanded ? "h-screen" : "h-[calc(100vh-8rem)]")}>
+      <div className={cn("flex flex-col h-full", isExpanded ? "fixed inset-0 bg-background z-50 p-0" : "relative")}>
         <Tabs
             value={activeTab}
             onValueChange={(value) => setActiveTab(value)}
             className="flex-grow flex flex-col h-full"
         >
-            <div className="flex flex-col items-center justify-center">
+          <div className="flex flex-col items-center justify-center">
                 <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">
                     Life Plan
                 </h1>
@@ -650,9 +650,9 @@ function LifePlanPageContent({
                     </TabsList>
                 </div>
             </div>
-            
+          
             <TabsContent value="life-plan" className="flex-grow flex flex-col mt-4">
-                <div className={cn('relative border border-border/20 rounded-xl overflow-hidden h-[85vh]')}>
+                <div className={cn('relative border border-border/20 rounded-xl overflow-hidden flex-grow')}>
                   <LifePlanCanvas
                     nodes={nodes}
                     edges={edges}
@@ -676,7 +676,6 @@ function LifePlanPageContent({
                   <AIPlanGenerator onGenerate={handleAIGenerate} />
                 </div>
             </TabsContent>
-            
             <TabsContent value="timeline" className="flex-grow mt-0">
                 <TimelineView nodes={nodes} onFocusNode={handleFocusNode} />
             </TabsContent>
@@ -695,7 +694,7 @@ export default function LifePlanPage() {
 
   return (
     <div className={cn(
-        "flex flex-col",
+        "flex flex-col h-full",
         isExpanded ? "fixed inset-0 bg-background z-50 p-0" : "relative"
     )}>
         

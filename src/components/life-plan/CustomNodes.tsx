@@ -92,12 +92,48 @@ const CustomNode = ({ data, type, selected }: CustomNodeProps) => {
         <NodeResizer minWidth={150} minHeight={100} isVisible={selected} />
         <Handle type="target" position={Position.Top} className="!bg-primary/50" isConnectable={true} />
         <div 
-          className="editable-content"
+          className="editable-content prose dark:prose-invert"
           contentEditable={true}
           dangerouslySetInnerHTML={{ __html: data.htmlContent || data.title || '' }}
           onBlur={onContentChange}
           suppressContentEditableWarning={true}
         />
+        <Handle type="source" position={Position.Bottom} className="!bg-primary/50" isConnectable={true} />
+      </Card>
+    );
+  }
+  
+  if (type === 'system') {
+    return (
+       <Card
+        className={cn(
+          `!h-16 shadow-lg rounded-lg border-2 bg-card/80 backdrop-blur-sm transition-all duration-300 w-full`,
+          selected ? 'border-primary shadow-lg shadow-primary/20' : `border-system-400/20`
+        )}
+      >
+        <NodeResizer minWidth={250} minHeight={64} maxHeight={64} isVisible={selected} lineClassName="border-dashed" handleClassName="h-3 w-3 bg-background border-primary" />
+        <Handle type="target" position={Position.Top} className="!bg-primary/50" isConnectable={true} />
+        <div className="flex items-center p-3 h-full">
+            <div
+              className={cn(
+                'flex h-8 w-8 items-center justify-center rounded-full',
+                `bg-system-400/10 text-system-400`
+              )}
+            >
+              <Icon className="h-5 w-5" />
+            </div>
+            <div className="ml-3 flex-grow">
+                <CardTitle className="text-sm font-semibold leading-tight">{data.title}</CardTitle>
+                {data.notes && (<p className="text-xs text-muted-foreground truncate">{data.notes}</p>)}
+            </div>
+            {formattedAmount && (
+                <div className={cn("text-lg font-bold ml-4", data.amount && data.amount > 0 ? "text-green-400" : "text-red-400")}>
+                    {formattedAmount}
+                    {data.frequency === 'yearly' && <span className="text-xs text-muted-foreground ml-1">/yr</span>}
+                    {data.frequency === 'weekly' && <span className="text-xs text-muted-foreground ml-1">/wk</span>}
+                </div>
+            )}
+        </div>
         <Handle type="source" position={Position.Bottom} className="!bg-primary/50" isConnectable={true} />
       </Card>
     );
@@ -110,7 +146,6 @@ const CustomNode = ({ data, type, selected }: CustomNodeProps) => {
         selected ? 'border-primary shadow-lg shadow-primary/20' : `border-${colorClass}-400/20`
       )}
     >
-      <NodeResizer minWidth={208} minHeight={88} isVisible={selected && type === 'system'} lineClassName="border-dashed" handleClassName="h-3 w-3 bg-background border-primary" />
       <Handle type="target" position={Position.Top} className="!bg-primary/50" isConnectable={true} />
       <CardHeader className="p-3">
         <div className="flex items-start justify-between">
@@ -132,7 +167,7 @@ const CustomNode = ({ data, type, selected }: CustomNodeProps) => {
           )}
         </div>
       </CardHeader>
-      {(formattedAmount || (type === 'system' && data.notes)) && (
+      {(formattedAmount || data.notes) && (
           <CardContent className="p-3 pt-0">
             {formattedAmount && (
                 <div className={cn("text-lg font-bold", data.amount && data.amount > 0 ? "text-green-400" : "text-red-400")}>
@@ -141,7 +176,7 @@ const CustomNode = ({ data, type, selected }: CustomNodeProps) => {
                     {data.frequency === 'weekly' && <span className="text-xs text-muted-foreground ml-1">/wk</span>}
                 </div>
             )}
-            {type === 'system' && data.notes && (
+            {data.notes && !data.htmlContent && (
                 <p className="text-xs text-muted-foreground mt-1">{data.notes}</p>
             )}
           </CardContent>
@@ -169,4 +204,3 @@ export const CareerNode = (props: any) => <CustomNode {...props} type="career" /
 export const GoalNode = (props: any) => <CustomNode {...props} type="goal" />;
 export const OtherNode = (props: any) => <CustomNode {...props} type="other" />;
 export const SystemNode = (props: any) => <CustomNode {...props} type="system" />;
-
