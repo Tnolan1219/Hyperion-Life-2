@@ -331,7 +331,7 @@ function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSe
               </DropdownMenu>
           </div>
           
-          <Panel position="bottom-left">
+          <Panel position="bottom-left" className={cn(isExpanded && "hidden md:block")}>
             <div className={cn("flex flex-col md:flex-row items-center gap-2 glass p-2 rounded-2xl")}>
               <SearchNodes nodes={nodes} onFocusNode={onFocusNode} />
               <div className="flex gap-1">
@@ -382,27 +382,29 @@ function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSe
             .react-flow__edge-path {
                 filter: drop-shadow(0 0 5px hsl(var(--primary)));
             }
-            .react-flow__node.connecting, .react-flow__node[data-connecting='true'] {
-                --glow-color-career: hsl(var(--orange-400));
-                --glow-color-education: hsl(var(--blue-400));
-                --glow-color-financial: hsl(var(--green-400));
-                --glow-color-lifeEvent: hsl(var(--pink-400));
-                --glow-color-goal: hsl(var(--purple-400));
-                --glow-color-other: hsl(var(--teal-400));
 
-                 box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px var(--glow-color, hsl(var(--secondary))), 0 0 15px var(--glow-color, hsl(var(--secondary)));
+            .react-flow__node {
+                --glow-color-career: hsl(28 90% 60%);
+                --glow-color-education: hsl(210 90% 60%);
+                --glow-color-financial: hsl(140 80% 50%);
+                --glow-color-lifeEvent: hsl(330 90% 65%);
+                --glow-color-goal: hsl(270 90% 65%);
+                --glow-color-other: hsl(180 80% 50%);
+                --glow-color-default: hsl(var(--primary));
             }
-             .react-flow__node[data-type='career'][data-connecting='true'] { --glow-color: var(--glow-color-career); }
-            .react-flow__node[data-type='education'][data-connecting='true'] { --glow-color: var(--glow-color-education); }
-            .react-flow__node[data-type='financial'][data-connecting='true'] { --glow-color: var(--glow-color-financial); }
-            .react-flow__node[data-type='lifeEvent'][data-connecting='true'] { --glow-color: var(--glow-color-lifeEvent); }
-            .react-flow__node[data-type='goal'][data-connecting='true'] { --glow-color: var(--glow-color-goal); }
-            .react-flow__node[data-type='other'][data-connecting='true'] { --glow-color: var(--glow-color-other); }
-
+            
+            .react-flow__node.connecting, 
+            .react-flow__node[data-connecting='true'],
             .react-flow__node:hover {
-                --glow-color: hsl(var(--primary));
-                box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px var(--glow-color), 0 0 15px var(--glow-color);
+                 box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px var(--glow-color, var(--glow-color-default)), 0 0 15px var(--glow-color, var(--glow-color-default));
             }
+            .react-flow__node[data-type='career']:hover, .react-flow__node[data-type='career'][data-connecting='true'] { --glow-color: var(--glow-color-career); }
+            .react-flow__node[data-type='education']:hover, .react-flow__node[data-type='education'][data-connecting='true'] { --glow-color: var(--glow-color-education); }
+            .react-flow__node[data-type='financial']:hover, .react-flow__node[data-type='financial'][data-connecting='true'] { --glow-color: var(--glow-color-financial); }
+            .react-flow__node[data-type='lifeEvent']:hover, .react-flow__node[data-type='lifeEvent'][data-connecting='true'] { --glow-color: var(--glow-color-lifeEvent); }
+            .react-flow__node[data-type='goal']:hover, .react-flow__node[data-type='goal'][data-connecting='true'] { --glow-color: var(--glow-color-goal); }
+            .react-flow__node[data-type='other']:hover, .react-flow__node[data-type='other'][data-connecting='true'] { --glow-color: var(--glow-color-other); }
+
         `}</style>
     </div>
   );
@@ -526,10 +528,10 @@ function LifePlanPageContent({
 
     return (
         <Tabs value={activeTab} onValueChange={(value) => props.setActiveTab(value)} className="flex flex-col flex-grow min-h-0">
-             <div className="px-4 md:px-8 flex-shrink-0">
-                <div className="flex items-center justify-center relative">
+             <div className="px-4 md:px-8">
+                <div className="flex items-center justify-between relative">
                  <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">Life Plan</h1>
-                 <TabsList className="absolute right-0 top-1/2 -translate-y-1/2">
+                 <TabsList>
                     <TabsTrigger value="life-plan">
                         <Map className="mr-2 h-4 w-4" />
                         Map

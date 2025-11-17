@@ -53,19 +53,15 @@ const formatCurrency = (value?: number) => {
 const CustomNode = ({ data, type, selected }: CustomNodeProps) => {
   const color = colorMap[type];
   const Icon = iconMap[type];
-  const borderColorClass = `border-${color}-400/50`;
-  const textColorClass = `text-${color}-400`;
-  const shadowColorClass = `hover:shadow-${color}-400/20`;
+  const colorClass = colorMap[type as keyof typeof colorMap];
 
   const formattedAmount = formatCurrency(data.amount);
 
   return (
     <Card
       className={cn(
-        '!w-52 shadow-lg rounded-lg border-2 bg-card/80 backdrop-blur-sm transition-all duration-300 hover:border-primary/60 hover:shadow-2xl hover:shadow-primary/10',
-        shadowColorClass,
-        borderColorClass,
-        selected && 'border-primary shadow-lg shadow-primary/20'
+        `!w-52 shadow-lg rounded-lg border-2 bg-card/80 backdrop-blur-sm transition-all duration-300`,
+        selected ? 'border-primary shadow-lg shadow-primary/20' : `border-${colorClass}-400/20`
       )}
     >
       <Handle type="target" position={Position.Top} className="!bg-primary/50" isConnectable={true} />
@@ -74,8 +70,8 @@ const CustomNode = ({ data, type, selected }: CustomNodeProps) => {
           <div className="flex items-center gap-2">
             <div
               className={cn(
-                'flex h-8 w-8 items-center justify-center rounded-full bg-primary/10',
-                textColorClass
+                'flex h-8 w-8 items-center justify-center rounded-full',
+                `bg-${colorClass}-400/10 text-${colorClass}-400`
               )}
             >
               <Icon className="h-5 w-5" />
@@ -119,5 +115,3 @@ export const EducationNode = (props: any) => (
 export const CareerNode = (props: any) => <CustomNode {...props} type="career" />;
 export const GoalNode = (props: any) => <CustomNode {...props} type="goal" />;
 export const OtherNode = (props: any) => <CustomNode {...props} type="other" />;
-
-    
