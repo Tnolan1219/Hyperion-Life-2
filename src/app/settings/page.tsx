@@ -233,7 +233,7 @@ const OverviewTab = ({ user, profile, preferences, isLoading }: { user: any, pro
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <StatCard title="Goals in Progress" value={5} icon={CheckCircle} />
                         <StatCard title="Net Worth Growth" value="+3.2%" icon={TrendingUp} />
-                        <StatCard title="Member Since" value={new Date(user.metadata.creationTime).toLocaleDateString()} icon={Calendar} />
+                        <StatCard title="Member Since" value={user?.metadata?.creationTime ? new Date(user.metadata.creationTime).toLocaleDateString() : 'N/A'} icon={Calendar} />
                         <StatCard title="AI Persona" value="Active" icon={UserIcon} />
                     </div>
                  )}
