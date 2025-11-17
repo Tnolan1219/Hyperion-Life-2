@@ -62,6 +62,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { LifePlanTimeline } from '@/components/life-plan/LifePlanTimeline';
 import { SearchNodes } from '@/components/life-plan/SearchNodes';
 import { ContactManager } from '@/components/life-plan/resources/ContactManager';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 
 const initialNodes: Node[] = lifePlanTemplates.default.nodes;
@@ -405,11 +406,6 @@ function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSe
   );
 }
 
-const tabOptions = [
-    { id: 'life-plan', label: 'Life Plan', icon: Map },
-    { id: 'timeline', label: 'Timeline', icon: CalendarIcon },
-    { id: 'resources', label: 'Resources', icon: Users },
-]
 
 function LifePlanFlowProvider(props: any) {
   return (
@@ -527,9 +523,25 @@ function LifePlanPageContent({
     };
 
     return (
-      <div className="flex-grow flex flex-col min-h-0">
-        <div className={cn('flex-grow flex flex-col', { 'hidden': activeTab !== 'life-plan' })}>
-            <div className={cn("flex flex-col flex-grow min-h-0", !isExpanded && "px-4 md:px-8")}>
+        <Tabs value={activeTab} onValueChange={(value) => props.setActiveTab(value)} className="flex flex-col flex-grow min-h-0">
+             <div className={cn("px-4 md:px-8 flex-shrink-0", isExpanded && 'hidden')}>
+                 <TabsList className="grid w-full grid-cols-3 max-w-md mx-auto">
+                    <TabsTrigger value="life-plan">
+                        <Map className="mr-2 h-4 w-4" />
+                        Map
+                    </TabsTrigger>
+                    <TabsTrigger value="timeline">
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        Timeline
+                    </TabsTrigger>
+                    <TabsTrigger value="resources">
+                        <Users className="mr-2 h-4 w-4" />
+                        Resources
+                    </TabsTrigger>
+                </TabsList>
+            </div>
+            
+            <TabsContent value="life-plan" className="flex-grow flex flex-col min-h-0 mt-4">
                  <div className={cn("flex-grow relative h-[calc(100vh-340px)] border border-border/20 rounded-xl overflow-hidden", isExpanded && "h-screen !rounded-none !border-0")}>
                     <LifePlanCanvas 
                         nodes={nodes}
@@ -552,15 +564,14 @@ function LifePlanPageContent({
                 <div className={cn("pt-8 pb-8 flex-shrink-0 w-full", isExpanded && 'hidden')}>
                    <AIPlanGenerator onGenerate={handleAIGenerate} />
                 </div>
-            </div>
-        </div>
-        <div className={cn({ 'hidden': activeTab !== 'timeline' })}>
-            <TimelineView nodes={nodes} onFocusNode={handleFocusNode} />
-        </div>
-        <div className={cn({ 'hidden': activeTab !== 'resources' })}>
-            <ResourcesView />
-        </div>
-      </div>
+            </TabsContent>
+            <TabsContent value="timeline" className="flex-grow mt-0">
+                <TimelineView nodes={nodes} onFocusNode={handleFocusNode} />
+            </TabsContent>
+            <TabsContent value="resources" className="flex-grow mt-0">
+                <ResourcesView />
+            </TabsContent>
+        </Tabs>
     );
 }
 
@@ -576,32 +587,8 @@ export default function LifePlanPage() {
         "flex flex-col h-full",
         isExpanded ? "fixed inset-0 bg-background z-50 h-screen" : "relative"
     )}>
-        <div className={cn("px-4 md:px-8 flex-shrink-0", isExpanded ? "pt-4" : "pt-0")}>
-            <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">Life Plan</h1>
-            <p className="text-muted-foreground mt-2">
-                Visualize and map out your financial future. Drag, drop, and connect the dots.
-            </p>
-        </div>
-
-        <div className={cn("px-4 md:px-8 flex items-center justify-center gap-2 flex-shrink-0 my-4", isExpanded && 'hidden')}>
-            {tabOptions.map(tab => (
-                <Button 
-                    key={tab.id}
-                    variant={activeTab === tab.id ? 'default' : 'outline'}
-                    className={cn(
-                        'rounded-full gap-2 transition-all duration-300',
-                        activeTab === tab.id ? 'w-32' : 'w-14 h-14',
-                        activeTab !== tab.id && 'glass text-muted-foreground'
-                    )}
-                    onClick={() => {
-                        setActiveTab(tab.id as any);
-                        if (isExpanded) setIsExpanded(false);
-                    }}
-                >
-                    <tab.icon className="h-6 w-6" />
-                    <span className={cn('transition-all', activeTab === tab.id ? 'block' : 'hidden')}>{tab.label}</span>
-                </Button>
-            ))}
+        <div className={cn("px-4 md:px-8 flex-shrink-0 mb-4", isExpanded ? "pt-4" : "pt-0")}>
+            <h1 className="text-4xl font-bold text-center text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">Life Plan</h1>
         </div>
         
         <LifePlanFlowProvider
@@ -619,7 +606,3 @@ export default function LifePlanPage() {
     </div>
   );
 }
-
-    
-
-    
