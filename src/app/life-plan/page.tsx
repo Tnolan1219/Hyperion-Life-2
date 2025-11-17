@@ -1,6 +1,6 @@
 
 'use client';
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import ReactFlow, {
   ReactFlowProvider,
   useNodesState,
@@ -40,10 +40,12 @@ import {
   Sparkles,
   Loader2,
   Map,
-  Calendar,
+  Calendar as CalendarIcon,
   Users,
   Rows,
   Maximize,
+  Calendar,
+  Search as SearchIcon,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { NodeEditor } from '@/components/life-plan/NodeEditor';
@@ -210,10 +212,48 @@ const ResourcesView = () => (
     </div>
 );
 
+const GuideLines = ({ nodes, show, type, direction }: { nodes: Node[], show: boolean, type: 'year' | 'month', direction: 'TB' | 'LR'}) => {
+    if (!show || nodes.length === 0) return null;
+
+    const years = [...new Set(nodes.map(n => n.data.year).filter(y => y))].sort();
+    if (years.length < 2) return null;
+
+    const firstYear = years[0];
+    const lastYear = years[years.length - 1];
+    const totalYears = lastYear - firstYear + 1;
+    const items = type === 'year' ? Array.from({ length: totalYears }, (_, i) => firstYear + i) : Array.from({ length: totalYears * 12 }, (_, i) => i);
+    const scale = direction === 'TB' ? '400px' : '600px';
+
+    return (
+        <div className={cn("absolute inset-0 pointer-events-none", direction === 'TB' ? 'flex flex-col' : 'flex flex-row')}>
+            {items.map((item, index) => (
+                <div 
+                    key={index}
+                    className={cn(
+                        'border-dashed border-primary/20',
+                        direction === 'TB' ? 'w-full border-t' : 'h-full border-l',
+                        type === 'month' && 'border-primary/10'
+                    )}
+                    style={direction === 'TB' ? { height: scale } : { width: scale }}
+                >
+                    {type === 'year' && (
+                        <span className="text-xs text-primary/40 p-1">{item}</span>
+                    )}
+                </div>
+            ))}
+        </div>
+    );
+};
+
 function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSelectedNode, onFocusNode, onAIGenerate, onTemplateLoad, selectedNode, connectingNodeId, setConnectingNodeId, onDeleteNode, isExpanded, setIsExpanded }: any) {
   const { fitView } = useReactFlow();
+  const [layoutDirection, setLayoutDirection] = useState<'TB' | 'LR'>('LR');
+  const [showYearGuides, setShowYearGuides] = useState(false);
+  const [showMonthGuides, setShowMonthGuides] = useState(false);
+
 
   const onLayout = useCallback((direction: 'TB' | 'LR') => {
+    setLayoutDirection(direction);
     const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(nodes, edges, direction);
     setNodes([...layoutedNodes]);
     setEdges([...layoutedEdges]);
@@ -247,8 +287,11 @@ function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSe
           proOptions={{ hideAttribution: true }}
           deleteKeyCode={['Backspace', 'Delete']}
           minZoom={0.1}
-          connectionRadius={50}
+          connectionRadius={80}
         >
+          <Background gap={24} size={1} color="hsl(var(--border))" />
+          <GuideLines nodes={nodes} show={showYearGuides} type="year" direction={layoutDirection} />
+          <GuideLines nodes={nodes} show={showMonthGuides} type="month" direction={layoutDirection} />
           <div className="absolute top-4 right-4 z-10 flex gap-2">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -285,21 +328,33 @@ function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSe
                 </DropdownMenuContent>
               </DropdownMenu>
           </div>
-          <Background gap={24} size={1} color="hsl(var(--border))" />
-          <Controls className="react-flow-controls" position='bottom-left'>
-              <button onClick={() => fitView({ duration: 500 })} title="Fit View">
-                  <ZoomIn />
-              </button>
-              <button onClick={() => onLayout('TB')} title="Top-to-Bottom Layout">
-                  <Layout />
-              </button>
-              <button onClick={() => onLayout('LR')} title="Left-to-Right Layout">
-                  <Rows />
-              </button>
-              <button onClick={() => setIsExpanded(!isExpanded)} title={isExpanded ? "Collapse" : "Expand"}>
-                  <Maximize />
-              </button>
-          </Controls>
+          
+          <Panel position="bottom-left" className="!left-auto !bottom-4 !right-4 !transform-none md:!left-4 md:!right-auto">
+            <div className="flex flex-col md:flex-row items-center gap-2 glass p-2 rounded-2xl">
+              <SearchNodes nodes={nodes} onFocusNode={onFocusNode} />
+              <div className="flex gap-1">
+                <Button variant="ghost" size="icon" onClick={() => fitView({ duration: 500 })} title="Fit View">
+                    <ZoomIn className="h-5 w-5"/>
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => onLayout('TB')} title="Top-to-Bottom Layout">
+                    <Layout className="h-5 w-5"/>
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => onLayout('LR')} title="Left-to-Right Layout">
+                    <Rows className="h-5 w-5"/>
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => setShowYearGuides(!showYearGuides)} title="Toggle Year Guides" className={cn(showYearGuides && 'text-primary bg-primary/10')}>
+                    <Calendar className="h-5 w-5" />
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => setShowMonthGuides(!showMonthGuides)} title="Toggle Month Guides" className={cn(showMonthGuides && 'text-primary bg-primary/10')}>
+                    <Calendar className="h-5 w-5" />
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => setIsExpanded(!isExpanded)} title={isExpanded ? "Collapse" : "Expand"}>
+                    <Maximize className="h-5 w-5"/>
+                </Button>
+              </div>
+            </div>
+          </Panel>
+
         </ReactFlow>
 
         <div className="absolute top-0 right-0 h-full w-auto pointer-events-none">
@@ -323,24 +378,26 @@ function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSe
             .react-flow__edge-path {
                 filter: drop-shadow(0 0 5px hsl(var(--primary)));
             }
-            .react-flow-controls button {
-                background-color: hsl(var(--card));
-                border-bottom: 1px solid hsl(var(--border));
-                border-radius: 4px;
+            .react-flow__node.connecting, .react-flow__node[data-connecting='true'] {
+                --glow-color-career: hsl(var(--orange-400));
+                --glow-color-education: hsl(var(--blue-400));
+                --glow-color-financial: hsl(var(--green-400));
+                --glow-color-lifeEvent: hsl(var(--pink-400));
+                --glow-color-goal: hsl(var(--purple-400));
+                --glow-color-other: hsl(var(--teal-400));
+
+                 box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px var(--glow-color, hsl(var(--secondary))), 0 0 15px var(--glow-color, hsl(var(--secondary)));
             }
-            .react-flow-controls button:hover {
-                background-color: hsl(var(--muted));
-            }
-            .react-flow-controls svg {
-                fill: hsl(var(--foreground));
-            }
+             .react-flow__node[data-type='career'][data-connecting='true'] { --glow-color: var(--glow-color-career); }
+            .react-flow__node[data-type='education'][data-connecting='true'] { --glow-color: var(--glow-color-education); }
+            .react-flow__node[data-type='financial'][data-connecting='true'] { --glow-color: var(--glow-color-financial); }
+            .react-flow__node[data-type='lifeEvent'][data-connecting='true'] { --glow-color: var(--glow-color-lifeEvent); }
+            .react-flow__node[data-type='goal'][data-connecting='true'] { --glow-color: var(--glow-color-goal); }
+            .react-flow__node[data-type='other'][data-connecting='true'] { --glow-color: var(--glow-color-other); }
+
             .react-flow__node:hover {
                 --glow-color: hsl(var(--primary));
                 box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px var(--glow-color), 0 0 15px var(--glow-color);
-            }
-            .react-flow__node.connecting, .react-flow__node[data-connecting='true'] {
-                --glow-color: hsl(var(--secondary));
-                 box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px var(--glow-color), 0 0 15px var(--glow-color);
             }
         `}</style>
     </div>
@@ -349,7 +406,7 @@ function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSe
 
 const tabOptions = [
     { id: 'life-plan', label: 'Life Plan', icon: Map },
-    { id: 'timeline', label: 'Timeline', icon: Calendar },
+    { id: 'timeline', label: 'Timeline', icon: CalendarIcon },
     { id: 'resources', label: 'Resources', icon: Users },
 ]
 
@@ -374,10 +431,22 @@ function LifePlanPageContent({
   setIsExpanded,
   ...props
 }: any) {
-    const { fitView, setCenter, getNode } = useReactFlow();
+    const { fitView, setCenter, getNode, addNodes, getNodes } = useReactFlow();
     const [selectedNode, setSelectedNode] = useState<Node | null>(null);
     const [connectingNodeId, setConnectingNodeId] = useState<string | null>(null);
-    const [layoutDirection, setLayoutDirection] = useState<'TB' | 'LR'>('TB');
+
+    useEffect(() => {
+        getNodes().forEach(node => {
+            if (node.id === connectingNodeId) {
+                node.data = { ...node.data, connecting: true };
+            } else if (node.data.connecting) {
+                const { connecting, ...rest } = node.data;
+                node.data = rest;
+            }
+        });
+        setNodes([...getNodes()]);
+    }, [connectingNodeId, getNodes, setNodes]);
+
 
     const handleNodesChange = useCallback(
     (changes: NodeChange[]) => {
@@ -413,14 +482,6 @@ function LifePlanPageContent({
         }
     };
     
-    const onLayout = useCallback((direction: 'TB' | 'LR') => {
-        setLayoutDirection(direction);
-        const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(nodes, edges, direction);
-        setNodes([...layoutedNodes]);
-        setEdges([...layoutedEdges]);
-        window.requestAnimationFrame(() => fitView({ duration: 500 }));
-    }, [nodes, edges, setNodes, setEdges, fitView]);
-
     const addNode = (type: string, label: string) => {
         const newNode: Node = {
             id: `node_${+new Date()}`,
@@ -435,7 +496,7 @@ function LifePlanPageContent({
     const handleTemplateLoad = (templateName: keyof typeof lifePlanTemplates | string) => {
         const template = lifePlanTemplates[templateName as keyof typeof lifePlanTemplates];
         if (template) {
-            const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(template.nodes, template.edges, layoutDirection);
+            const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(template.nodes, template.edges, 'LR');
             setNodes(layoutedNodes);
             setEdges(layoutedEdges);
         } else {
@@ -446,7 +507,7 @@ function LifePlanPageContent({
     };
 
     const handleAIGenerate = (aiNodes: Node[], aiEdges: Edge[]) => {
-        const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(aiNodes, aiEdges, layoutDirection);
+        const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(aiNodes, aiEdges, 'LR');
         setNodes(layoutedNodes);
         setEdges(layoutedEdges);
         setSelectedNode(null);
@@ -466,10 +527,9 @@ function LifePlanPageContent({
 
     return (
       <div className="flex-grow flex flex-col min-h-0">
-        {/* Render all tab panels, but only show the active one */}
-        <div className={cn(activeTab !== 'life-plan' && 'hidden', "h-full flex flex-col")}>
+        <div className={cn('h-full flex flex-col', { 'hidden': activeTab !== 'life-plan' })}>
             <div className={cn("flex flex-col flex-grow min-h-0", !isExpanded && "px-4 md:px-8")}>
-                <div className={cn("flex-grow relative h-[calc(100vh-250px)]")}>
+                <div className={cn("flex-grow relative", isExpanded ? "h-screen" : "h-[calc(100vh-350px)]")}>
                     <LifePlanCanvas 
                         nodes={nodes}
                         edges={edges}
@@ -478,7 +538,6 @@ function LifePlanPageContent({
                         setEdges={setEdges}
                         setSelectedNode={setSelectedNode}
                         onFocusNode={handleFocusNode}
-                        onLayout={onLayout}
                         onAIGenerate={handleAIGenerate}
                         onTemplateLoad={handleTemplateLoad}
                         selectedNode={selectedNode}
@@ -494,10 +553,10 @@ function LifePlanPageContent({
                 </div>
             </div>
         </div>
-        <div className={cn(activeTab !== 'timeline' && 'hidden')}>
+        <div className={cn({ 'hidden': activeTab !== 'timeline' })}>
             <TimelineView nodes={nodes} onFocusNode={handleFocusNode} />
         </div>
-        <div className={cn(activeTab !== 'resources' && 'hidden')}>
+        <div className={cn({ 'hidden': activeTab !== 'resources' })}>
             <ResourcesView />
         </div>
       </div>
@@ -559,8 +618,3 @@ export default function LifePlanPage() {
     </div>
   );
 }
-
-
-    
-
-    
