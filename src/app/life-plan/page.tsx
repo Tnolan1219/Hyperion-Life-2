@@ -360,7 +360,7 @@ function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSe
         <div className="absolute top-0 right-0 h-full w-auto pointer-events-none">
             <NodeEditor
               selectedNode={selectedNode}
-              onNodeDataChange={(nodeId: string, newData: any) => setNodes((nds: Node[]) => nds.map(n => n.id === nodeId ? { ...n, data: { ...n.data, ...newData } } : n))}
+              onNodeDataChange={(nodeId: string, newData: any) => setNodes((nds: Node[]) => nds.map((n: Node) => n.id === nodeId ? { ...n, data: { ...n.data, ...newData } } : n))}
               closeEditor={() => setSelectedNode(null)}
               startConnecting={() => {
                   if (selectedNode) setConnectingNodeId(selectedNode.id);
@@ -527,9 +527,9 @@ function LifePlanPageContent({
 
     return (
       <div className="flex-grow flex flex-col min-h-0">
-        <div className={cn('h-full flex-grow flex-col', { 'hidden': activeTab !== 'life-plan' })}>
+        <div className={cn('h-full flex-grow flex flex-col', { 'hidden': activeTab !== 'life-plan' })}>
             <div className={cn("flex flex-col flex-grow min-h-0", !isExpanded && "px-4 md:px-8")}>
-                <div className={cn("flex-grow relative", isExpanded ? "h-screen" : "h-[calc(100vh-250px)]")}>
+                 <div className={cn("flex-grow relative h-[calc(100vh-320px)]", isExpanded && "h-screen")}>
                     <LifePlanCanvas 
                         nodes={nodes}
                         edges={edges}
@@ -548,7 +548,7 @@ function LifePlanPageContent({
                         setIsExpanded={setIsExpanded}
                     />
                 </div>
-                <div className={cn("pt-8 flex-shrink-0 w-full", isExpanded && 'hidden')}>
+                <div className={cn("pt-8 pb-8 flex-shrink-0 w-full", isExpanded && 'hidden')}>
                    <AIPlanGenerator onGenerate={handleAIGenerate} />
                 </div>
             </div>
@@ -618,3 +618,5 @@ export default function LifePlanPage() {
     </div>
   );
 }
+
+    
