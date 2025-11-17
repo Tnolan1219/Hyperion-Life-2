@@ -14,6 +14,8 @@ import ReactFlow, {
   useReactFlow,
   Panel,
   NodeChange,
+  NodeResizeControl,
+  NodeToolbar,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { lifePlanTemplates } from '@/lib/life-plan-templates';
@@ -87,20 +89,22 @@ const nodeMenu = [
   { type: 'financial', label: 'Milestone', icon: PiggyBank, color: 'green' },
   { type: 'lifeEvent', label: 'Life Event', icon: Heart, color: 'pink' },
   { type: 'goal', label: 'Goal', icon: Flag, color: 'purple' },
-  { type: 'other', label: 'Other', icon: Zap, color: 'teal' },
+  { type: 'other', label: 'Note', icon: Zap, color: 'teal' },
 ];
 
 const dagreGraph = new dagre.graphlib.Graph({ multigraph: true });
 dagreGraph.setDefaultEdgeLabel(() => ({}));
 
-const nodeWidth = 208;
-const nodeHeight = 88;
+const defaultNodeWidth = 208;
+const defaultNodeHeight = 88;
 
 const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = 'TB') => {
   const isHorizontal = direction === 'LR';
   dagreGraph.setGraph({ rankdir: direction, nodesep: 100, ranksep: 100 });
 
   nodes.forEach((node) => {
+    const nodeWidth = node.width || defaultNodeWidth;
+    const nodeHeight = node.height || defaultNodeHeight;
     dagreGraph.setNode(node.id, { width: nodeWidth, height: nodeHeight });
   });
 
@@ -113,16 +117,16 @@ const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = 'TB') => 
 
   const layoutedNodes = nodes.map((node) => {
     const nodeWithPosition = dagreGraph.node(node.id);
+    const nodeWidth = node.width || defaultNodeWidth;
+    const nodeHeight = node.height || defaultNodeHeight;
+    
     node.targetPosition = isHorizontal ? 'left' : 'top';
     node.sourcePosition = isHorizontal ? 'right' : 'bottom';
-
-    // We are searching for the system node as we don't want to layout it
-    if (node.type !== 'system') {
-      node.position = {
-        x: nodeWithPosition.x - nodeWidth / 2,
-        y: nodeWithPosition.y - nodeHeight / 2,
-      };
-    }
+    
+    node.position = {
+      x: nodeWithPosition.x - nodeWidth / 2,
+      y: nodeWithPosition.y - nodeHeight / 2,
+    };
 
     return node;
   });
@@ -301,6 +305,7 @@ function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSe
           <Background gap={24} size={1} color="hsl(var(--border))" />
           <GuideLines nodes={nodes} show={showYearGuides} type="year" direction={layoutDirection} />
           <GuideLines nodes={nodes} show={showMonthGuides} type="month" direction={layoutDirection} />
+           <NodeResizeControl minWidth={208} minHeight={88} />
           <div className="absolute top-4 right-4 z-10 flex gap-2">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -349,7 +354,7 @@ function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSe
               </Button>
           </Panel>
 
-          <Panel position="bottom-left" className={cn(isExpanded && "block")}>
+          <Panel position="bottom-center" className={cn(isExpanded && "block")}>
             <div className={cn("flex flex-col md:flex-row items-center gap-2 glass p-2 rounded-2xl")}>
               <SearchNodes nodes={nodes} onFocusNode={onFocusNode} />
               <div className="flex gap-1">
@@ -418,6 +423,15 @@ function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSe
             .react-flow__node[data-type='goal']:hover, .react-flow__node[data-type='goal'][data-connecting='true'] { --glow-color: var(--glow-color-goal); }
             .react-flow__node[data-type='other']:hover, .react-flow__node[data-type='other'][data-connecting='true'] { --glow-color: var(--glow-color-other); }
              .react-flow__node[data-type='system']:hover, .react-flow__node[data-type='system'][data-connecting='true'] { --glow-color: var(--glow-color-system); }
+
+            .react-flow__resize-control.handle {
+                width: 10px;
+                height: 10px;
+                border-radius: 2px;
+                background-color: hsl(var(--primary));
+                border-color: hsl(var(--primary-foreground));
+                border-width: 2px;
+            }
 
         `}</style>
     </div>
@@ -515,12 +529,10 @@ function LifePlanPageContent({
     };
     
     const addSystemNode = () => {
-         const systemNodes = getNodes().filter((node) => node.type === 'system');
         const { x, y, zoom } = getViewport();
-
         const position = {
-            x: 20,
-            y: -y / zoom + 500 / zoom + systemNodes.length * 100, // Stack new nodes
+            x: -x/zoom + 100/zoom,
+            y: -y/zoom + 100/zoom,
         };
 
         const newNode: Node = {
@@ -528,8 +540,6 @@ function LifePlanPageContent({
             type: 'system',
             position,
             data: { title: 'Weekly Investment', amount: 100, frequency: 'weekly', notes: 'Auto-invest into VTI' },
-            draggable: false,
-            zIndex: -1,
         };
         setNodes((nds: Node[]) => nds.concat(newNode));
         window.requestAnimationFrame(() => fitView({ duration: 500, nodes: [newNode] }));
@@ -573,29 +583,31 @@ function LifePlanPageContent({
     };
 
     return (
-        <Tabs value={activeTab} onValueChange={(value) => props.setActiveTab(value)} className="flex flex-col flex-grow min-h-0">
-             <div className="px-4 md:px-8">
+        <div className="flex flex-col h-full">
+            <div className="px-4 md:px-8">
                 <div className="flex items-center justify-between relative">
                  <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">Life Plan</h1>
-                 <TabsList>
-                    <TabsTrigger value="life-plan">
-                        <Map className="mr-2 h-4 w-4" />
-                        Map
-                    </TabsTrigger>
-                    <TabsTrigger value="timeline">
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        Timeline
-                    </TabsTrigger>
-                    <TabsTrigger value="resources">
-                        <Users className="mr-2 h-4 w-4" />
-                        Resources
-                    </TabsTrigger>
-                </TabsList>
+                 <Tabs value={activeTab} onValueChange={(value) => props.setActiveTab(value)}>
+                    <TabsList>
+                        <TabsTrigger value="life-plan">
+                            <Map className="mr-2 h-4 w-4" />
+                            Map
+                        </TabsTrigger>
+                        <TabsTrigger value="timeline">
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            Timeline
+                        </TabsTrigger>
+                        <TabsTrigger value="resources">
+                            <Users className="mr-2 h-4 w-4" />
+                            Resources
+                        </TabsTrigger>
+                    </TabsList>
+                 </Tabs>
                 </div>
             </div>
             
             <TabsContent value="life-plan" className="flex-grow flex flex-col min-h-0 mt-4">
-                 <div className={cn("flex-grow relative h-[85vh] border border-border/20 rounded-xl overflow-hidden", isExpanded && "h-screen !rounded-none !border-0")}>
+                 <div className={cn("flex-grow relative h-full border border-border/20 rounded-xl overflow-hidden", isExpanded && "h-screen !rounded-none !border-0")}>
                     <LifePlanCanvas 
                         nodes={nodes}
                         edges={edges}
@@ -624,7 +636,7 @@ function LifePlanPageContent({
             <TabsContent value="resources" className="flex-grow mt-0">
                 <ResourcesView />
             </TabsContent>
-        </Tabs>
+        </div>
     );
 }
 
@@ -637,23 +649,24 @@ export default function LifePlanPage() {
 
   return (
     <div className={cn(
-        "flex flex-col min-h-[calc(100vh-12rem)]", // Ensure it takes significant height but respects footer
-        isExpanded ? "fixed inset-0 bg-background z-50 h-screen" : "relative"
+        "flex flex-col h-[calc(100vh-8rem)]",
+        isExpanded ? "fixed inset-0 bg-background z-50 h-screen !p-0" : "relative"
     )}>
         
-        <LifePlanFlowProvider
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          setNodes={setNodes}
-          setEdges={setEdges}
-          onEdgesChange={onEdgesChange}
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          isExpanded={isExpanded}
-          setIsExpanded={setIsExpanded}
-        />
+        <ReactFlowProvider>
+            <LifePlanPageContent
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            setNodes={setNodes}
+            setEdges={setEdges}
+            onEdgesChange={onEdgesChange}
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            isExpanded={isExpanded}
+            setIsExpanded={setIsExpanded}
+            />
+        </ReactFlowProvider>
     </div>
   );
 }
-

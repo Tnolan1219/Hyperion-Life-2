@@ -1,9 +1,11 @@
+
 'use client';
 import React from 'react';
-import { Handle, Position } from 'reactflow';
+import { Handle, Position, NodeResizer } from 'reactflow';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { Briefcase, GraduationCap, PiggyBank, Heart, Flag, Zap, Users, Repeat } from 'lucide-react';
+import { Textarea } from '../ui/textarea';
 
 const iconMap = {
   career: Briefcase,
@@ -59,6 +61,24 @@ const CustomNode = ({ data, type, selected }: CustomNodeProps) => {
   const colorClass = colorMap[type as keyof typeof colorMap];
 
   const formattedAmount = formatCurrency(data.amount);
+  
+  if (type === 'other') {
+    return (
+      <Card
+        className={cn(
+          `shadow-lg rounded-lg border-2 bg-yellow-200/80 dark:bg-yellow-800/50 backdrop-blur-sm transition-all duration-300 w-full h-full`,
+          selected ? 'border-primary shadow-lg shadow-primary/20' : `border-yellow-400/20`
+        )}
+      >
+        <NodeResizer minWidth={150} minHeight={100} />
+        <Textarea
+          defaultValue={data.title || "My Note"}
+          className="w-full h-full bg-transparent border-none focus:ring-0 resize-none text-yellow-900 dark:text-yellow-100 placeholder:text-yellow-700/80 dark:placeholder:text-yellow-300/80"
+          placeholder="Write your note..."
+        />
+      </Card>
+    );
+  }
 
   return (
     <Card
@@ -67,7 +87,8 @@ const CustomNode = ({ data, type, selected }: CustomNodeProps) => {
         selected ? 'border-primary shadow-lg shadow-primary/20' : `border-${colorClass}-400/20`
       )}
     >
-      {type !== 'system' && <Handle type="target" position={Position.Top} className="!bg-primary/50" isConnectable={true} />}
+      <NodeResizer minWidth={208} minHeight={88} isVisible={selected && type === 'system'} />
+      <Handle type="target" position={Position.Top} className="!bg-primary/50" isConnectable={true} />
       <CardHeader className="p-3">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-2">
@@ -102,12 +123,12 @@ const CustomNode = ({ data, type, selected }: CustomNodeProps) => {
             )}
           </CardContent>
       )}
-      {type !== 'system' && <Handle
+      <Handle
         type="source"
         position={Position.Bottom}
         className="!bg-primary/50"
         isConnectable={true}
-      />}
+      />
     </Card>
   );
 };

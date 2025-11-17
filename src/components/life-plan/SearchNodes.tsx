@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -42,7 +43,7 @@ export function SearchNodes({ nodes, onFocusNode }: SearchNodesProps) {
       <PopoverTrigger asChild>
         <Button variant="outline" className="w-[300px] justify-start text-muted-foreground glass">
           <Search className="mr-2 h-4 w-4" />
-          <span>Search events...</span>
+          <span>Search...</span>
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[300px] p-0" align="end">
