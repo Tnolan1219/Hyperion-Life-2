@@ -2,7 +2,7 @@
 
 import { firebaseConfig } from '@/firebase/config';
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
-import { getAuth, Auth } from 'firebase/auth';
+import { getAuth, Auth, browserSessionPersistence, setPersistence } from 'firebase/auth';
 import { getFirestore, Firestore } from 'firebase/firestore';
 
 let app: FirebaseApp;
@@ -25,6 +25,11 @@ if (!getApps().length) {
 
 auth = getAuth(app);
 firestore = getFirestore(app);
+
+// Set persistence to session before any other auth operations.
+// This helps prevent issues with popup-based sign-in flows.
+setPersistence(auth, browserSessionPersistence);
+
 
 export { app as firebaseApp, auth, firestore };
 
