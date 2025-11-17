@@ -1,3 +1,4 @@
+
 'use client';
 
 import React from 'react';
@@ -53,7 +54,7 @@ export default function LandingPage() {
 
   return (
     <div className="space-y-16 md:space-y-24">
-      <div className="text-center pt-16 md:pt-20">
+      <div className="text-center pt-12 md:pt-16">
         <h1 className="text-5xl md:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary leading-tight">
           Design Your Destiny
         </h1>
