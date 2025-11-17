@@ -70,12 +70,14 @@ const CustomNode = ({ data, type, selected }: CustomNodeProps) => {
           selected ? 'border-primary shadow-lg shadow-primary/20' : `border-yellow-400/20`
         )}
       >
-        <NodeResizer minWidth={150} minHeight={100} />
+        <NodeResizer minWidth={150} minHeight={100} isVisible={selected} />
+        <Handle type="target" position={Position.Top} className="!bg-primary/50" isConnectable={true} />
         <Textarea
           defaultValue={data.title || "My Note"}
           className="w-full h-full bg-transparent border-none focus:ring-0 resize-none text-yellow-900 dark:text-yellow-100 placeholder:text-yellow-700/80 dark:placeholder:text-yellow-300/80"
           placeholder="Write your note..."
         />
+        <Handle type="source" position={Position.Bottom} className="!bg-primary/50" isConnectable={true} />
       </Card>
     );
   }

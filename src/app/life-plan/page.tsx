@@ -553,7 +553,7 @@ function LifePlanPageContent({
 
         const template = lifePlanTemplates[templateName as keyof typeof lifePlanTemplates];
         if (template) {
-            const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(template.nodes, template.edges, 'LR');
+            const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(template.nodes, 'LR');
             setNodes(layoutedNodes);
             setEdges(layoutedEdges);
         } else {
@@ -583,13 +583,11 @@ function LifePlanPageContent({
     };
 
     return (
-      <div className="flex flex-col h-full">
+      <div className={cn("flex flex-col", isExpanded ? "h-screen" : "h-[calc(100vh-8rem)]")}>
         <div className="px-4 md:px-8">
-          <div className="flex items-center justify-between relative">
             <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">
               Life Plan
             </h1>
-          </div>
         </div>
 
         <Tabs
@@ -616,7 +614,7 @@ function LifePlanPageContent({
             <div
               className={cn(
                 'flex-grow relative h-full border border-border/20 rounded-xl overflow-hidden',
-                isExpanded && 'h-screen !rounded-none !border-0'
+                isExpanded ? 'h-screen !rounded-none !border-0' : 'h-[85vh]'
               )}
             >
               <LifePlanCanvas
@@ -666,8 +664,8 @@ export default function LifePlanPage() {
 
   return (
     <div className={cn(
-        "flex flex-col h-[calc(100vh-8rem)]",
-        isExpanded ? "fixed inset-0 bg-background z-50 h-screen !p-0" : "relative"
+        "flex flex-col",
+        isExpanded ? "fixed inset-0 bg-background z-50 p-0" : "relative"
     )}>
         
         <ReactFlowProvider>
