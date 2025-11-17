@@ -260,7 +260,7 @@ const GuideLines = ({ nodes, show, type, direction }: { nodes: Node[], show: boo
 
 function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSelectedNode, onFocusNode, onAIGenerate, onTemplateLoad, selectedNode, connectingNodeId, setConnectingNodeId, onDeleteNode, isExpanded, setIsExpanded }: any) {
   const { fitView } = useReactFlow();
-  const [layoutDirection, setLayoutDirection] = useState<'TB' | 'LR'>('LR');
+  const [layoutDirection, setLayoutDirection] = useState<'TB' | 'LR'>('TB');
   const [showYearGuides, setShowYearGuides] = useState(false);
   const [showMonthGuides, setShowMonthGuides] = useState(false);
 
@@ -305,7 +305,9 @@ function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSe
           <Background gap={24} size={1} color="hsl(var(--border))" />
           <GuideLines nodes={nodes} show={showYearGuides} type="year" direction={layoutDirection} />
           <GuideLines nodes={nodes} show={showMonthGuides} type="month" direction={layoutDirection} />
-           <NodeResizeControl minWidth={208} minHeight={88} />
+           <NodeResizeControl minWidth={208} minHeight={88} isVisible={selectedNode?.type === 'system' || selectedNode?.type === 'other'}>
+             <div className="w-full h-full border-2 border-dashed border-primary rounded-lg" />
+           </NodeResizeControl>
           <div className="absolute top-4 right-4 z-10 flex gap-2">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -356,7 +358,6 @@ function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSe
 
           <Panel position="bottom-center" className={cn(isExpanded && "block")}>
             <div className={cn("flex flex-col md:flex-row items-center gap-2 glass p-2 rounded-2xl")}>
-              <SearchNodes nodes={nodes} onFocusNode={onFocusNode} />
               <div className="flex gap-1">
                 <Button variant="ghost" size="icon" onClick={() => fitView({ duration: 500 })} title="Fit View">
                     <ZoomIn className="h-5 w-5"/>
@@ -432,6 +433,17 @@ function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSe
                 border-color: hsl(var(--primary-foreground));
                 border-width: 2px;
             }
+            
+            .react-flow__node-other .editable-content {
+                background-color: transparent;
+                border: none;
+                width: 100%;
+                height: 100%;
+                padding: 1rem;
+                outline: none;
+                resize: none;
+                color: inherit;
+            }
 
         `}</style>
     </div>
@@ -447,25 +459,73 @@ function LifePlanFlowProvider(props: any) {
   )
 }
 
+function useSystemNodeSnapper(nodes: Node[], setNodes: (nodes: Node[] | ((prevNodes: Node[]) => Node[])) => void) {
+    const onNodeDragStop = useCallback((event: React.MouseEvent, node: Node) => {
+        if (node.type === 'system') {
+            const systemNodes = nodes.filter(n => n.type === 'system');
+            const otherNodes = nodes.filter(n => n.type !== 'system');
+            
+            const snappedY = 10; // Snap to top
+            let currentX = 10;
+            
+            const updatedSystemNodes = systemNodes.map(sn => {
+                if (sn.id === node.id) {
+                    sn.position.y = snappedY;
+                }
+                return sn;
+            }).sort((a,b) => a.position.x - b.position.x)
+            .map(sn => {
+                sn.position.x = currentX;
+                currentX += (sn.width || 208) + 10;
+                return sn;
+            });
+            
+            setNodes([...otherNodes, ...updatedSystemNodes]);
+        }
+    }, [nodes, setNodes]);
+
+    return onNodeDragStop;
+}
+
 
 function LifePlanPageContent({
-  nodes,
-  edges,
-  onNodesChange,
-  setNodes,
-  setEdges,
-  onEdgesChange,
   activeTab,
+  setActiveTab,
   isExpanded,
-  setIsExpanded,
-  ...props
+  setIsExpanded
 }: any) {
-    const { fitView, setCenter, getNode, addNodes, getNodes, getViewport } = useReactFlow();
+    const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+    const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+    const { fitView, setCenter, getNode, getViewport } = useReactFlow();
     const [selectedNode, setSelectedNode] = useState<Node | null>(null);
     const [connectingNodeId, setConnectingNodeId] = useState<string | null>(null);
 
+    const onNodeDragStop = useSystemNodeSnapper(nodes, setNodes);
+
+    const handleNodesChange = (changes: NodeChange[]) => {
+      onNodesChange(changes);
+      
+      const resizeChange = changes.find(c => c.type === 'dimensions' && c.resizing);
+      if (resizeChange && (resizeChange as any).id) {
+          const node = getNode((resizeChange as any).id);
+          if (node?.type === 'system') {
+              const systemNodes = nodes.filter(n => n.type === 'system' && n.id !== node.id);
+              let currentX = 10 + (node.width || 208) + 10;
+              
+              const updatedNodes = systemNodes.sort((a,b) => a.position.x - b.position.x).map(sn => {
+                  sn.position.x = currentX;
+                  currentX += (sn.width || 208) + 10;
+                  return sn;
+              });
+
+              setNodes([...nodes.filter(n => n.type !== 'system' || n.id === node.id), ...updatedNodes]);
+          }
+      }
+    };
+
+
     useEffect(() => {
-        getNodes().forEach(node => {
+        nodes.forEach(node => {
             if (node.id === connectingNodeId) {
                 node.data = { ...node.data, connecting: true };
             } else if (node.data.connecting) {
@@ -473,43 +533,20 @@ function LifePlanPageContent({
                 node.data = rest;
             }
         });
-        setNodes([...getNodes()]);
-    }, [connectingNodeId, getNodes, setNodes]);
+        setNodes([...nodes]);
+    }, [connectingNodeId, nodes, setNodes]);
 
 
-    const handleNodesChange = useCallback(
-    (changes: NodeChange[]) => {
-      const deletedNodeIds = changes
-        .filter(change => change.type === 'remove')
-        .map(change => (change as any).id);
-
-      if (deletedNodeIds.length > 0) {
+    const handleDeleteNode = (nodeId: string) => {
+        const changes: NodeChange[] = [{type: 'remove', id: nodeId}];
+        
+        const deletedNodeIds = [nodeId];
         setEdges((eds: Edge[]) => eds.filter(edge => !deletedNodeIds.includes(edge.source) && !deletedNodeIds.includes(edge.target)));
         if (selectedNode && deletedNodeIds.includes(selectedNode.id)) {
             setSelectedNode(null);
         }
-      }
-      onNodesChange(changes);
-    },
-    [onNodesChange, setEdges, selectedNode, setSelectedNode]
-  );
-
-    const onDeleteNode = (nodeId: string) => {
-        handleNodesChange([{type: 'remove', id: nodeId}]);
+        onNodesChange(changes);
     }
-
-    const onNodeDataChange = (nodeId: string, newData: any) => {
-        setNodes((nds: Node[]) =>
-            nds.map((node) =>
-                node.id === nodeId
-                    ? { ...node, data: { ...node.data, ...newData } }
-                    : node
-            )
-        );
-        if (selectedNode?.id === nodeId) {
-            setSelectedNode((prev) => prev ? { ...prev, data: { ...prev.data, ...newData } } : null);
-        }
-    };
     
     const addNode = (type: string, label: string) => {
         const { x, y, zoom } = getViewport();
@@ -529,20 +566,18 @@ function LifePlanPageContent({
     };
     
     const addSystemNode = () => {
-        const { x, y, zoom } = getViewport();
-        const position = {
-            x: -x/zoom + 100/zoom,
-            y: -y/zoom + 100/zoom,
-        };
+       const systemNodes = nodes.filter(n => n.type === 'system');
+       const xPos = systemNodes.reduce((acc, node) => acc + (node.width || 208) + 10, 10);
 
         const newNode: Node = {
             id: `node_${+new Date()}`,
             type: 'system',
-            position,
+            position: { x: xPos, y: 10 },
             data: { title: 'Weekly Investment', amount: 100, frequency: 'weekly', notes: 'Auto-invest into VTI' },
+            width: 208,
+            height: 88,
         };
         setNodes((nds: Node[]) => nds.concat(newNode));
-        window.requestAnimationFrame(() => fitView({ duration: 500, nodes: [newNode] }));
     }
 
     const handleTemplateLoad = (templateName: keyof typeof lifePlanTemplates | string) => {
@@ -553,7 +588,7 @@ function LifePlanPageContent({
 
         const template = lifePlanTemplates[templateName as keyof typeof lifePlanTemplates];
         if (template) {
-            const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(template.nodes, 'LR');
+            const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(template.nodes, template.edges, 'LR');
             setNodes(layoutedNodes);
             setEdges(layoutedEdges);
         } else {
@@ -579,38 +614,38 @@ function LifePlanPageContent({
             setCenter(x + (node.width || 0) / 2, y + (node.height || 0) / 2, { zoom, duration: 500 });
             setSelectedNode(node);
         }
-        props.setActiveTab('life-plan');
+        setActiveTab('life-plan');
     };
 
     return (
       <div className={cn("flex flex-col", isExpanded ? "h-screen" : "h-[calc(100vh-8rem)]")}>
-        <div className="px-4 md:px-8">
+        <div className="px-4 md:px-8 flex justify-between items-center">
             <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">
               Life Plan
             </h1>
+            <Tabs
+              value={activeTab}
+              onValueChange={(value) => setActiveTab(value)}
+            >
+              <TabsList>
+                <TabsTrigger value="life-plan">
+                  <Map className="mr-2 h-4 w-4" />
+                  Map
+                </TabsTrigger>
+                <TabsTrigger value="timeline">
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  Timeline
+                </TabsTrigger>
+                <TabsTrigger value="resources">
+                  <Users className="mr-2 h-4 w-4" />
+                  Resources
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
         </div>
 
-        <Tabs
-          value={activeTab}
-          onValueChange={(value) => props.setActiveTab(value)}
-          className="flex-grow flex flex-col mt-4"
-        >
-          <TabsList className="mx-auto">
-            <TabsTrigger value="life-plan">
-              <Map className="mr-2 h-4 w-4" />
-              Map
-            </TabsTrigger>
-            <TabsTrigger value="timeline">
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              Timeline
-            </TabsTrigger>
-            <TabsTrigger value="resources">
-              <Users className="mr-2 h-4 w-4" />
-              Resources
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="life-plan" className="flex-grow flex flex-col min-h-0 mt-4">
+        <div className="flex-grow flex flex-col min-h-0 mt-4">
+          <TabsContent value="life-plan" className="flex-grow flex flex-col min-h-0 mt-0">
             <div
               className={cn(
                 'flex-grow relative h-full border border-border/20 rounded-xl overflow-hidden',
@@ -628,11 +663,12 @@ function LifePlanPageContent({
                 onAIGenerate={handleAIGenerate}
                 onTemplateLoad={handleTemplateLoad}
                 selectedNode={selectedNode}
-                onDeleteNode={onDeleteNode}
+                onDeleteNode={handleDeleteNode}
                 connectingNodeId={connectingNodeId}
                 setConnectingNodeId={setConnectingNodeId}
                 isExpanded={isExpanded}
                 setIsExpanded={setIsExpanded}
+                onNodeDragStop={onNodeDragStop}
               />
             </div>
             <div
@@ -650,15 +686,13 @@ function LifePlanPageContent({
           <TabsContent value="resources" className="flex-grow mt-0">
             <ResourcesView />
           </TabsContent>
-        </Tabs>
+        </div>
       </div>
     );
 }
 
 export default function LifePlanPage() {
     const [activeTab, setActiveTab] = useState<'life-plan' | 'timeline' | 'resources'>('life-plan');
-    const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-    const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
     const [isExpanded, setIsExpanded] = useState(false);
 
 
@@ -670,12 +704,6 @@ export default function LifePlanPage() {
         
         <ReactFlowProvider>
             <LifePlanPageContent
-            nodes={nodes}
-            edges={edges}
-            onNodesChange={onNodesChange}
-            setNodes={setNodes}
-            setEdges={setEdges}
-            onEdgesChange={onEdgesChange}
             activeTab={activeTab}
             setActiveTab={setActiveTab}
             isExpanded={isExpanded}
@@ -685,3 +713,4 @@ export default function LifePlanPage() {
     </div>
   );
 }
+
