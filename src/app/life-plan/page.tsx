@@ -258,7 +258,7 @@ const GuideLines = ({ nodes, show, type, direction }: { nodes: Node[], show: boo
     );
 };
 
-function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSelectedNode, onFocusNode, onAIGenerate, onTemplateLoad, selectedNode, connectingNodeId, setConnectingNodeId, onDeleteNode, isExpanded, setIsExpanded }: any) {
+function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSelectedNode, onFocusNode, onAIGenerate, onTemplateLoad, selectedNode, connectingNodeId, setConnectingNodeId, onDeleteNode, isExpanded, setIsExpanded, onNodeDragStop }: any) {
   const { fitView } = useReactFlow();
   const [layoutDirection, setLayoutDirection] = useState<'TB' | 'LR'>('TB');
   const [showYearGuides, setShowYearGuides] = useState(false);
@@ -284,15 +284,30 @@ function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSe
           onConnect={(params) => setEdges((eds: Edge[]) => addEdge({ ...params, type: 'smoothstep', animated: true }, eds))}
           onNodeClick={(e, node) => {
             if (connectingNodeId && connectingNodeId !== node.id) {
-              setEdges((eds: Edge[]) => addEdge({ source: connectingNodeId, target: node.id, type: 'smoothstep', animated: true }, eds));
-              setConnectingNodeId(null);
+                setEdges((eds: Edge[]) => addEdge({ source: connectingNodeId, target: node.id, type: 'smoothstep', animated: true }, eds));
+                setConnectingNodeId(null);
+
+                // Reset the connecting state on the source node
+                setNodes((prevNodes: Node[]) =>
+                    prevNodes.map(n => 
+                        n.id === connectingNodeId ? { ...n, data: { ...n.data, connecting: false } } : n
+                    )
+                );
             } else {
-              setSelectedNode(node);
+                setSelectedNode(node);
             }
           }}
           onPaneClick={() => {
             setSelectedNode(null);
-            setConnectingNodeId(null);
+            if (connectingNodeId) {
+                // Reset the connecting state if the connection is cancelled
+                setNodes((prevNodes: Node[]) =>
+                    prevNodes.map(n => 
+                        n.id === connectingNodeId ? { ...n, data: { ...n.data, connecting: false } } : n
+                    )
+                );
+                setConnectingNodeId(null);
+            }
           }}
           nodeTypes={nodeTypes}
           fitView
@@ -301,6 +316,7 @@ function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSe
           deleteKeyCode={['Backspace', 'Delete']}
           minZoom={0.1}
           connectionRadius={80}
+          onNodeDragStop={onNodeDragStop}
         >
           <Background gap={24} size={1} color="hsl(var(--border))" />
           <GuideLines nodes={nodes} show={showYearGuides} type="year" direction={layoutDirection} />
@@ -358,7 +374,6 @@ function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSe
 
           <Panel position="bottom-center" className={cn(isExpanded && "block")}>
             <div className={cn("flex flex-col md:flex-row items-center gap-2 glass p-2 rounded-2xl")}>
-              <div className="flex gap-1">
                 <Button variant="ghost" size="icon" onClick={() => fitView({ duration: 500 })} title="Fit View">
                     <ZoomIn className="h-5 w-5"/>
                 </Button>
@@ -374,7 +389,6 @@ function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSe
                 <Button variant="ghost" size="icon" onClick={() => setShowMonthGuides(!showMonthGuides)} title="Toggle Month Guides" className={cn(showMonthGuides && 'text-primary bg-primary/10')}>
                     <CalendarDays className="h-5 w-5" />
                 </Button>
-              </div>
             </div>
           </Panel>
         </ReactFlow>
@@ -385,7 +399,10 @@ function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSe
               onNodeDataChange={(nodeId: string, newData: any) => setNodes((nds: Node[]) => nds.map((n: Node) => n.id === nodeId ? { ...n, data: { ...n.data, ...newData } } : n))}
               closeEditor={() => setSelectedNode(null)}
               startConnecting={() => {
-                  if (selectedNode) setConnectingNodeId(selectedNode.id);
+                  if (selectedNode) {
+                    setNodes(nodes.map(n => n.id === selectedNode.id ? {...n, data: { ...n.data, connecting: true }} : n));
+                    setConnectingNodeId(selectedNode.id);
+                  }
                   setSelectedNode(null);
               }}
               onDeleteNode={() => {
@@ -466,21 +483,22 @@ function useSystemNodeSnapper(nodes: Node[], setNodes: (nodes: Node[] | ((prevNo
             const otherNodes = nodes.filter(n => n.type !== 'system');
             
             const snappedY = 10; // Snap to top
-            let currentX = 10;
             
-            const updatedSystemNodes = systemNodes.map(sn => {
-                if (sn.id === node.id) {
-                    sn.position.y = snappedY;
-                }
-                return sn;
-            }).sort((a,b) => a.position.x - b.position.x)
-            .map(sn => {
-                sn.position.x = currentX;
-                currentX += (sn.width || 208) + 10;
-                return sn;
+            setNodes((prevNodes) => {
+              let currentX = 10;
+              const updatedSystemNodes = systemNodes.map(sn => {
+                  if (sn.id === node.id) {
+                      sn.position.y = snappedY;
+                  }
+                  return sn;
+              }).sort((a,b) => a.position.x - b.position.x)
+              .map(sn => {
+                  sn.position.x = currentX;
+                  currentX += (sn.width || 208) + 10;
+                  return sn;
+              });
+              return [...otherNodes, ...updatedSystemNodes];
             });
-            
-            setNodes([...otherNodes, ...updatedSystemNodes]);
         }
     }, [nodes, setNodes]);
 
@@ -522,19 +540,6 @@ function LifePlanPageContent({
           }
       }
     };
-
-
-    useEffect(() => {
-        nodes.forEach(node => {
-            if (node.id === connectingNodeId) {
-                node.data = { ...node.data, connecting: true };
-            } else if (node.data.connecting) {
-                const { connecting, ...rest } = node.data;
-                node.data = rest;
-            }
-        });
-        setNodes([...nodes]);
-    }, [connectingNodeId, nodes, setNodes]);
 
 
     const handleDeleteNode = (nodeId: string) => {
@@ -619,9 +624,9 @@ function LifePlanPageContent({
 
     return (
       <div className={cn("flex flex-col", isExpanded ? "h-screen" : "h-[calc(100vh-8rem)]")}>
-        <div className="px-4 md:px-8 flex justify-between items-center">
+        <div className="flex flex-col items-center justify-center">
             <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">
-              Life Plan
+                Life Plan
             </h1>
         </div>
 
@@ -630,64 +635,55 @@ function LifePlanPageContent({
             onValueChange={(value) => setActiveTab(value)}
             className="flex-grow flex flex-col min-h-0"
         >
-            <div className="px-4 md:px-8">
-              <TabsList>
-                <TabsTrigger value="life-plan">
-                  <Map className="mr-2 h-4 w-4" />
-                  Map
-                </TabsTrigger>
-                <TabsTrigger value="timeline">
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  Timeline
-                </TabsTrigger>
-                <TabsTrigger value="resources">
-                  <Users className="mr-2 h-4 w-4" />
-                  Resources
-                </TabsTrigger>
-              </TabsList>
+            <div className="flex items-center justify-center px-4 md:px-8">
+                <TabsList>
+                    <TabsTrigger value="life-plan">
+                        <Map className="mr-2 h-4 w-4" />
+                        Map
+                    </TabsTrigger>
+                    <TabsTrigger value="timeline">
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        Timeline
+                    </TabsTrigger>
+                    <TabsTrigger value="resources">
+                        <Users className="mr-2 h-4 w-4" />
+                        Resources
+                    </TabsTrigger>
+                </TabsList>
             </div>
-
-          <TabsContent value="life-plan" className="flex-grow flex flex-col min-h-0 mt-4">
-            <div
-              className={cn(
-                'flex-grow relative h-full border border-border/20 rounded-xl overflow-hidden',
-                isExpanded ? 'h-screen !rounded-none !border-0' : 'h-[85vh]'
-              )}
-            >
-              <LifePlanCanvas
-                nodes={nodes}
-                edges={edges}
-                onNodesChange={handleNodesChange}
-                setNodes={setNodes}
-                setEdges={setEdges}
-                setSelectedNode={setSelectedNode}
-                onFocusNode={handleFocusNode}
-                onAIGenerate={handleAIGenerate}
-                onTemplateLoad={handleTemplateLoad}
-                selectedNode={selectedNode}
-                onDeleteNode={handleDeleteNode}
-                connectingNodeId={connectingNodeId}
-                setConnectingNodeId={setConnectingNodeId}
-                isExpanded={isExpanded}
-                setIsExpanded={setIsExpanded}
-                onNodeDragStop={onNodeDragStop}
-              />
-            </div>
-            <div
-              className={cn(
-                'pt-8 pb-8 flex-shrink-0 w-full',
-                isExpanded && 'hidden'
-              )}
-            >
-              <AIPlanGenerator onGenerate={handleAIGenerate} />
-            </div>
-          </TabsContent>
-          <TabsContent value="timeline" className="flex-grow mt-0">
-            <TimelineView nodes={nodes} onFocusNode={handleFocusNode} />
-          </TabsContent>
-          <TabsContent value="resources" className="flex-grow mt-0">
-            <ResourcesView />
-          </TabsContent>
+            
+            <TabsContent value="life-plan" className="flex-grow flex flex-col min-h-0 mt-4">
+                <div className={cn('flex-grow relative h-full border border-border/20 rounded-xl overflow-hidden', isExpanded ? 'h-screen !rounded-none !border-0' : 'h-[85vh]')}>
+                  <LifePlanCanvas
+                    nodes={nodes}
+                    edges={edges}
+                    onNodesChange={handleNodesChange}
+                    setNodes={setNodes}
+                    setEdges={setEdges}
+                    setSelectedNode={setSelectedNode}
+                    onFocusNode={handleFocusNode}
+                    onAIGenerate={handleAIGenerate}
+                    onTemplateLoad={handleTemplateLoad}
+                    selectedNode={selectedNode}
+                    onDeleteNode={handleDeleteNode}
+                    connectingNodeId={connectingNodeId}
+                    setConnectingNodeId={setConnectingNodeId}
+                    isExpanded={isExpanded}
+                    setIsExpanded={setIsExpanded}
+                    onNodeDragStop={onNodeDragStop}
+                  />
+                </div>
+                <div className={cn('pt-8 pb-8 flex-shrink-0 w-full', isExpanded && 'hidden')}>
+                  <AIPlanGenerator onGenerate={handleAIGenerate} />
+                </div>
+            </TabsContent>
+            
+            <TabsContent value="timeline" className="flex-grow mt-0">
+                <TimelineView nodes={nodes} onFocusNode={handleFocusNode} />
+            </TabsContent>
+            <TabsContent value="resources" className="flex-grow mt-0">
+                <ResourcesView />
+            </TabsContent>
         </Tabs>
       </div>
     );
@@ -715,3 +711,5 @@ export default function LifePlanPage() {
     </div>
   );
 }
+
+    
