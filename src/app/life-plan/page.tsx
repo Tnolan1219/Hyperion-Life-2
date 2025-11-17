@@ -258,7 +258,7 @@ const GuideLines = ({ nodes, show, type, direction }: { nodes: Node[], show: boo
     );
 };
 
-function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSelectedNode, onFocusNode, onAIGenerate, onTemplateLoad, selectedNode, connectingNodeId, setConnectingNodeId, onDeleteNode, isExpanded, setIsExpanded, onNodeDragStop }: any) {
+function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSelectedNode, onFocusNode, onTemplateLoad, selectedNode, connectingNodeId, setConnectingNodeId, onDeleteNode, isExpanded, setIsExpanded, onNodeDragStop }: any) {
   const { fitView } = useReactFlow();
   const [layoutDirection, setLayoutDirection] = useState<'TB' | 'LR'>('TB');
   const [showYearGuides, setShowYearGuides] = useState(false);
@@ -633,7 +633,7 @@ function LifePlanPageContent({
         <Tabs
             value={activeTab}
             onValueChange={(value) => setActiveTab(value)}
-            className="flex-grow flex flex-col min-h-0"
+            className="flex-grow flex flex-col h-full"
         >
             <div className="flex items-center justify-center px-4 md:px-8">
                 <TabsList>
@@ -712,4 +712,3 @@ export default function LifePlanPage() {
   );
 }
 
-    
