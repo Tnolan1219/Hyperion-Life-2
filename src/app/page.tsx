@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import React from 'react';
@@ -39,7 +37,7 @@ function LandingPageContent() {
         <h1 className="text-5xl md:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary leading-tight">
           Design Your Destiny
         </h1>
-        <p className="mt-4 text-lg md:text-xl max-w-3xl mx-auto text-muted-foreground">
+        <p className="mt-6 text-lg md:text-xl max-w-3xl mx-auto text-muted-foreground">
           Hyperion Life is more than a financial tool—it's your AI-powered co-pilot for strategic life planning.
           Integrate your goals, finances, and career into a single, actionable roadmap.
         </p>
