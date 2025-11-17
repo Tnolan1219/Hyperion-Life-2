@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, Brain, Map, Wallet } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { SignInPrompt } from '@/components/auth/SignInPrompt';
 
@@ -31,28 +31,7 @@ const features = [
     }
 ]
 
-export default function LandingPage() {
-  const { user, isUserLoading, onboardingComplete } = useUser();
-  const router = useRouter();
-
-  React.useEffect(() => {
-    if (!isUserLoading && user) {
-      if (onboardingComplete) {
-        router.push('/dashboard');
-      } else {
-        router.push('/onboarding');
-      }
-    }
-  }, [user, isUserLoading, onboardingComplete, router]);
-
-  if (isUserLoading || user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center animated-background">
-        <div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-primary"></div>
-      </div>
-    );
-  }
-
+function LandingPageContent() {
   return (
     <div className="space-y-16 md:space-y-24">
       <div className="text-center pt-12 md:pt-16">
@@ -63,7 +42,7 @@ export default function LandingPage() {
           Hyperion Life is more than a financial tool—it's your AI-powered co-pilot for strategic life planning.
           Integrate your goals, finances, and career into a single, actionable roadmap.
         </p>
-        <div className="mt-8 flex justify-center gap-4">
+        <div className="mt-8 flex justify-center items-center gap-4">
             <Dialog>
               <DialogTrigger asChild>
                 <Button size="lg">
@@ -74,6 +53,9 @@ export default function LandingPage() {
                   <SignInPrompt />
               </DialogContent>
             </Dialog>
+             <Button size="lg" variant="outline">
+                View Plans
+            </Button>
         </div>
       </div>
 
@@ -98,5 +80,30 @@ export default function LandingPage() {
           </div>
       </div>
     </div>
-  );
+  )
+}
+
+export default function LandingPage() {
+  const { user, isUserLoading, onboardingComplete } = useUser();
+  const router = useRouter();
+
+  React.useEffect(() => {
+    if (!isUserLoading && user) {
+      if (onboardingComplete) {
+        router.push('/dashboard');
+      } else {
+        router.push('/onboarding');
+      }
+    }
+  }, [user, isUserLoading, onboardingComplete, router]);
+
+  if (isUserLoading || user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center animated-background">
+        <div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-primary"></div>
+      </div>
+    );
+  }
+
+  return <LandingPageContent />;
 }
