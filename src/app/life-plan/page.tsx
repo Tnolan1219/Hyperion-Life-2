@@ -583,60 +583,77 @@ function LifePlanPageContent({
     };
 
     return (
-        <div className="flex flex-col h-full">
-            <div className="px-4 md:px-8">
-                <div className="flex items-center justify-between relative">
-                 <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">Life Plan</h1>
-                 <Tabs value={activeTab} onValueChange={(value) => props.setActiveTab(value)}>
-                    <TabsList>
-                        <TabsTrigger value="life-plan">
-                            <Map className="mr-2 h-4 w-4" />
-                            Map
-                        </TabsTrigger>
-                        <TabsTrigger value="timeline">
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            Timeline
-                        </TabsTrigger>
-                        <TabsTrigger value="resources">
-                            <Users className="mr-2 h-4 w-4" />
-                            Resources
-                        </TabsTrigger>
-                    </TabsList>
-                 </Tabs>
-                </div>
-            </div>
-            
-            <TabsContent value="life-plan" className="flex-grow flex flex-col min-h-0 mt-4">
-                 <div className={cn("flex-grow relative h-full border border-border/20 rounded-xl overflow-hidden", isExpanded && "h-screen !rounded-none !border-0")}>
-                    <LifePlanCanvas 
-                        nodes={nodes}
-                        edges={edges}
-                        onNodesChange={handleNodesChange}
-                        setNodes={setNodes}
-                        setEdges={setEdges}
-                        setSelectedNode={setSelectedNode}
-                        onFocusNode={handleFocusNode}
-                        onAIGenerate={handleAIGenerate}
-                        onTemplateLoad={handleTemplateLoad}
-                        selectedNode={selectedNode}
-                        onDeleteNode={onDeleteNode}
-                        connectingNodeId={connectingNodeId}
-                        setConnectingNodeId={setConnectingNodeId}
-                        isExpanded={isExpanded}
-                        setIsExpanded={setIsExpanded}
-                    />
-                </div>
-                <div className={cn("pt-8 pb-8 flex-shrink-0 w-full", isExpanded && 'hidden')}>
-                   <AIPlanGenerator onGenerate={handleAIGenerate} />
-                </div>
-            </TabsContent>
-            <TabsContent value="timeline" className="flex-grow mt-0">
-                <TimelineView nodes={nodes} onFocusNode={handleFocusNode} />
-            </TabsContent>
-            <TabsContent value="resources" className="flex-grow mt-0">
-                <ResourcesView />
-            </TabsContent>
+      <div className="flex flex-col h-full">
+        <div className="px-4 md:px-8">
+          <div className="flex items-center justify-between relative">
+            <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">
+              Life Plan
+            </h1>
+          </div>
         </div>
+
+        <Tabs
+          value={activeTab}
+          onValueChange={(value) => props.setActiveTab(value)}
+          className="flex-grow flex flex-col mt-4"
+        >
+          <TabsList className="mx-auto">
+            <TabsTrigger value="life-plan">
+              <Map className="mr-2 h-4 w-4" />
+              Map
+            </TabsTrigger>
+            <TabsTrigger value="timeline">
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              Timeline
+            </TabsTrigger>
+            <TabsTrigger value="resources">
+              <Users className="mr-2 h-4 w-4" />
+              Resources
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="life-plan" className="flex-grow flex flex-col min-h-0 mt-4">
+            <div
+              className={cn(
+                'flex-grow relative h-full border border-border/20 rounded-xl overflow-hidden',
+                isExpanded && 'h-screen !rounded-none !border-0'
+              )}
+            >
+              <LifePlanCanvas
+                nodes={nodes}
+                edges={edges}
+                onNodesChange={handleNodesChange}
+                setNodes={setNodes}
+                setEdges={setEdges}
+                setSelectedNode={setSelectedNode}
+                onFocusNode={handleFocusNode}
+                onAIGenerate={handleAIGenerate}
+                onTemplateLoad={handleTemplateLoad}
+                selectedNode={selectedNode}
+                onDeleteNode={onDeleteNode}
+                connectingNodeId={connectingNodeId}
+                setConnectingNodeId={setConnectingNodeId}
+                isExpanded={isExpanded}
+                setIsExpanded={setIsExpanded}
+              />
+            </div>
+            <div
+              className={cn(
+                'pt-8 pb-8 flex-shrink-0 w-full',
+                isExpanded && 'hidden'
+              )}
+            >
+              <AIPlanGenerator onGenerate={handleAIGenerate} />
+            </div>
+          </TabsContent>
+          <TabsContent value="timeline" className="flex-grow mt-0">
+            <TimelineView nodes={nodes} onFocusNode={handleFocusNode} />
+          </TabsContent>
+          <TabsContent value="resources" className="flex-grow mt-0">
+            <ResourcesView />
+          </TabsContent>
+        </Tabs>
+      </div>
     );
 }
 
