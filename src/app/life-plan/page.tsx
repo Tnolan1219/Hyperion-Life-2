@@ -170,7 +170,7 @@ function AIPlanGenerator({ onGenerate }: { onGenerate: (nodes: Node[], edges: Ed
     }
 
     return (
-        <Card className="glass">
+        <Card className="glass w-full max-w-2xl mx-auto">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                     <Sparkles className="text-primary" />
@@ -334,9 +334,13 @@ function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSe
             .react-flow-controls svg {
                 fill: hsl(var(--foreground));
             }
-            .react-flow__node.connecting {
+            .react-flow__node:hover {
                 --glow-color: hsl(var(--primary));
                 box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px var(--glow-color), 0 0 15px var(--glow-color);
+            }
+            .react-flow__node.connecting, .react-flow__node[data-connecting='true'] {
+                --glow-color: hsl(var(--secondary));
+                 box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px var(--glow-color), 0 0 15px var(--glow-color);
             }
         `}</style>
     </div>
@@ -460,46 +464,44 @@ function LifePlanPageContent({
         props.setActiveTab('life-plan');
     };
 
-    const renderContent = () => {
-        switch(activeTab) {
-            case 'life-plan':
-                return (
-                    <div className={cn("flex flex-col flex-grow min-h-0", !isExpanded && "px-4 md:px-8")}>
-                        <div className={cn("flex-grow relative", isExpanded ? "h-screen" : "h-[calc(100vh-250px)]")}>
-                             <LifePlanCanvas 
-                                nodes={nodes}
-                                edges={edges}
-                                onNodesChange={handleNodesChange}
-                                setNodes={setNodes}
-                                setEdges={setEdges}
-                                setSelectedNode={setSelectedNode}
-                                onFocusNode={handleFocusNode}
-                                onLayout={onLayout}
-                                onAIGenerate={handleAIGenerate}
-                                onTemplateLoad={handleTemplateLoad}
-                                selectedNode={selectedNode}
-                                onDeleteNode={onDeleteNode}
-                                connectingNodeId={connectingNodeId}
-                                setConnectingNodeId={setConnectingNodeId}
-                                isExpanded={isExpanded}
-                                setIsExpanded={setIsExpanded}
-                            />
-                        </div>
-                        <div className={cn("pt-8 flex-shrink-0 w-full max-w-2xl mx-auto", isExpanded && 'hidden')}>
-                           <AIPlanGenerator onGenerate={handleAIGenerate} />
-                        </div>
-                    </div>
-                )
-            case 'timeline':
-                return <TimelineView nodes={nodes} onFocusNode={handleFocusNode} />;
-            case 'resources':
-                return <ResourcesView />;
-            default:
-                return null;
-        }
-    };
-    
-    return renderContent();
+    return (
+      <div className="flex-grow flex flex-col min-h-0">
+        {/* Render all tab panels, but only show the active one */}
+        <div className={cn(activeTab !== 'life-plan' && 'hidden', "h-full flex flex-col")}>
+            <div className={cn("flex flex-col flex-grow min-h-0", !isExpanded && "px-4 md:px-8")}>
+                <div className={cn("flex-grow relative h-[calc(100vh-250px)]")}>
+                    <LifePlanCanvas 
+                        nodes={nodes}
+                        edges={edges}
+                        onNodesChange={handleNodesChange}
+                        setNodes={setNodes}
+                        setEdges={setEdges}
+                        setSelectedNode={setSelectedNode}
+                        onFocusNode={handleFocusNode}
+                        onLayout={onLayout}
+                        onAIGenerate={handleAIGenerate}
+                        onTemplateLoad={handleTemplateLoad}
+                        selectedNode={selectedNode}
+                        onDeleteNode={onDeleteNode}
+                        connectingNodeId={connectingNodeId}
+                        setConnectingNodeId={setConnectingNodeId}
+                        isExpanded={isExpanded}
+                        setIsExpanded={setIsExpanded}
+                    />
+                </div>
+                <div className={cn("pt-8 flex-shrink-0", isExpanded && 'hidden')}>
+                    <AIPlanGenerator onGenerate={handleAIGenerate} />
+                </div>
+            </div>
+        </div>
+        <div className={cn(activeTab !== 'timeline' && 'hidden')}>
+            <TimelineView nodes={nodes} onFocusNode={handleFocusNode} />
+        </div>
+        <div className={cn(activeTab !== 'resources' && 'hidden')}>
+            <ResourcesView />
+        </div>
+      </div>
+    );
 }
 
 export default function LifePlanPage() {
@@ -542,23 +544,23 @@ export default function LifePlanPage() {
             ))}
         </div>
         
-        <div className="flex-grow flex flex-col min-h-0">
-            <LifePlanFlowProvider
-              nodes={nodes}
-              edges={edges}
-              onNodesChange={onNodesChange}
-              setNodes={setNodes}
-              setEdges={setEdges}
-              onEdgesChange={onEdgesChange}
-              activeTab={activeTab}
-              setActiveTab={setActiveTab}
-              isExpanded={isExpanded}
-              setIsExpanded={setIsExpanded}
-            />
-        </div>
+        <LifePlanFlowProvider
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          setNodes={setNodes}
+          setEdges={setEdges}
+          onEdgesChange={onEdgesChange}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          isExpanded={isExpanded}
+          setIsExpanded={setIsExpanded}
+        />
     </div>
   );
 }
 
+
+    
 
     
