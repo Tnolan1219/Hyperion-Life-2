@@ -109,12 +109,12 @@ export const Header = () => {
         </Sheet>
       </div>
 
-       <div className="hidden md:flex absolute left-1/2 -translate-x-1/2">
+       <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center">
             <Link href="/" className="flex items-center justify-center gap-3 font-semibold text-foreground transition-opacity duration-300">
             <span className="text-primary">
                 <Logo className="h-7 w-7" />
             </span>
-            <span className="text-xl font-bold">Hyperion Life</span>
+            <span className="text-xl font-bold hidden sm:inline">Hyperion Life</span>
             </Link>
         </div>
 
