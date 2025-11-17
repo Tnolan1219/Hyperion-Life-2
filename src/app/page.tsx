@@ -54,7 +54,7 @@ export default function LandingPage() {
   return (
     <div className="space-y-16 md:space-y-24">
       <div className="text-center pt-16 md:pt-24">
-        <h1 className="text-5xl md:text-7xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary leading-tight">
+        <h1 className="text-5xl md:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary leading-tight">
           Design Your Destiny
         </h1>
         <p className="mt-4 text-lg md:text-xl max-w-3xl mx-auto text-muted-foreground">
