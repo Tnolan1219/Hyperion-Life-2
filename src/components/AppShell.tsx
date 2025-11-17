@@ -26,7 +26,7 @@ const navItems = [
   { href: '/portfolio', label: 'Net Worth', icon: Wallet, color: 'amber' },
   { href: '/ai-coach', label: 'AI Coach', icon: Brain, color: 'cyan' },
   { href: '/goals', label: 'Goals', icon: Star, color: 'rose' },
-  { href: '/profile', label: 'Profile', icon: User, color: 'slate' },
+  { href: '/settings', label: 'Profile', icon: User, color: 'slate' },
 ];
 
 const colorClasses: { [key: string]: { [key: string]: string } } = {
@@ -125,22 +125,27 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
 
-  const isAuthPage = ['/', '/about', '/terms', '/policy'].includes(pathname);
+  const isPublicPage = ['/', '/about', '/terms', '/policy'].includes(pathname);
 
   React.useEffect(() => {
-    if (!isUserLoading && !user && !isAuthPage) {
+    // If we are done loading, there is no user, and the page is NOT public, redirect to login.
+    if (!isUserLoading && !user && !isPublicPage) {
         router.push('/');
     }
+    // If we are done loading, there IS a user, but they haven't completed onboarding,
+    // and they aren't ALREADY on the onboarding page, redirect them.
     if (!isUserLoading && user && !onboardingComplete && pathname !== '/onboarding') {
         router.push('/onboarding');
     }
-  }, [user, isUserLoading, onboardingComplete, router, pathname, isAuthPage]);
+  }, [user, isUserLoading, onboardingComplete, router, pathname, isPublicPage]);
   
+  // Onboarding is a special full-screen layout, handle it separately.
   if (pathname === '/onboarding') {
     return <main>{children}</main>;
   }
 
-  if (isUserLoading || (!user && !isAuthPage)) {
+  // While checking user auth, show a global loader.
+  if (isUserLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center animated-background">
         <div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-primary"></div>
@@ -148,10 +153,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!user && isAuthPage) {
-     return <main className="flex-1 overflow-y-auto">{children}</main>
+  // If the user is logged out, show a simplified layout for public pages.
+  if (!user) {
+     return (
+        <div className="flex flex-col min-h-screen">
+          <Header />
+          <main className="flex-1">{children}</main>
+          <Footer />
+        </div>
+     )
   }
-
+  
+  // This is the main app layout for authenticated users.
   return (
     <div className="grid min-h-screen w-full md:grid-cols-[88px_1fr]">
       <aside className="hidden md:flex flex-col items-center py-2 px-2">

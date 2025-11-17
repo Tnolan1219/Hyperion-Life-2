@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useUser, useFirestore, useDoc, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
+import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useAuth } from '@/firebase/provider';
 import { doc } from 'firebase/firestore';
 import { useTheme } from 'next-themes';
@@ -256,7 +257,7 @@ const OverviewTab = ({ user, profile, preferences, isLoading }: { user: any, pro
 );
 
 
-export default function ProfilePage() {
+export default function SettingsPage() {
     const { user, isUserLoading } = useUser();
     const firestore = useFirestore();
     

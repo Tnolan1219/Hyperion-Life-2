@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useUser, useAuth } from '@/firebase';
+import type { User } from 'firebase/auth';
 import { Sun, Moon, Bell, User as UserIcon, Menu, Award } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import {
@@ -15,7 +16,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
   Wallet,
@@ -29,6 +30,8 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Logo } from '../icons/logo';
+import { Dialog, DialogContent, DialogTrigger } from '../ui/dialog';
+import { SignInPrompt } from '../auth/SignInPrompt';
 
 
 const navItems = [
@@ -37,7 +40,7 @@ const navItems = [
   { href: '/portfolio', label: 'Net Worth', icon: Wallet, color: 'amber' },
   { href: '/ai-coach', label: 'AI Coach', icon: Brain, color: 'cyan' },
   { href: '/goals', label: 'Goals', icon: Star, color: 'rose' },
-  { href: '/settings', label: 'Settings', icon: Settings, color: 'slate' },
+  { href: '/settings', label: 'Profile', icon: UserIcon, color: 'slate' },
 ];
 
 
@@ -45,10 +48,12 @@ function MobileNavLink({
   href,
   label,
   icon: Icon,
+  closeSheet,
 }: {
   href: string;
   label: string;
   icon: React.ElementType;
+  closeSheet: () => void;
 }) {
   const pathname = usePathname();
   const isActive = pathname === href;
@@ -56,6 +61,7 @@ function MobileNavLink({
   return (
     <Link href={href} legacyBehavior>
       <a
+        onClick={closeSheet}
         className={cn(
           'flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary hover:bg-primary/10',
           isActive && 'bg-primary/10 text-primary'
@@ -73,38 +79,44 @@ export const Header = () => {
   const { user } = useUser();
   const auth = useAuth();
   const { theme, setTheme } = useTheme();
-  const pathname = usePathname();
-  
-  const noHeaderPaths = ['/','/about','/terms','/policy'];
-
-  if (!user && noHeaderPaths.includes(pathname)) {
-    return null;
-  }
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const router = useRouter();
 
   return (
     <header className="sticky top-0 z-40 flex h-14 items-center gap-4 border-b border-border/20 bg-background/80 backdrop-blur-lg px-4 lg:h-[60px] lg:px-6">
-      <Sheet>
-        <SheetTrigger asChild>
-          <Button variant="outline" size="icon" className="shrink-0 md:hidden">
-            <Menu className="h-5 w-5" />
-            <span className="sr-only">Toggle navigation menu</span>
-          </Button>
-        </SheetTrigger>
-        <SheetContent side="left" className="flex flex-col glass !border-r-0">
-          <nav className="grid gap-2 text-lg font-medium">
-            <Link
-              href="#"
-              className="flex items-center gap-2 text-lg font-semibold mb-4"
-            >
-              <Logo className="h-6 w-6 text-primary" />
-              <span>Hyperion Life</span>
+      <div className="flex items-center gap-4 md:hidden">
+        <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+          <SheetTrigger asChild>
+            <Button variant="outline" size="icon" className="shrink-0">
+              <Menu className="h-5 w-5" />
+              <span className="sr-only">Toggle navigation menu</span>
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="flex flex-col glass !border-r-0">
+            <nav className="grid gap-2 text-lg font-medium">
+              <Link
+                href="#"
+                className="flex items-center gap-2 text-lg font-semibold mb-4"
+              >
+                <Logo className="h-6 w-6 text-primary" />
+                <span>Hyperion Life</span>
+              </Link>
+              {user && navItems.map(item => (
+                <MobileNavLink key={item.href} {...item} closeSheet={() => setIsSheetOpen(false)} />
+              ))}
+            </nav>
+          </SheetContent>
+        </Sheet>
+      </div>
+
+       <div className="hidden md:flex h-14 items-center justify-center w-full lg:h-[60px] mb-2">
+            <Link href="/" className="flex items-center justify-center gap-3 font-semibold text-foreground transition-opacity duration-300">
+            <span className="text-primary">
+                <Logo className="h-7 w-7" />
+            </span>
+            <span className="text-xl font-bold">Hyperion Life</span>
             </Link>
-            {navItems.map(item => (
-              <MobileNavLink key={item.href} {...item} />
-            ))}
-          </nav>
-        </SheetContent>
-      </Sheet>
+        </div>
 
       <div className="w-full flex-1">
         {/* Can be used for breadcrumbs or page title */}
@@ -122,7 +134,7 @@ export const Header = () => {
 
       {user && auth ? (
         <>
-          <div className="flex items-center gap-2 glass rounded-full px-3 py-1.5 text-sm font-semibold">
+          <div className="hidden sm:flex items-center gap-2 glass rounded-full px-3 py-1.5 text-sm font-semibold">
             <Award className="h-5 w-5 text-amber-400" />
             <span>1,250 MP</span>
           </div>
@@ -155,6 +167,9 @@ export const Header = () => {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
+               <DropdownMenuItem onClick={() => router.push('/settings')}>
+                Settings
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => auth.signOut()}>
                 Log out
               </DropdownMenuItem>
@@ -162,9 +177,14 @@ export const Header = () => {
           </DropdownMenu>
         </>
       ) : (
-        <Button asChild>
-          <Link href="/">Log In</Link>
-        </Button>
+         <Dialog>
+            <DialogTrigger asChild>
+                <Button>Log In</Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md glass">
+                <SignInPrompt />
+            </DialogContent>
+        </Dialog>
       )}
     </header>
   );

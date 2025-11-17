@@ -1,189 +1,33 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
-import { useUser, useAuth } from '@/firebase';
+import { useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  CardFooter,
-} from '@/components/ui/card';
-import {
-  initiateGoogleSignIn,
-  initiateEmailSignIn,
-  initiateEmailSignUp,
-} from '@/firebase/non-blocking-login';
-import { FcGoogle } from 'react-icons/fc';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { ArrowRight, Brain, Map, Wallet } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
 
-const SignInForm = () => {
-  const auth = useAuth();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-
-  const handleEmailSignIn = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (auth) {
-      try {
-        initiateEmailSignIn(auth, email, password);
-      } catch (error) {
-        console.error('Email sign-in failed', error);
-      }
+const features = [
+    {
+        icon: Map,
+        title: 'Visual Life Planning',
+        description: 'Map out your entire life, from career moves to personal milestones, on an interactive canvas.',
+        color: 'violet'
+    },
+    {
+        icon: Wallet,
+        title: 'Unified Net Worth',
+        description: 'Connect all your accounts to see a complete picture of your financial health in one place.',
+        color: 'amber'
+    },
+    {
+        icon: Brain,
+        title: 'AI-Powered Insights',
+        description: 'Your personal AI coach analyzes your plan to provide personalized advice and simulate financial futures.',
+        color: 'cyan'
     }
-  };
-  
-  return (
-      <form onSubmit={handleEmailSignIn}>
-        <div className="grid gap-4">
-            <div className="grid gap-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                id="email"
-                type="email"
-                placeholder="m@example.com"
-                required
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                />
-            </div>
-            <div className="grid gap-2">
-                <Label htmlFor="password">Password</Label>
-                <Input 
-                  id="password" 
-                  type="password" 
-                  required 
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                />
-            </div>
-            <Button type="submit" className="w-full">
-                Sign In
-            </Button>
-        </div>
-    </form>
-  );
-};
-
-const SignUpForm = () => {
-    const auth = useAuth();
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-
-    const handleEmailSignUp = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (auth) {
-        try {
-            initiateEmailSignUp(auth, email, password);
-        } catch (error) {
-            console.error('Email sign-up failed', error);
-        }
-        }
-    };
-    
-    return (
-        <form onSubmit={handleEmailSignUp}>
-            <div className="grid gap-4">
-                <div className="grid gap-2">
-                    <Label htmlFor="email-signup">Email</Label>
-                    <Input
-                    id="email-signup"
-                    type="email"
-                    placeholder="m@example.com"
-                    required
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    />
-                </div>
-                <div className="grid gap-2">
-                    <Label htmlFor="password-signup">Password</Label>
-                    <Input 
-                    id="password-signup" 
-                    type="password" 
-                    required 
-                    value={password}
-                    onChange={e => setPassword(e.target.value)}
-                    />
-                </div>
-                <Button type="submit" className="w-full">
-                   Create Account
-                </Button>
-            </div>
-        </form>
-    );
-};
-
-
-const SignInPrompt = () => {
-  const auth = useAuth();
-  const handleGoogleSignIn = async () => {
-    if (auth) {
-      try {
-        initiateGoogleSignIn(auth);
-      } catch (error) {
-        console.error('Google sign-in failed', error);
-      }
-    }
-  };
-
-  return (
-    <div className="min-h-screen flex flex-col items-center justify-center animated-background p-4">
-      <Card className="w-full max-w-sm glass">
-        <CardHeader className="text-center">
-          <CardTitle className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary py-2">
-            Hyperion Life
-          </CardTitle>
-          <CardDescription className="text-muted-foreground pt-2">
-            Your AI-powered financial co-pilot.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="p-6">
-            <Tabs defaultValue="signin" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="signin">Sign In</TabsTrigger>
-                    <TabsTrigger value="signup">Sign Up</TabsTrigger>
-                </TabsList>
-                <TabsContent value="signin" className="pt-6">
-                    <SignInForm />
-                </TabsContent>
-                <TabsContent value="signup" className="pt-6">
-                    <SignUpForm />
-                </TabsContent>
-            </Tabs>
-        </CardContent>
-        <CardFooter className="flex flex-col gap-4 p-6 pt-0">
-             <div className="relative w-full">
-                <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-background px-2 text-muted-foreground">
-                    Or continue with
-                    </span>
-                </div>
-            </div>
-            <Button onClick={handleGoogleSignIn} variant="outline" className="w-full">
-                <FcGoogle className="mr-2 h-5 w-5" />
-                Google
-            </Button>
-        </CardFooter>
-      </Card>
-      <footer className="absolute bottom-4 text-center text-sm text-muted-foreground">
-        <div className="flex gap-x-4">
-            <Link href="/about" className="hover:text-primary">About</Link>
-            <Link href="/terms" className="hover:text-primary">Terms of Use</Link>
-            <Link href="/policy" className="hover:text-primary">Privacy Policy</Link>
-        </div>
-      </footer>
-    </div>
-  );
-};
+]
 
 export default function LandingPage() {
   const { user, isUserLoading, onboardingComplete } = useUser();
@@ -207,5 +51,45 @@ export default function LandingPage() {
     );
   }
 
-  return <SignInPrompt />;
+  return (
+    <div className="space-y-16 md:space-y-24">
+      <div className="text-center pt-16 md:pt-24">
+        <h1 className="text-5xl md:text-7xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary leading-tight">
+          Design Your Destiny
+        </h1>
+        <p className="mt-4 text-lg md:text-xl max-w-3xl mx-auto text-muted-foreground">
+          Hyperion Life is more than a financial tool—it's your AI-powered co-pilot for strategic life planning.
+          Integrate your goals, finances, and career into a single, actionable roadmap.
+        </p>
+        <div className="mt-8 flex justify-center gap-4">
+            <Button size="lg" asChild>
+                <Link href="/dashboard">
+                    Get Started Free <ArrowRight className="ml-2 h-5 w-5" />
+                </Link>
+            </Button>
+        </div>
+      </div>
+
+      <div className="max-w-5xl mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {features.map(feature => {
+                  const colorClass = `text-${feature.color}-400`;
+                  return (
+                    <Card key={feature.title} className="text-center glass hover:border-primary/50 hover:-translate-y-1 transition-transform">
+                        <CardHeader className="items-center">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10">
+                                <feature.icon className={`h-6 w-6 ${colorClass}`} />
+                            </div>
+                            <CardTitle>{feature.title}</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <p className="text-muted-foreground">{feature.description}</p>
+                        </CardContent>
+                    </Card>
+                  )
+              })}
+          </div>
+      </div>
+    </div>
+  );
 }
