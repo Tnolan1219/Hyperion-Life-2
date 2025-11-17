@@ -332,7 +332,7 @@ function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSe
           </div>
           
           <Panel position="bottom-left" className="!left-auto !bottom-4 !right-4 !transform-none md:!left-4 md:!right-auto">
-            <div className="flex flex-col md:flex-row items-center gap-2 glass p-2 rounded-2xl">
+            <div className={cn("flex flex-col md:flex-row items-center gap-2 glass p-2 rounded-2xl", isExpanded && 'hidden')}>
               <SearchNodes nodes={nodes} onFocusNode={onFocusNode} />
               <div className="flex gap-1">
                 <Button variant="ghost" size="icon" onClick={() => fitView({ duration: 500 })} title="Fit View">
@@ -350,11 +350,13 @@ function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSe
                 <Button variant="ghost" size="icon" onClick={() => setShowMonthGuides(!showMonthGuides)} title="Toggle Month Guides" className={cn(showMonthGuides && 'text-primary/10')}>
                     <Calendar className="h-5 w-5" />
                 </Button>
-                <Button variant="ghost" size="icon" onClick={() => setIsExpanded(!isExpanded)} title={isExpanded ? "Collapse" : "Expand"}>
-                    {isExpanded ? <Shrink className="h-5 w-5" /> : <Maximize className="h-5 w-5"/>}
-                </Button>
               </div>
             </div>
+          </Panel>
+           <Panel position="bottom-left" className="!left-4 !bottom-4 !transform-none">
+              <Button variant="ghost" size="icon" onClick={() => setIsExpanded(!isExpanded)} title={isExpanded ? "Collapse" : "Expand"}>
+                    {isExpanded ? <Shrink className="h-5 w-5" /> : <Maximize className="h-5 w-5"/>}
+              </Button>
           </Panel>
 
         </ReactFlow>
@@ -524,7 +526,7 @@ function LifePlanPageContent({
 
     return (
         <Tabs value={activeTab} onValueChange={(value) => props.setActiveTab(value)} className="flex flex-col flex-grow min-h-0">
-             <div className={cn("px-4 md:px-8 flex-shrink-0", isExpanded && 'hidden')}>
+             <div className={cn("px-4 md:px-8 flex-shrink-0 flex items-center justify-center", isExpanded && 'hidden')}>
                  <TabsList className="grid w-full grid-cols-3 max-w-md mx-auto">
                     <TabsTrigger value="life-plan">
                         <Map className="mr-2 h-4 w-4" />
@@ -542,7 +544,7 @@ function LifePlanPageContent({
             </div>
             
             <TabsContent value="life-plan" className="flex-grow flex flex-col min-h-0 mt-4">
-                 <div className={cn("flex-grow relative h-[calc(100vh-340px)] border border-border/20 rounded-xl overflow-hidden", isExpanded && "h-screen !rounded-none !border-0")}>
+                 <div className={cn("flex-grow relative h-[85vh] border border-border/20 rounded-xl overflow-hidden", isExpanded && "h-screen !rounded-none !border-0")}>
                     <LifePlanCanvas 
                         nodes={nodes}
                         edges={edges}
@@ -587,8 +589,8 @@ export default function LifePlanPage() {
         "flex flex-col h-full",
         isExpanded ? "fixed inset-0 bg-background z-50 h-screen" : "relative"
     )}>
-        <div className={cn("px-4 md:px-8 flex-shrink-0 mb-4", isExpanded ? "pt-4" : "pt-0")}>
-            <h1 className="text-4xl font-bold text-center text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">Life Plan</h1>
+        <div className={cn("px-4 md:px-8 flex-shrink-0 mb-4 text-center", isExpanded ? "pt-4" : "pt-0")}>
+            <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">Life Plan</h1>
         </div>
         
         <LifePlanFlowProvider
