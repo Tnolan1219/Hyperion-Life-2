@@ -160,8 +160,13 @@ export const SignInPrompt = () => {
     if (auth) {
       try {
         await initiateGoogleSignIn(auth);
-      } catch (error) {
-        console.error('Google sign-in failed', error);
+      } catch (error: any) {
+        // The 'auth/cancelled-popup-request' error occurs when the user closes the
+        // Google sign-in popup. It's a normal part of the flow and not an actual
+        // application error, so we can safely ignore it.
+        if (error.code !== 'auth/cancelled-popup-request') {
+            console.error('Google sign-in failed', error);
+        }
       }
     }
   };
