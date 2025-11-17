@@ -25,6 +25,7 @@ import {
   CareerNode,
   GoalNode,
   OtherNode,
+  SystemNode,
 } from '@/components/life-plan/CustomNodes';
 import { Button } from '@/components/ui/button';
 import {
@@ -47,6 +48,7 @@ import {
   Calendar,
   Search as SearchIcon,
   Shrink,
+  Repeat,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { NodeEditor } from '@/components/life-plan/NodeEditor';
@@ -75,6 +77,7 @@ const nodeTypes = {
   career: CareerNode,
   goal: GoalNode,
   other: OtherNode,
+  system: SystemNode,
 };
 
 const nodeMenu = [
@@ -311,6 +314,11 @@ function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSe
                 </DropdownMenuContent>
               </DropdownMenu>
 
+               <Button variant="outline" className="glass h-auto py-2" onClick={() => onTemplateLoad('system')}>
+                    <Repeat className="mr-2 h-4 w-4" /> Add System
+               </Button>
+              
+
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" className="glass h-auto py-2">
@@ -331,7 +339,7 @@ function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSe
               </DropdownMenu>
           </div>
           
-          <Panel position="bottom-left" className={cn(isExpanded && "hidden md:block")}>
+          <Panel position="bottom-left" className={cn(isExpanded && "block")}>
             <div className={cn("flex flex-col md:flex-row items-center gap-2 glass p-2 rounded-2xl")}>
               <SearchNodes nodes={nodes} onFocusNode={onFocusNode} />
               <div className="flex gap-1">
@@ -390,6 +398,7 @@ function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSe
                 --glow-color-lifeEvent: hsl(330 90% 65%);
                 --glow-color-goal: hsl(270 90% 65%);
                 --glow-color-other: hsl(180 80% 50%);
+                --glow-color-system: hsl(220 80% 70%);
                 --glow-color-default: hsl(var(--primary));
             }
             
@@ -404,6 +413,7 @@ function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSe
             .react-flow__node[data-type='lifeEvent']:hover, .react-flow__node[data-type='lifeEvent'][data-connecting='true'] { --glow-color: var(--glow-color-lifeEvent); }
             .react-flow__node[data-type='goal']:hover, .react-flow__node[data-type='goal'][data-connecting='true'] { --glow-color: var(--glow-color-goal); }
             .react-flow__node[data-type='other']:hover, .react-flow__node[data-type='other'][data-connecting='true'] { --glow-color: var(--glow-color-other); }
+             .react-flow__node[data-type='system']:hover, .react-flow__node[data-type='system'][data-connecting='true'] { --glow-color: var(--glow-color-system); }
 
         `}</style>
     </div>
@@ -432,7 +442,7 @@ function LifePlanPageContent({
   setIsExpanded,
   ...props
 }: any) {
-    const { fitView, setCenter, getNode, addNodes, getNodes } = useReactFlow();
+    const { fitView, setCenter, getNode, addNodes, getNodes, getViewport } = useReactFlow();
     const [selectedNode, setSelectedNode] = useState<Node | null>(null);
     const [connectingNodeId, setConnectingNodeId] = useState<string | null>(null);
 
@@ -484,17 +494,46 @@ function LifePlanPageContent({
     };
     
     const addNode = (type: string, label: string) => {
+        const { x, y, zoom } = getViewport();
+        const position = {
+            x: -x/zoom + 100/zoom,
+            y: -y/zoom + 100/zoom,
+        };
+
         const newNode: Node = {
             id: `node_${+new Date()}`,
             type,
-            position: { x: 100, y: 100 },
+            position,
             data: { title: label, year: new Date().getFullYear(), amount: 0, frequency: 'one-time', notes: '' },
         };
         setNodes((nds: Node[]) => nds.concat(newNode));
         setSelectedNode(newNode);
     };
+    
+    const addSystemNode = () => {
+         const position = {
+            x: 100,
+            y: 600, // Position it lower on the canvas
+        };
+
+        const newNode: Node = {
+            id: `node_${+new Date()}`,
+            type: 'system',
+            position,
+            data: { title: 'Weekly Investment', amount: 100, frequency: 'weekly' },
+            draggable: false, // Make it non-movable
+            zIndex: -1, // Render it behind other nodes
+        };
+        setNodes((nds: Node[]) => nds.concat(newNode));
+        window.requestAnimationFrame(() => fitView({ duration: 500, nodes: [newNode] }));
+    }
 
     const handleTemplateLoad = (templateName: keyof typeof lifePlanTemplates | string) => {
+        if (templateName === 'system') {
+            addSystemNode();
+            return;
+        }
+
         const template = lifePlanTemplates[templateName as keyof typeof lifePlanTemplates];
         if (template) {
             const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(template.nodes, template.edges, 'LR');

@@ -3,7 +3,7 @@ import React from 'react';
 import { Handle, Position } from 'reactflow';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { Briefcase, GraduationCap, PiggyBank, Heart, Flag, Zap, Users } from 'lucide-react';
+import { Briefcase, GraduationCap, PiggyBank, Heart, Flag, Zap, Users, Repeat } from 'lucide-react';
 
 const iconMap = {
   career: Briefcase,
@@ -12,6 +12,7 @@ const iconMap = {
   lifeEvent: Heart,
   goal: Flag,
   other: Zap,
+  system: Repeat,
 };
 
 const colorMap = {
@@ -21,13 +22,14 @@ const colorMap = {
   lifeEvent: 'pink',
   goal: 'purple',
   other: 'teal',
+  system: 'system',
 };
 
 type CustomNodeProps = {
   data: {
     title: string;
     amount?: number;
-    frequency?: 'one-time' | 'yearly';
+    frequency?: 'one-time' | 'yearly' | 'weekly';
     linkedContact?: { id: string, name: string };
   };
   type: keyof typeof iconMap;
@@ -64,7 +66,7 @@ const CustomNode = ({ data, type, selected }: CustomNodeProps) => {
         selected ? 'border-primary shadow-lg shadow-primary/20' : `border-${colorClass}-400/20`
       )}
     >
-      <Handle type="target" position={Position.Top} className="!bg-primary/50" isConnectable={true} />
+      {type !== 'system' && <Handle type="target" position={Position.Top} className="!bg-primary/50" isConnectable={true} />}
       <CardHeader className="p-3">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-2">
@@ -90,15 +92,16 @@ const CustomNode = ({ data, type, selected }: CustomNodeProps) => {
             <div className={cn("text-lg font-bold", data.amount && data.amount > 0 ? "text-green-400" : "text-red-400")}>
                 {formattedAmount}
                 {data.frequency === 'yearly' && <span className="text-xs text-muted-foreground ml-1">/yr</span>}
+                {data.frequency === 'weekly' && <span className="text-xs text-muted-foreground ml-1">/wk</span>}
             </div>
           </CardContent>
       )}
-      <Handle
+      {type !== 'system' && <Handle
         type="source"
         position={Position.Bottom}
         className="!bg-primary/50"
         isConnectable={true}
-      />
+      />}
     </Card>
   );
 };
@@ -115,3 +118,4 @@ export const EducationNode = (props: any) => (
 export const CareerNode = (props: any) => <CustomNode {...props} type="career" />;
 export const GoalNode = (props: any) => <CustomNode {...props} type="goal" />;
 export const OtherNode = (props: any) => <CustomNode {...props} type="other" />;
+export const SystemNode = (props: any) => <CustomNode {...props} type="system" />;

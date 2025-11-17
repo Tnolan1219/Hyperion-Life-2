@@ -31,6 +31,9 @@ const config = {
     'text-teal-400',
     'border-teal-400/20',
     'bg-teal-400/10',
+    'text-system-400',
+    'border-system-400/20',
+    'bg-system-400/10',
     // Safelist for goal categories
     'bg-blue-500/10',
     'text-blue-500',
@@ -89,6 +92,9 @@ const config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        system: {
+          DEFAULT: "hsl(220 80% 70%)",
+        }
       },
       borderRadius: {
         lg: "var(--radius)",

@@ -99,7 +99,7 @@ export function NodeEditor({ selectedNode, onNodeDataChange, closeEditor, startC
     );
   }
   
-  const isOtherNode = selectedNode.type === 'other';
+  const isSystemNode = selectedNode.type === 'system';
 
   return (
     <div 
@@ -137,78 +137,80 @@ export function NodeEditor({ selectedNode, onNodeDataChange, closeEditor, startC
             value={formData.year}
             onChange={handleAmountChange}
             placeholder="e.g., 2025"
+            disabled={isSystemNode}
           />
         </div>
 
-        {!isOtherNode && (
-            <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                    <Label htmlFor="amount">Amount</Label>
-                    <Input
-                        id="amount"
-                        name="amount"
-                        type="number"
-                        value={formData.amount}
-                        onChange={handleAmountChange}
-                        placeholder="e.g., 50000 or -2500"
-                    />
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="frequency">Frequency</Label>
-                    <Select name="frequency" value={formData.frequency} onValueChange={handleFrequencyChange}>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select frequency" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="one-time">One-Time</SelectItem>
-                            <SelectItem value="yearly">Yearly</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
+        <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+                <Label htmlFor="amount">Amount</Label>
+                <Input
+                    id="amount"
+                    name="amount"
+                    type="number"
+                    value={formData.amount}
+                    onChange={handleAmountChange}
+                    placeholder="e.g., 50000 or -2500"
+                />
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="frequency">Frequency</Label>
+                <Select name="frequency" value={formData.frequency} onValueChange={handleFrequencyChange}>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Select frequency" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="one-time">One-Time</SelectItem>
+                        <SelectItem value="yearly">Yearly</SelectItem>
+                        <SelectItem value="weekly">Weekly</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
+        </div>
+
+        {!isSystemNode && (
+            <div className="space-y-2">
+                <Label>Linked Contact</Label>
+                {formData.linkedContact ? (
+                    <div className="flex items-center justify-between rounded-md border border-input bg-background/50 px-3 py-2">
+                        <div className="flex items-center gap-2">
+                            <Users className="h-4 w-4 text-primary" />
+                            <span className="text-sm font-medium">{formData.linkedContact.name}</span>
+                        </div>
+                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleUnlinkContact}>
+                            <XCircle className="h-4 w-4 text-muted-foreground" />
+                        </Button>
+                    </div>
+                ) : (
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button variant="outline" className="w-full justify-start font-normal">
+                                <LinkIcon className="mr-2 h-4 w-4" />
+                                Link a contact...
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-80">
+                            <div className="space-y-1">
+                                {contacts && contacts.length > 0 ? (
+                                    contacts.map(contact => (
+                                        <Button
+                                            key={contact.id}
+                                            variant="ghost"
+                                            className="w-full justify-start"
+                                            onClick={() => handleLinkContact(contact)}
+                                        >
+                                            {contact.name}
+                                        </Button>
+                                    ))
+                                ) : (
+                                    <p className="text-sm text-muted-foreground p-2">No contacts found. Add one in the Resources tab.</p>
+                                )}
+                            </div>
+                        </PopoverContent>
+                    </Popover>
+                )}
             </div>
         )}
-
-        <div className="space-y-2">
-            <Label>Linked Contact</Label>
-            {formData.linkedContact ? (
-                <div className="flex items-center justify-between rounded-md border border-input bg-background/50 px-3 py-2">
-                    <div className="flex items-center gap-2">
-                        <Users className="h-4 w-4 text-primary" />
-                        <span className="text-sm font-medium">{formData.linkedContact.name}</span>
-                    </div>
-                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleUnlinkContact}>
-                        <XCircle className="h-4 w-4 text-muted-foreground" />
-                    </Button>
-                </div>
-            ) : (
-                <Popover>
-                    <PopoverTrigger asChild>
-                        <Button variant="outline" className="w-full justify-start font-normal">
-                            <LinkIcon className="mr-2 h-4 w-4" />
-                            Link a contact...
-                        </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-80">
-                        <div className="space-y-1">
-                            {contacts && contacts.length > 0 ? (
-                                contacts.map(contact => (
-                                    <Button
-                                        key={contact.id}
-                                        variant="ghost"
-                                        className="w-full justify-start"
-                                        onClick={() => handleLinkContact(contact)}
-                                    >
-                                        {contact.name}
-                                    </Button>
-                                ))
-                            ) : (
-                                <p className="text-sm text-muted-foreground p-2">No contacts found. Add one in the Resources tab.</p>
-                            )}
-                        </div>
-                    </PopoverContent>
-                </Popover>
-            )}
-        </div>
 
 
         <div className="space-y-2">
@@ -225,16 +227,16 @@ export function NodeEditor({ selectedNode, onNodeDataChange, closeEditor, startC
       </CardContent>
       <div className="p-4 space-y-2 mt-auto">
         <Separator className="my-2" />
-        <Button onClick={startConnecting} className="w-full" variant="outline">
+        {!isSystemNode && <Button onClick={startConnecting} className="w-full" variant="outline">
             <Zap className="mr-2 h-4 w-4" />
             Connect to another node
-        </Button>
+        </Button>}
         <div className="grid grid-cols-2 gap-2">
-            <Button onClick={onCenterNode} variant="outline" className="w-full">
+            {!isSystemNode && <Button onClick={onCenterNode} variant="outline" className="w-full">
                 <LocateFixed className="mr-2 h-4 w-4" />
                 Center
-            </Button>
-            <Button onClick={onDeleteNode} variant="destructive" className="w-full">
+            </Button>}
+            <Button onClick={onDeleteNode} variant="destructive" className="w-full col-span-2">
                 <Trash2 className="mr-2 h-4 w-4" />
                 Delete Node
             </Button>
@@ -243,5 +245,3 @@ export function NodeEditor({ selectedNode, onNodeDataChange, closeEditor, startC
     </div>
   );
 }
-
-    
