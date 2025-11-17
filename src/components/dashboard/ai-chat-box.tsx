@@ -11,7 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { MessageCircle, Send, X, Bot, User, HelpCircle } from 'lucide-react';
+import { Sparkles, Send, X, Bot, User, HelpCircle } from 'lucide-react';
 import { ScrollArea } from '../ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback } from '../ui/avatar';
@@ -85,10 +85,10 @@ export function AiChatBox() {
       <div className="fixed bottom-6 right-6 z-50">
         <Button
           size="icon"
-          className="rounded-full w-16 h-16 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/40"
+          className="rounded-full w-14 h-14 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/40"
           onClick={toggleChat}
         >
-          {isOpen ? <X className="h-8 w-8" /> : <MessageCircle className="h-8 w-8" />}
+          {isOpen ? <X className="h-7 w-7" /> : <Sparkles className="h-7 w-7" />}
         </Button>
       </div>
 
@@ -143,7 +143,7 @@ export function AiChatBox() {
                       )}
                       <div
                         className={cn(
-                          'rounded-xl px-4 py-2 max-w-[80%] text-sm',
+                          'rounded-xl px-4 py-2 max-w-[80%]',
                           message.role === 'user'
                             ? 'bg-primary text-primary-foreground'
                             : 'bg-muted/60'

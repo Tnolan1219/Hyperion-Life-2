@@ -46,6 +46,7 @@ import {
   Maximize,
   Calendar,
   Search as SearchIcon,
+  Shrink,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { NodeEditor } from '@/components/life-plan/NodeEditor';
@@ -262,7 +263,7 @@ function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSe
 
 
   return (
-    <div className="flex-grow h-full relative border border-border/20 rounded-xl overflow-hidden">
+    <div className="flex-grow h-full relative">
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -345,11 +346,11 @@ function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSe
                 <Button variant="ghost" size="icon" onClick={() => setShowYearGuides(!showYearGuides)} title="Toggle Year Guides" className={cn(showYearGuides && 'text-primary bg-primary/10')}>
                     <Calendar className="h-5 w-5" />
                 </Button>
-                <Button variant="ghost" size="icon" onClick={() => setShowMonthGuides(!showMonthGuides)} title="Toggle Month Guides" className={cn(showMonthGuides && 'text-primary bg-primary/10')}>
+                <Button variant="ghost" size="icon" onClick={() => setShowMonthGuides(!showMonthGuides)} title="Toggle Month Guides" className={cn(showMonthGuides && 'text-primary/10')}>
                     <Calendar className="h-5 w-5" />
                 </Button>
                 <Button variant="ghost" size="icon" onClick={() => setIsExpanded(!isExpanded)} title={isExpanded ? "Collapse" : "Expand"}>
-                    <Maximize className="h-5 w-5"/>
+                    {isExpanded ? <Shrink className="h-5 w-5" /> : <Maximize className="h-5 w-5"/>}
                 </Button>
               </div>
             </div>
@@ -529,7 +530,7 @@ function LifePlanPageContent({
       <div className="flex-grow flex flex-col min-h-0">
         <div className={cn('flex-grow flex flex-col', { 'hidden': activeTab !== 'life-plan' })}>
             <div className={cn("flex flex-col flex-grow min-h-0", !isExpanded && "px-4 md:px-8")}>
-                 <div className={cn("flex-grow relative h-[calc(100vh-200px)]", isExpanded && "h-screen")}>
+                 <div className={cn("flex-grow relative h-[calc(100vh-340px)] border border-border/20 rounded-xl overflow-hidden", isExpanded && "h-screen !rounded-none !border-0")}>
                     <LifePlanCanvas 
                         nodes={nodes}
                         edges={edges}
