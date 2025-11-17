@@ -172,7 +172,7 @@ function AIPlanGenerator({ onGenerate }: { onGenerate: (nodes: Node[], edges: Ed
     }
 
     return (
-        <Card className="glass w-full max-w-2xl mx-auto">
+        <Card className="glass w-full max-w-4xl mx-auto">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                     <Sparkles className="text-primary" />
@@ -463,7 +463,7 @@ function LifePlanPageContent({
       onNodesChange(changes);
     },
     [onNodesChange, setEdges, selectedNode, setSelectedNode]
-    );
+  );
 
     const onDeleteNode = (nodeId: string) => {
         handleNodesChange([{type: 'remove', id: nodeId}]);
@@ -527,9 +527,9 @@ function LifePlanPageContent({
 
     return (
       <div className="flex-grow flex flex-col min-h-0">
-        <div className={cn('h-full flex-grow flex flex-col', { 'hidden': activeTab !== 'life-plan' })}>
+        <div className={cn('flex-grow flex flex-col', { 'hidden': activeTab !== 'life-plan' })}>
             <div className={cn("flex flex-col flex-grow min-h-0", !isExpanded && "px-4 md:px-8")}>
-                 <div className={cn("flex-grow relative h-[calc(100vh-320px)]", isExpanded && "h-screen")}>
+                 <div className={cn("flex-grow relative h-[calc(100vh-200px)]", isExpanded && "h-screen")}>
                     <LifePlanCanvas 
                         nodes={nodes}
                         edges={edges}
@@ -618,5 +618,7 @@ export default function LifePlanPage() {
     </div>
   );
 }
+
+    
 
     
