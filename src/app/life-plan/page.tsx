@@ -1,6 +1,6 @@
 
 'use client';
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import ReactFlow, {
   ReactFlowProvider,
   useNodesState,
@@ -47,7 +47,6 @@ import {
   Users,
   Rows,
   Maximize,
-  Calendar,
   CalendarDays,
   Search as SearchIcon,
   Shrink,
@@ -65,9 +64,9 @@ import { cn } from '@/lib/utils';
 import dagre from 'dagre';
 import { Textarea } from '@/components/ui/textarea';
 import { LifePlanTimeline } from '@/components/life-plan/LifePlanTimeline';
-import { SearchNodes } from '@/components/life-plan/SearchNodes';
 import { ContactManager } from '@/components/life-plan/resources/ContactManager';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { CalendarView } from '@/components/life-plan/calendar/CalendarView';
 
 
 const initialNodes: Node[] = lifePlanTemplates.default.nodes;
@@ -381,7 +380,7 @@ function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSe
                     <Rows className="h-5 w-5"/>
                 </Button>
                 <Button variant="ghost" size="icon" onClick={() => setShowYearGuides(!showYearGuides)} title="Toggle Year Guides" className={cn(showYearGuides && 'text-primary bg-primary/10')}>
-                    <Calendar className="h-5 w-5" />
+                    <CalendarIcon className="h-5 w-5" />
                 </Button>
                 <Button variant="ghost" size="icon" onClick={() => setShowMonthGuides(!showMonthGuides)} title="Toggle Month Guides" className={cn(showMonthGuides && 'text-primary bg-primary/10')}>
                     <CalendarDays className="h-5 w-5" />
@@ -620,80 +619,85 @@ function LifePlanPageContent({
     };
 
     return (
-      <div className={cn("flex flex-col h-full", isExpanded ? "fixed inset-0 bg-background z-50 p-0" : "relative")}>
-        <Tabs
-            value={activeTab}
-            onValueChange={(value) => setActiveTab(value)}
-            className="flex-grow flex flex-col h-full"
-        >
-          <div className="flex flex-col items-center justify-center">
-                <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">
-                    Life Plan
-                </h1>
-                <div className="flex items-center justify-center px-4 md:px-8 mt-4">
-                    <TabsList>
-                        <TabsTrigger value="life-plan">
-                            <Map className="mr-2 h-4 w-4" />
-                            Map
-                        </TabsTrigger>
-                        <TabsTrigger value="timeline">
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            Timeline
-                        </TabsTrigger>
-                        <TabsTrigger value="resources">
-                            <Users className="mr-2 h-4 w-4" />
-                            Resources
-                        </TabsTrigger>
-                    </TabsList>
-                </div>
+      <div className={cn("flex flex-col", isExpanded ? "fixed inset-0 bg-background z-50 p-0 h-screen" : "relative h-[calc(100vh-8rem)]")}>
+        <div className="flex flex-col items-center justify-center">
+            <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">
+                Life Plan
+            </h1>
+            <div className="flex items-center justify-center px-4 md:px-8 mt-4">
+                <TabsList>
+                    <TabsTrigger value="life-plan">
+                        <Map className="mr-2 h-4 w-4" />
+                        Map
+                    </TabsTrigger>
+                    <TabsTrigger value="timeline">
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        Timeline
+                    </TabsTrigger>
+                    <TabsTrigger value="calendar">
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        Calendar
+                    </TabsTrigger>
+                    <TabsTrigger value="resources">
+                        <Users className="mr-2 h-4 w-4" />
+                        Resources
+                    </TabsTrigger>
+                </TabsList>
             </div>
-          
-            <TabsContent value="life-plan" className="flex-grow flex flex-col mt-4">
-                 <div className="relative border border-border/20 rounded-xl overflow-hidden h-[85vh]">
-                  <LifePlanCanvas
-                    nodes={nodes}
-                    edges={edges}
-                    onNodesChange={handleNodesChange}
-                    setNodes={setNodes}
-                    setEdges={setEdges}
-                    setSelectedNode={setSelectedNode}
-                    onFocusNode={handleFocusNode}
-                    onAIGenerate={handleAIGenerate}
-                    onTemplateLoad={handleTemplateLoad}
-                    selectedNode={selectedNode}
-                    onDeleteNode={handleDeleteNode}
-                    connectingNodeId={connectingNodeId}
-                    setConnectingNodeId={setConnectingNodeId}
-                    isExpanded={isExpanded}
-                    setIsExpanded={setIsExpanded}
-                    onNodeDragStop={onNodeDragStop}
-                  />
-                </div>
-                <div className={cn('pt-8 pb-8 flex-shrink-0 w-full', isExpanded && 'hidden')}>
-                  <AIPlanGenerator onGenerate={handleAIGenerate} />
-                </div>
-            </TabsContent>
-            <TabsContent value="timeline" className="flex-grow mt-0">
-                <TimelineView nodes={nodes} onFocusNode={handleFocusNode} />
-            </TabsContent>
-            <TabsContent value="resources" className="flex-grow mt-0">
-                <ResourcesView />
-            </TabsContent>
-        </Tabs>
+        </div>
+        
+        <TabsContent value="life-plan" className="flex-grow flex flex-col mt-4">
+            <div className="relative border border-border/20 rounded-xl overflow-hidden h-[85vh]">
+                <LifePlanCanvas
+                nodes={nodes}
+                edges={edges}
+                onNodesChange={handleNodesChange}
+                setNodes={setNodes}
+                setEdges={setEdges}
+                setSelectedNode={setSelectedNode}
+                onFocusNode={handleFocusNode}
+                onAIGenerate={handleAIGenerate}
+                onTemplateLoad={handleTemplateLoad}
+                selectedNode={selectedNode}
+                onDeleteNode={handleDeleteNode}
+                connectingNodeId={connectingNodeId}
+                setConnectingNodeId={setConnectingNodeId}
+                isExpanded={isExpanded}
+                setIsExpanded={setIsExpanded}
+                onNodeDragStop={onNodeDragStop}
+                />
+            </div>
+            <div className={cn('pt-8 pb-8 flex-shrink-0 w-full', isExpanded && 'hidden')}>
+                <AIPlanGenerator onGenerate={handleAIGenerate} />
+            </div>
+        </TabsContent>
+        <TabsContent value="timeline" className="flex-grow mt-0">
+            <TimelineView nodes={nodes} onFocusNode={handleFocusNode} />
+        </TabsContent>
+        <TabsContent value="calendar" className="flex-grow mt-0">
+            <CalendarView nodes={nodes} onFocusNode={handleFocusNode} />
+        </TabsContent>
+        <TabsContent value="resources" className="flex-grow mt-0">
+            <ResourcesView />
+        </TabsContent>
       </div>
     );
 }
 
 export default function LifePlanPage() {
-    const [activeTab, setActiveTab] = useState<'life-plan' | 'timeline' | 'resources'>('life-plan');
+    const [activeTab, setActiveTab] = useState<'life-plan' | 'timeline' | 'resources' | 'calendar'>('life-plan');
     const [isExpanded, setIsExpanded] = useState(false);
 
 
   return (
-    <div className={cn(
-        "flex flex-col h-full",
-        isExpanded ? "fixed inset-0 bg-background z-50 p-0" : "relative"
-    )}>
+    <Tabs 
+        value={activeTab}
+        onValueChange={(value) => setActiveTab(value as any)}
+        className={cn(
+            "flex flex-col h-full",
+            isExpanded ? "fixed inset-0 bg-background z-50 p-0" : "relative"
+        )}
+    >
         
         <ReactFlowProvider>
             <LifePlanPageContent
@@ -703,10 +707,6 @@ export default function LifePlanPage() {
             setIsExpanded={setIsExpanded}
             />
         </ReactFlowProvider>
-    </div>
+    </Tabs>
   );
 }
-
-
-
-    
