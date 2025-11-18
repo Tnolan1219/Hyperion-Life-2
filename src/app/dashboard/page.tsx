@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -40,13 +41,28 @@ import { Progress } from '@/components/ui/progress';
 import { Asset } from '../portfolio/page';
 import { Debt } from '../portfolio/page';
 
-const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
+const ClientFormattedCurrency = ({ value }: { value: number }) => {
+  const [formattedValue, setFormattedValue] = useState(
+    new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
       notation: 'compact',
-      maximumFractionDigits: 2,
-    }).format(value);
+      maximumFractionDigits: 0,
+    }).format(0)
+  );
+
+  useEffect(() => {
+    setFormattedValue(
+      new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        notation: 'compact',
+        maximumFractionDigits: 2,
+      }).format(value)
+    );
+  }, [value]);
+
+  return <>{formattedValue}</>;
 };
 
 
@@ -57,7 +73,7 @@ const StatCard = ({
   description,
 }: {
   title: string;
-  value: string;
+  value: number;
   icon: React.ReactNode;
   description: string;
 }) => (
@@ -69,7 +85,9 @@ const StatCard = ({
       <div className="text-muted-foreground">{icon}</div>
     </CardHeader>
     <CardContent>
-      <div className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary py-1">{value}</div>
+      <div className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary py-1">
+        <ClientFormattedCurrency value={value} />
+      </div>
       <p className="text-sm text-muted-foreground mt-1">{description}</p>
     </CardContent>
   </Card>
@@ -237,25 +255,25 @@ export default function Dashboard() {
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Net Worth"
-          value={formatCurrency(netWorth)}
+          value={netWorth}
           description="+3.2% this month"
           icon={<DollarSign className="h-5 w-5" />}
         />
         <StatCard
           title="Assets"
-          value={formatCurrency(totalAssets)}
+          value={totalAssets}
           description="Mainly investments"
           icon={<TrendingUp className="h-5 w-5" />}
         />
         <StatCard
           title="Liabilities"
-          value={formatCurrency(totalLiabilities)}
+          value={totalLiabilities}
           description="Student loans"
           icon={<TrendingDown className="h-5 w-5" />}
         />
         <StatCard
           title="Cash Flow"
-          value={`+${formatCurrency(cashFlow)}`}
+          value={cashFlow}
           description="After expenses"
           icon={<Activity className="h-5 w-5" />}
         />
