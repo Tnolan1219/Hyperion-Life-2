@@ -173,6 +173,15 @@ service cloud.firestore {
     match /users/{userId}/contacts/{contactId} {
         allow get, list, create, update, delete: if isOwner(userId);
     }
+    
+    /**
+     * @description Rules for the /users/{userId}/calendarEvents/{eventId} collection.
+     * @path /users/{userId}/calendarEvents/{eventId}
+     * @principle Enforces document ownership for writes.
+     */
+    match /users/{userId}/calendarEvents/{eventId} {
+        allow get, list, create, update, delete: if isOwner(userId);
+    }
 
     /**
      * @description Rules for the /tips/{tipId} collection.

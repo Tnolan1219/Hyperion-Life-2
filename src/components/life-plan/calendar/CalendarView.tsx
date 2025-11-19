@@ -48,7 +48,8 @@ export function CalendarView({ nodes, onFocusNode }: { nodes: Node[], onFocusNod
     const events: Record<string, Node[]> = {};
     nodes.forEach(node => {
       if (node.data.year) {
-        const date = new Date(node.data.year, 0, 2); // Use Day 2 for stability
+        // Create a date object. Using the 2nd day of the month to avoid timezone issues.
+        const date = new Date(node.data.year, 0, 2); 
         const dateString = format(date, 'yyyy-MM-dd');
         if (!events[dateString]) {
           events[dateString] = [];
@@ -69,6 +70,7 @@ export function CalendarView({ nodes, onFocusNode }: { nodes: Node[], onFocusNod
     const dateString = format(date, 'yyyy-MM-dd');
     const dayEvents = eventsByDate[dateString] || [];
     
+    // Dim days that are not in the current display month
     if (date.getMonth() !== displayMonth.getMonth()) {
       return (
         <div className="flex justify-center items-center h-full w-full text-muted-foreground/50">
@@ -80,7 +82,7 @@ export function CalendarView({ nodes, onFocusNode }: { nodes: Node[], onFocusNod
     return (
       <div className="relative flex flex-col h-full w-full p-1">
         <div className="text-right text-sm">{format(date, 'd')}</div>
-        <div className="flex-grow flex flex-col justify-end gap-1 mt-1">
+        <div className="flex-grow flex flex-col justify-end gap-1 mt-1 overflow-hidden">
             {dayEvents.slice(0, 2).map(event => {
                 const config = nodeIcons[event.type!] || nodeIcons.other;
                 return (

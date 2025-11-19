@@ -39,7 +39,7 @@ import {
   PlusCircle,
   Zap,
   ZoomIn,
-  Layout,
+  Layout as LayoutIcon,
   Sparkles,
   Loader2,
   Map,
@@ -67,6 +67,7 @@ import { LifePlanTimeline } from '@/components/life-plan/LifePlanTimeline';
 import { ContactManager } from '@/components/life-plan/resources/ContactManager';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CalendarView } from '@/components/life-plan/calendar/CalendarView';
+import { FullCalendar } from '@/components/life-plan/calendar/FullCalendar';
 
 
 const initialNodes: Node[] = lifePlanTemplates.default.nodes;
@@ -284,11 +285,6 @@ function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSe
           onNodeClick={(e, node) => {
             if (connectingNodeId) {
                 setEdges((eds: Edge[]) => addEdge({ source: connectingNodeId, target: node.id, type: 'smoothstep', animated: true }, eds));
-                setNodes((prevNodes: Node[]) =>
-                    prevNodes.map(n => 
-                        n.id === connectingNodeId ? { ...n, data: { ...n.data, connecting: false } } : n
-                    )
-                );
                 setConnectingNodeId(null);
             } else {
                 setSelectedNode(node);
@@ -297,11 +293,6 @@ function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSe
           onPaneClick={() => {
             setSelectedNode(null);
             if (connectingNodeId) {
-                setNodes((prevNodes: Node[]) =>
-                    prevNodes.map(n => 
-                        n.id === connectingNodeId ? { ...n, data: { ...n.data, connecting: false } } : n
-                    )
-                );
                 setConnectingNodeId(null);
             }
           }}
@@ -374,7 +365,7 @@ function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSe
                     <ZoomIn className="h-5 w-5"/>
                 </Button>
                 <Button variant="ghost" size="icon" onClick={() => onLayout('TB')} title="Top-to-Bottom Layout">
-                    <Layout className="h-5 w-5"/>
+                    <LayoutIcon className="h-5 w-5"/>
                 </Button>
                 <Button variant="ghost" size="icon" onClick={() => onLayout('LR')} title="Left-to-Right Layout">
                     <Rows className="h-5 w-5"/>
@@ -675,7 +666,7 @@ function LifePlanPageContent({
             <TimelineView nodes={nodes} onFocusNode={handleFocusNode} />
         </TabsContent>
         <TabsContent value="calendar" className="flex-grow mt-0">
-            <CalendarView nodes={nodes} onFocusNode={handleFocusNode} />
+            <FullCalendar />
         </TabsContent>
         <TabsContent value="resources" className="flex-grow mt-0">
             <ResourcesView />
@@ -694,8 +685,8 @@ export default function LifePlanPage() {
         value={activeTab}
         onValueChange={(value) => setActiveTab(value as any)}
         className={cn(
-            "flex flex-col h-full",
-            isExpanded ? "fixed inset-0 bg-background z-50 p-0" : "relative"
+            "flex flex-col",
+            isExpanded ? "fixed inset-0 bg-background z-50 p-0" : "relative h-[calc(100vh-8rem)]"
         )}
     >
         

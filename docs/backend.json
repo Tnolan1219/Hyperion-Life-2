@@ -289,6 +289,55 @@
         "progressAmount"
       ]
     },
+    "CalendarEvent": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "CalendarEvent",
+      "type": "object",
+      "description": "Represents an event on the user's calendar.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the calendar event."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N CalendarEvent)"
+        },
+        "title": {
+          "type": "string",
+          "description": "Title of the event."
+        },
+        "description": {
+          "type": "string",
+          "description": "A more detailed description of the event."
+        },
+        "location": {
+          "type": "string",
+          "description": "The location of the event (e.g., 'Zoom', '123 Main St')."
+        },
+        "start": {
+          "type": "string",
+          "description": "The start date and time of the event in ISO 8601 format.",
+          "format": "date-time"
+        },
+        "end": {
+          "type": "string",
+          "description": "The end date and time of the event in ISO 8601 format.",
+          "format": "date-time"
+        },
+        "category": {
+          "type": "string",
+          "description": "The category of the event for color-coding.",
+          "enum": ["Work", "Personal", "Financial", "Health", "Other"]
+        },
+        "recurring": {
+          "type": "string",
+          "description": "The recurrence rule for the event.",
+          "enum": ["none", "daily", "weekly", "monthly", "yearly"]
+        }
+      },
+      "required": ["id", "userId", "title", "start", "end", "category"]
+    },
     "Tip": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Tip",
@@ -816,6 +865,14 @@
               "description": "The unique identifier of the contact."
             }
           ]
+        }
+      },
+      {
+        "path": "/users/{userId}/calendarEvents/{eventId}",
+        "definition": {
+          "entityName": "CalendarEvent",
+          "schema": { "$ref": "#/backend/entities/CalendarEvent" },
+          "description": "Stores calendar events for the user."
         }
       },
       {
