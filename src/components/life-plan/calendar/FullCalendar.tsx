@@ -14,15 +14,19 @@ import {
   startOfDay,
   endOfDay,
   eachHourOfInterval,
+  set,
 } from 'date-fns';
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, GripVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { cn } from '@/lib/utils';
-import { useCollection, useUser, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection } from 'firebase/firestore';
-import { CalendarEvent, eventCategories, categoryStyles } from './calendar-types';
+import { useCollection, useUser, useFirestore, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
+import { collection, doc } from 'firebase/firestore';
+import { CalendarEvent, categoryStyles } from './calendar-types';
 import { EventDialog } from './EventDialog';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
+
 
 const getWeekDays = (date: Date) => {
     const start = startOfWeek(date);
@@ -61,18 +65,29 @@ const MonthView = ({ currentDate, eventsByDay, onDayClick, onEventClick }: { cur
               >
                 <span className={cn('self-end text-sm', isToday(day) && 'font-bold text-blue-600')}>{format(day, 'd')}</span>
                 <div className="mt-1 flex-grow overflow-y-auto space-y-1">
-                  {dayEvents.map(event => (
-                    <div
-                      key={event.id}
-                      onClick={(e) => { e.stopPropagation(); onEventClick(event); }}
-                      className={cn(
-                        'p-1 text-xs rounded-md text-white truncate',
-                        categoryStyles[event.category]?.bg,
-                      )}
-                    >
-                      {event.title}
-                    </div>
-                  ))}
+                  <TooltipProvider>
+                    {dayEvents.map(event => (
+                      <Tooltip key={event.id}>
+                        <TooltipTrigger asChild>
+                          <div
+                            onClick={(e) => { e.stopPropagation(); onEventClick(event); }}
+                            className={cn(
+                              'p-1 text-xs rounded-md text-white truncate',
+                              categoryStyles[event.category]?.bg,
+                            )}
+                          >
+                            {event.title}
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p className="font-semibold">{event.title}</p>
+                            <p className="text-sm text-muted-foreground">
+                                {format(new Date(event.start), 'p')} - {format(new Date(event.end), 'p')}
+                            </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    ))}
+                  </TooltipProvider>
                 </div>
               </div>
             );
@@ -81,7 +96,7 @@ const MonthView = ({ currentDate, eventsByDay, onDayClick, onEventClick }: { cur
     )
 }
 
-const WeekView = ({ currentDate, events, onSlotClick, onEventClick }: { currentDate: Date, events: CalendarEvent[], onSlotClick: (date: Date) => void, onEventClick: (event: CalendarEvent) => void }) => {
+const WeekView = ({ currentDate, events, onSlotClick, onEventClick, onEventUpdate }: { currentDate: Date, events: CalendarEvent[], onSlotClick: (date: Date) => void, onEventClick: (event: CalendarEvent) => void, onEventUpdate: (event: CalendarEvent) => void }) => {
     const weekDays = getWeekDays(currentDate);
     const hours = getDayHours(new Date());
 
@@ -90,55 +105,102 @@ const WeekView = ({ currentDate, events, onSlotClick, onEventClick }: { currentD
         const end = new Date(event.end);
         const startHour = start.getHours() + start.getMinutes() / 60;
         const endHour = end.getHours() + end.getMinutes() / 60;
-        const duration = Math.max(endHour - startHour, 0.5); // Minimum 30min block
+        const duration = Math.max(endHour - startHour, 0.5);
 
-        const top = startHour * 4; // 4rem per hour
-        const height = duration * 4; // 4rem per hour
+        const top = startHour * 4;
+        const height = duration * 4;
 
         return { top: `${top}rem`, height: `${height}rem` };
+    }
+    
+    const handleResize = (event: CalendarEvent, newHeight: number) => {
+        const durationHours = newHeight / 4;
+        const newEnd = add(new Date(event.start), { minutes: durationHours * 60 });
+        onEventUpdate({ ...event, end: newEnd.toISOString() });
     }
 
     return (
         <div className="flex border-t border-border">
-            <div className="w-16 text-center">
+            <div className="w-16 text-center shrink-0">
                 {hours.map(hour => (
                     <div key={hour.toString()} className="h-16 flex items-center justify-center text-xs text-muted-foreground border-r border-border">
                         {format(hour, 'ha')}
                     </div>
                 ))}
             </div>
-            <div className="grid grid-cols-7 flex-grow">
-                {weekDays.map(day => (
-                    <div key={day.toString()} className="border-r border-border relative">
-                         <div className="text-center p-2 border-b border-border sticky top-0 bg-background/80 backdrop-blur-sm z-10">
+            <Droppable droppableId="week-view" direction="horizontal">
+              {(provided) => (
+                <div {...provided.droppableProps} ref={provided.innerRef} className="grid grid-cols-7 flex-grow">
+                  {weekDays.map((day, dayIndex) => (
+                    <Droppable key={day.toString()} droppableId={format(day, 'yyyy-MM-dd')}>
+                      {(dayProvided, daySnapshot) => (
+                        <div
+                          ref={dayProvided.innerRef}
+                          {...dayProvided.droppableProps}
+                          className={cn("border-r border-border relative", daySnapshot.isDraggingOver && 'bg-primary/10')}
+                        >
+                          <div className="text-center p-2 border-b border-border sticky top-0 bg-background/80 backdrop-blur-sm z-10">
                             <p className="text-sm font-semibold">{format(day, 'EEE')}</p>
                             <p className={cn("text-2xl font-bold", isToday(day) && "text-primary")}>{format(day, 'd')}</p>
-                         </div>
-                        {hours.map(hour => (
-                            <div key={hour.toString()} className="h-16 border-b border-border cursor-pointer hover:bg-muted/40" onClick={() => onSlotClick(new Date(day.setHours(hour.getHours())))} />
-                        ))}
-                         {events.filter(e => isSameDay(new Date(e.start), day)).map(event => (
-                            <div
-                                key={event.id}
-                                style={getEventPosition(event)}
-                                onClick={(e) => { e.stopPropagation(); onEventClick(event); }}
-                                className={cn(
-                                    'absolute left-1 right-1 p-2 rounded-lg text-white text-xs z-20 cursor-pointer overflow-hidden',
-                                    categoryStyles[event.category]?.bg
-                                )}
-                            >
-                                <p className="font-semibold">{event.title}</p>
-                                <p>{format(new Date(event.start), 'p')} - {format(new Date(event.end), 'p')}</p>
-                            </div>
-                        ))}
-                    </div>
-                ))}
-            </div>
+                          </div>
+                          {hours.map(hour => (
+                            <div key={hour.toString()} className="h-16 border-b border-border cursor-pointer hover:bg-muted/40" onClick={() => onSlotClick(set(day, { hours: hour.getHours() }))} />
+                          ))}
+                          {events.filter(e => isSameDay(new Date(e.start), day)).map((event, eventIndex) => (
+                            <Draggable key={event.id} draggableId={event.id!} index={eventIndex}>
+                              {(eventProvided, eventSnapshot) => (
+                                <div
+                                  ref={eventProvided.innerRef}
+                                  {...eventProvided.draggableProps}
+                                  style={{...getEventPosition(event), ...eventProvided.draggableProps.style}}
+                                  className={cn('absolute left-1 right-1 p-2 rounded-lg text-white text-xs z-20 cursor-pointer overflow-hidden group', categoryStyles[event.category]?.bg, eventSnapshot.isDragging && 'shadow-2xl')}
+                                >
+                                  <div {...eventProvided.dragHandleProps} className="absolute top-1 left-1 opacity-60 group-hover:opacity-100">
+                                    <GripVertical className="h-4 w-4" />
+                                  </div>
+                                  <div onClick={(e) => { e.stopPropagation(); onEventClick(event); }} className="pl-4">
+                                      <p className="font-semibold">{event.title}</p>
+                                      <p>{format(new Date(event.start), 'p')} - {format(new Date(event.end), 'p')}</p>
+                                  </div>
+                                  <div 
+                                      className="absolute bottom-0 left-0 w-full h-2 cursor-ns-resize"
+                                      onMouseDown={(e) => {
+                                          e.preventDefault();
+                                          const initialHeight = (e.target as HTMLElement).parentElement!.clientHeight;
+                                          const initialY = e.clientY;
+                                          
+                                          const handleMouseMove = (moveE: MouseEvent) => {
+                                              const newHeight = initialHeight + (moveE.clientY - initialY);
+                                              if (newHeight > 2*16) { // min height 30min
+                                                  handleResize(event, newHeight / 16); // rem to hours
+                                              }
+                                          };
+                                          const handleMouseUp = () => {
+                                              document.removeEventListener('mousemove', handleMouseMove);
+                                              document.removeEventListener('mouseup', handleMouseUp);
+                                          };
+                                          document.addEventListener('mousemove', handleMouseMove);
+                                          document.addEventListener('mouseup', handleMouseUp);
+                                      }}
+                                  />
+                                </div>
+                              )}
+                            </Draggable>
+                          ))}
+                          {dayProvided.placeholder}
+                        </div>
+                      )}
+                    </Droppable>
+                  ))}
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
         </div>
     )
 }
 
-const DayView = ({ currentDate, events, onSlotClick, onEventClick }: { currentDate: Date, events: CalendarEvent[], onSlotClick: (date: Date) => void, onEventClick: (event: CalendarEvent) => void }) => {
+const DayView = ({ currentDate, events, onSlotClick, onEventClick, onEventUpdate }: { currentDate: Date, events: CalendarEvent[], onSlotClick: (date: Date) => void, onEventClick: (event: CalendarEvent) => void, onEventUpdate: (event: CalendarEvent) => void }) => {
     const hours = getDayHours(new Date());
 
     const getEventPosition = (event: CalendarEvent) => {
@@ -156,36 +218,76 @@ const DayView = ({ currentDate, events, onSlotClick, onEventClick }: { currentDa
     
     const dayEvents = events.filter(e => isSameDay(new Date(e.start), currentDate));
 
+    const handleResize = (event: CalendarEvent, newHeight: number) => {
+        const durationHours = newHeight / 4;
+        const newEnd = add(new Date(event.start), { minutes: durationHours * 60 });
+        onEventUpdate({ ...event, end: newEnd.toISOString() });
+    }
+
     return (
-        <div className="flex border-t border-border">
-            <div className="w-20 text-center">
-                {hours.map(hour => (
-                    <div key={hour.toString()} className="h-16 flex items-center justify-center text-sm text-muted-foreground border-r border-border">
-                        {format(hour, 'h a')}
-                    </div>
-                ))}
+        <DragDropContext onDragEnd={() => {}}>
+            <div className="flex border-t border-border">
+                <div className="w-20 text-center shrink-0">
+                    {hours.map(hour => (
+                        <div key={hour.toString()} className="h-16 flex items-center justify-center text-sm text-muted-foreground border-r border-border">
+                            {format(hour, 'h a')}
+                        </div>
+                    ))}
+                </div>
+                 <Droppable droppableId={format(currentDate, 'yyyy-MM-dd')}>
+                    {(provided) => (
+                        <div ref={provided.innerRef} {...provided.droppableProps} className="flex-grow border-r border-border relative">
+                            {hours.map(hour => (
+                                <div key={hour.toString()} className="h-16 border-b border-border cursor-pointer hover:bg-muted/40" onClick={() => onSlotClick(set(currentDate, { hours: hour.getHours() }))} />
+                            ))}
+                            {dayEvents.map((event, index) => (
+                               <Draggable key={event.id} draggableId={event.id!} index={index}>
+                                {(eventProvided, eventSnapshot) => (
+                                    <div
+                                        ref={eventProvided.innerRef}
+                                        {...eventProvided.draggableProps}
+                                        style={{...getEventPosition(event), ...eventProvided.draggableProps.style}}
+                                        className={cn('absolute left-2 right-2 p-3 rounded-lg text-white z-10 cursor-pointer overflow-hidden group', categoryStyles[event.category]?.bg, eventSnapshot.isDragging && 'shadow-2xl')}
+                                    >
+                                        <div {...eventProvided.dragHandleProps} className="absolute top-2 left-2 opacity-60 group-hover:opacity-100">
+                                            <GripVertical className="h-5 w-5" />
+                                        </div>
+                                        <div onClick={(e) => { e.stopPropagation(); onEventClick(event); }} className="pl-6">
+                                            <p className="font-bold">{event.title}</p>
+                                            <p className="text-sm">{format(new Date(event.start), 'p')} - {format(new Date(event.end), 'p')}</p>
+                                            {event.location && <p className="text-sm opacity-90">{event.location}</p>}
+                                        </div>
+                                         <div 
+                                              className="absolute bottom-0 left-0 w-full h-2 cursor-ns-resize"
+                                              onMouseDown={(e) => {
+                                                  e.preventDefault();
+                                                  const initialHeight = (e.target as HTMLElement).parentElement!.clientHeight;
+                                                  const initialY = e.clientY;
+                                                  
+                                                  const handleMouseMove = (moveE: MouseEvent) => {
+                                                      const newHeight = initialHeight + (moveE.clientY - initialY);
+                                                      if (newHeight > 2*16) {
+                                                          handleResize(event, newHeight / 16);
+                                                      }
+                                                  };
+                                                  const handleMouseUp = () => {
+                                                      document.removeEventListener('mousemove', handleMouseMove);
+                                                      document.removeEventListener('mouseup', handleMouseUp);
+                                                  };
+                                                  document.addEventListener('mousemove', handleMouseMove);
+                                                  document.addEventListener('mouseup', handleMouseUp);
+                                              }}
+                                          />
+                                    </div>
+                                )}
+                                </Draggable>
+                            ))}
+                            {provided.placeholder}
+                        </div>
+                    )}
+                </Droppable>
             </div>
-            <div className="flex-grow border-r border-border relative">
-                {hours.map(hour => (
-                    <div key={hour.toString()} className="h-16 border-b border-border cursor-pointer hover:bg-muted/40" onClick={() => onSlotClick(new Date(currentDate.setHours(hour.getHours())))} />
-                ))}
-                {dayEvents.map(event => (
-                    <div
-                        key={event.id}
-                        style={getEventPosition(event)}
-                        onClick={(e) => { e.stopPropagation(); onEventClick(event); }}
-                        className={cn(
-                            'absolute left-2 right-2 p-3 rounded-lg text-white z-10 cursor-pointer overflow-hidden',
-                             categoryStyles[event.category]?.bg
-                        )}
-                    >
-                        <p className="font-bold">{event.title}</p>
-                        <p className="text-sm">{format(new Date(event.start), 'p')} - {format(new Date(event.end), 'p')}</p>
-                        {event.location && <p className="text-sm opacity-90">{event.location}</p>}
-                    </div>
-                ))}
-            </div>
-        </div>
+        </DragDropContext>
     )
 }
 
@@ -242,6 +344,38 @@ export function FullCalendar() {
     setIsDialogOpen(true);
   }
   
+  const handleEventUpdate = (updatedEvent: CalendarEvent) => {
+    if (!firestore || !user || !updatedEvent.id) return;
+    const eventRef = doc(firestore, `users/${user.uid}/calendarEvents`, updatedEvent.id);
+    updateDocumentNonBlocking(eventRef, updatedEvent);
+  }
+
+  const handleDragEnd = (result: DropResult) => {
+    const { destination, source, draggableId } = result;
+
+    if (!destination) return;
+
+    const event = events?.find(e => e.id === draggableId);
+    if (!event) return;
+
+    const originalDate = new Date(event.start);
+    const destinationDate = new Date(destination.droppableId);
+
+    const newStartDate = set(destinationDate, {
+      hours: originalDate.getHours(),
+      minutes: originalDate.getMinutes(),
+    });
+
+    const duration = new Date(event.end).getTime() - new Date(event.start).getTime();
+    const newEndDate = new Date(newStartDate.getTime() + duration);
+
+    handleEventUpdate({ 
+        ...event, 
+        start: newStartDate.toISOString(),
+        end: newEndDate.toISOString()
+    });
+  };
+
   const getHeaderText = () => {
       if (view === 'month') return format(currentDate, 'MMMM yyyy');
       if (view === 'week') {
@@ -277,11 +411,14 @@ export function FullCalendar() {
             </div>
         </div>
         
-        <div className="rounded-lg border border-border overflow-hidden glass">
-            {view === 'month' && <MonthView currentDate={currentDate} eventsByDay={eventsByDay} onDayClick={handleAddEvent} onEventClick={handleEventClick} />}
-            {view === 'week' && <WeekView currentDate={currentDate} events={events || []} onSlotClick={handleAddEvent} onEventClick={handleEventClick} />}
-            {view === 'day' && <DayView currentDate={currentDate} events={events || []} onSlotClick={handleAddEvent} onEventClick={handleEventClick} />}
-        </div>
+        <DragDropContext onDragEnd={handleDragEnd}>
+            <div className="rounded-lg border border-border overflow-hidden glass">
+                {view === 'month' && <MonthView currentDate={currentDate} eventsByDay={eventsByDay} onDayClick={handleAddEvent} onEventClick={handleEventClick} />}
+                {view === 'week' && <WeekView currentDate={currentDate} events={events || []} onSlotClick={handleAddEvent} onEventClick={handleEventClick} onEventUpdate={handleEventUpdate}/>}
+                {view === 'day' && <DayView currentDate={currentDate} events={events || []} onSlotClick={handleAddEvent} onEventClick={handleEventClick} onEventUpdate={handleEventUpdate}/>}
+            </div>
+        </DragDropContext>
+
         <EventDialog 
             isOpen={isDialogOpen} 
             setIsOpen={setIsDialogOpen} 
