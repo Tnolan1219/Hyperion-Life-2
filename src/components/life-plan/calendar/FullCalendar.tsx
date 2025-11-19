@@ -128,74 +128,69 @@ const WeekView = ({ currentDate, events, onSlotClick, onEventClick, onEventUpdat
                     </div>
                 ))}
             </div>
-            <Droppable droppableId="week-view" direction="horizontal">
-              {(provided) => (
-                <div {...provided.droppableProps} ref={provided.innerRef} className="grid grid-cols-7 flex-grow">
-                  {weekDays.map((day, dayIndex) => (
-                    <Droppable key={day.toString()} droppableId={format(day, 'yyyy-MM-dd')}>
-                      {(dayProvided, daySnapshot) => (
-                        <div
-                          ref={dayProvided.innerRef}
-                          {...dayProvided.droppableProps}
-                          className={cn("border-r border-border relative", daySnapshot.isDraggingOver && 'bg-primary/10')}
-                        >
-                          <div className="text-center p-2 border-b border-border sticky top-0 bg-background/80 backdrop-blur-sm z-10">
-                            <p className="text-sm font-semibold">{format(day, 'EEE')}</p>
-                            <p className={cn("text-2xl font-bold", isToday(day) && "text-primary")}>{format(day, 'd')}</p>
-                          </div>
-                          {hours.map(hour => (
-                            <div key={hour.toString()} className="h-16 border-b border-border cursor-pointer hover:bg-muted/40" onClick={() => onSlotClick(set(day, { hours: hour.getHours() }))} />
-                          ))}
-                          {events.filter(e => isSameDay(new Date(e.start), day)).map((event, eventIndex) => (
-                            <Draggable key={event.id} draggableId={event.id!} index={eventIndex}>
-                              {(eventProvided, eventSnapshot) => (
-                                <div
-                                  ref={eventProvided.innerRef}
-                                  {...eventProvided.draggableProps}
-                                  style={{...getEventPosition(event), ...eventProvided.draggableProps.style}}
-                                  className={cn('absolute left-1 right-1 p-2 rounded-lg text-white text-xs z-20 cursor-pointer overflow-hidden group', categoryStyles[event.category]?.bg, eventSnapshot.isDragging && 'shadow-2xl')}
-                                >
-                                  <div {...eventProvided.dragHandleProps} className="absolute top-1 left-1 opacity-60 group-hover:opacity-100">
-                                    <GripVertical className="h-4 w-4" />
-                                  </div>
-                                  <div onClick={(e) => { e.stopPropagation(); onEventClick(event); }} className="pl-4">
-                                      <p className="font-semibold">{event.title}</p>
-                                      <p>{format(new Date(event.start), 'p')} - {format(new Date(event.end), 'p')}</p>
-                                  </div>
-                                  <div 
-                                      className="absolute bottom-0 left-0 w-full h-2 cursor-ns-resize"
-                                      onMouseDown={(e) => {
-                                          e.preventDefault();
-                                          const initialHeight = (e.target as HTMLElement).parentElement!.clientHeight;
-                                          const initialY = e.clientY;
-                                          
-                                          const handleMouseMove = (moveE: MouseEvent) => {
-                                              const newHeight = initialHeight + (moveE.clientY - initialY);
-                                              if (newHeight > 2*16) { // min height 30min
-                                                  handleResize(event, newHeight / 16); // rem to hours
-                                              }
-                                          };
-                                          const handleMouseUp = () => {
-                                              document.removeEventListener('mousemove', handleMouseMove);
-                                              document.removeEventListener('mouseup', handleMouseUp);
-                                          };
-                                          document.addEventListener('mousemove', handleMouseMove);
-                                          document.addEventListener('mouseup', handleMouseUp);
-                                      }}
-                                  />
-                                </div>
-                              )}
-                            </Draggable>
-                          ))}
-                          {dayProvided.placeholder}
+            <div className="grid grid-cols-7 flex-grow">
+                {weekDays.map((day, dayIndex) => (
+                <Droppable key={day.toString()} droppableId={format(day, 'yyyy-MM-dd')}>
+                    {(dayProvided, daySnapshot) => (
+                    <div
+                        ref={dayProvided.innerRef}
+                        {...dayProvided.droppableProps}
+                        className={cn("border-r border-border relative", daySnapshot.isDraggingOver && 'bg-primary/10')}
+                    >
+                        <div className="text-center p-2 border-b border-border sticky top-0 bg-background/80 backdrop-blur-sm z-10">
+                        <p className="text-sm font-semibold">{format(day, 'EEE')}</p>
+                        <p className={cn("text-2xl font-bold", isToday(day) && "text-primary")}>{format(day, 'd')}</p>
                         </div>
-                      )}
-                    </Droppable>
-                  ))}
-                  {provided.placeholder}
-                </div>
-              )}
-            </Droppable>
+                        {hours.map(hour => (
+                        <div key={hour.toString()} className="h-16 border-b border-border cursor-pointer hover:bg-muted/40" onClick={() => onSlotClick(set(day, { hours: hour.getHours() }))} />
+                        ))}
+                        {events.filter(e => isSameDay(new Date(e.start), day)).map((event, eventIndex) => (
+                        <Draggable key={event.id} draggableId={event.id!} index={eventIndex}>
+                            {(eventProvided, eventSnapshot) => (
+                            <div
+                                ref={eventProvided.innerRef}
+                                {...eventProvided.draggableProps}
+                                style={{...getEventPosition(event), ...eventProvided.draggableProps.style}}
+                                className={cn('absolute left-1 right-1 p-2 rounded-lg text-white text-xs z-20 cursor-pointer overflow-hidden group', categoryStyles[event.category]?.bg, eventSnapshot.isDragging && 'shadow-2xl')}
+                            >
+                                <div {...eventProvided.dragHandleProps} className="absolute top-1 left-1 opacity-60 group-hover:opacity-100">
+                                <GripVertical className="h-4 w-4" />
+                                </div>
+                                <div onClick={(e) => { e.stopPropagation(); onEventClick(event); }} className="pl-4">
+                                    <p className="font-semibold">{event.title}</p>
+                                    <p>{format(new Date(event.start), 'p')} - {format(new Date(event.end), 'p')}</p>
+                                </div>
+                                <div 
+                                    className="absolute bottom-0 left-0 w-full h-2 cursor-ns-resize"
+                                    onMouseDown={(e) => {
+                                        e.preventDefault();
+                                        const initialHeight = (e.target as HTMLElement).parentElement!.clientHeight;
+                                        const initialY = e.clientY;
+                                        
+                                        const handleMouseMove = (moveE: MouseEvent) => {
+                                            const newHeight = initialHeight + (moveE.clientY - initialY);
+                                            if (newHeight > 2*16) { // min height 30min
+                                                handleResize(event, newHeight / 16); // rem to hours
+                                            }
+                                        };
+                                        const handleMouseUp = () => {
+                                            document.removeEventListener('mousemove', handleMouseMove);
+                                            document.removeEventListener('mouseup', handleMouseUp);
+                                        };
+                                        document.addEventListener('mousemove', handleMouseMove);
+                                        document.addEventListener('mouseup', handleMouseUp);
+                                    }}
+                                />
+                            </div>
+                            )}
+                        </Draggable>
+                        ))}
+                        {dayProvided.placeholder}
+                    </div>
+                    )}
+                </Droppable>
+                ))}
+            </div>
         </div>
     )
 }
