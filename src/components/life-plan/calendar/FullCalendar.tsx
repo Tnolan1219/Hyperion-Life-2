@@ -220,69 +220,67 @@ const DayView = ({ currentDate, events, onSlotClick, onEventClick, onEventUpdate
     }
 
     return (
-        <DragDropContext onDragEnd={() => {}}>
-            <div className="flex border-t border-border">
-                <div className="w-20 text-center shrink-0">
-                    {hours.map(hour => (
-                        <div key={hour.toString()} className="h-16 flex items-center justify-center text-sm text-muted-foreground border-r border-border">
-                            {format(hour, 'h a')}
-                        </div>
-                    ))}
-                </div>
-                 <Droppable droppableId={format(currentDate, 'yyyy-MM-dd')}>
-                    {(provided) => (
-                        <div ref={provided.innerRef} {...provided.droppableProps} className="flex-grow border-r border-border relative">
-                            {hours.map(hour => (
-                                <div key={hour.toString()} className="h-16 border-b border-border cursor-pointer hover:bg-muted/40" onClick={() => onSlotClick(set(currentDate, { hours: hour.getHours() }))} />
-                            ))}
-                            {dayEvents.map((event, index) => (
-                               <Draggable key={event.id} draggableId={event.id!} index={index}>
-                                {(eventProvided, eventSnapshot) => (
-                                    <div
-                                        ref={eventProvided.innerRef}
-                                        {...eventProvided.draggableProps}
-                                        style={{...getEventPosition(event), ...eventProvided.draggableProps.style}}
-                                        className={cn('absolute left-2 right-2 p-3 rounded-lg text-white z-10 cursor-pointer overflow-hidden group', categoryStyles[event.category]?.bg, eventSnapshot.isDragging && 'shadow-2xl')}
-                                    >
-                                        <div {...eventProvided.dragHandleProps} className="absolute top-2 left-2 opacity-60 group-hover:opacity-100">
-                                            <GripVertical className="h-5 w-5" />
-                                        </div>
-                                        <div onClick={(e) => { e.stopPropagation(); onEventClick(event); }} className="pl-6">
-                                            <p className="font-bold">{event.title}</p>
-                                            <p className="text-sm">{format(new Date(event.start), 'p')} - {format(new Date(event.end), 'p')}</p>
-                                            {event.location && <p className="text-sm opacity-90">{event.location}</p>}
-                                        </div>
-                                         <div 
-                                              className="absolute bottom-0 left-0 w-full h-2 cursor-ns-resize"
-                                              onMouseDown={(e) => {
-                                                  e.preventDefault();
-                                                  const initialHeight = (e.target as HTMLElement).parentElement!.clientHeight;
-                                                  const initialY = e.clientY;
-                                                  
-                                                  const handleMouseMove = (moveE: MouseEvent) => {
-                                                      const newHeight = initialHeight + (moveE.clientY - initialY);
-                                                      if (newHeight > 2*16) {
-                                                          handleResize(event, newHeight / 16);
-                                                      }
-                                                  };
-                                                  const handleMouseUp = () => {
-                                                      document.removeEventListener('mousemove', handleMouseMove);
-                                                      document.removeEventListener('mouseup', handleMouseUp);
-                                                  };
-                                                  document.addEventListener('mousemove', handleMouseMove);
-                                                  document.addEventListener('mouseup', handleMouseUp);
-                                              }}
-                                          />
-                                    </div>
-                                )}
-                                </Draggable>
-                            ))}
-                            {provided.placeholder}
-                        </div>
-                    )}
-                </Droppable>
+        <div className="flex border-t border-border">
+            <div className="w-20 text-center shrink-0">
+                {hours.map(hour => (
+                    <div key={hour.toString()} className="h-16 flex items-center justify-center text-sm text-muted-foreground border-r border-border">
+                        {format(hour, 'h a')}
+                    </div>
+                ))}
             </div>
-        </DragDropContext>
+             <Droppable droppableId={format(currentDate, 'yyyy-MM-dd')}>
+                {(provided) => (
+                    <div ref={provided.innerRef} {...provided.droppableProps} className="flex-grow border-r border-border relative">
+                        {hours.map(hour => (
+                            <div key={hour.toString()} className="h-16 border-b border-border cursor-pointer hover:bg-muted/40" onClick={() => onSlotClick(set(currentDate, { hours: hour.getHours() }))} />
+                        ))}
+                        {dayEvents.map((event, index) => (
+                           <Draggable key={event.id} draggableId={event.id!} index={index}>
+                            {(eventProvided, eventSnapshot) => (
+                                <div
+                                    ref={eventProvided.innerRef}
+                                    {...eventProvided.draggableProps}
+                                    style={{...getEventPosition(event), ...eventProvided.draggableProps.style}}
+                                    className={cn('absolute left-2 right-2 p-3 rounded-lg text-white z-10 cursor-pointer overflow-hidden group', categoryStyles[event.category]?.bg, eventSnapshot.isDragging && 'shadow-2xl')}
+                                >
+                                    <div {...eventProvided.dragHandleProps} className="absolute top-2 left-2 opacity-60 group-hover:opacity-100">
+                                        <GripVertical className="h-5 w-5" />
+                                    </div>
+                                    <div onClick={(e) => { e.stopPropagation(); onEventClick(event); }} className="pl-6">
+                                        <p className="font-bold">{event.title}</p>
+                                        <p className="text-sm">{format(new Date(event.start), 'p')} - {format(new Date(event.end), 'p')}</p>
+                                        {event.location && <p className="text-sm opacity-90">{event.location}</p>}
+                                    </div>
+                                     <div 
+                                          className="absolute bottom-0 left-0 w-full h-2 cursor-ns-resize"
+                                          onMouseDown={(e) => {
+                                              e.preventDefault();
+                                              const initialHeight = (e.target as HTMLElement).parentElement!.clientHeight;
+                                              const initialY = e.clientY;
+                                              
+                                              const handleMouseMove = (moveE: MouseEvent) => {
+                                                  const newHeight = initialHeight + (moveE.clientY - initialY);
+                                                  if (newHeight > 2*16) {
+                                                      handleResize(event, newHeight / 16);
+                                                  }
+                                              };
+                                              const handleMouseUp = () => {
+                                                  document.removeEventListener('mousemove', handleMouseMove);
+                                                  document.removeEventListener('mouseup', handleMouseUp);
+                                              };
+                                              document.addEventListener('mousemove', handleMouseMove);
+                                              document.addEventListener('mouseup', handleMouseUp);
+                                          }}
+                                      />
+                                </div>
+                            )}
+                            </Draggable>
+                        ))}
+                        {provided.placeholder}
+                    </div>
+                )}
+            </Droppable>
+        </div>
     )
 }
 
