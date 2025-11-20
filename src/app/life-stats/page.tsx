@@ -2,12 +2,12 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, doc, increment, runTransaction } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Sword, Heart, MessageSquare, Brain, Gem, Zap, Info, Target, PlusCircle, Edit, Trash2, Home, Car, PiggyBank, Briefcase, GraduationCap } from 'lucide-react';
+import { Sword, Heart, MessageSquare, Brain, Gem, Zap, Info, Target, PlusCircle, Edit, Trash2, Home, Car, PiggyBank, Briefcase, GraduationCap, History, Star } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
@@ -16,6 +16,9 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { GoalDialog } from '@/components/goals/GoalDialog';
 import { differenceInDays } from 'date-fns';
+import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from 'recharts';
+import { ChartContainer } from '@/components/ui/chart';
+
 
 // Define the structure of the LifeStats document
 interface LifeStats {
@@ -341,6 +344,43 @@ const CharacterAvatar = ({ level }: { level: number }) => {
     );
 }
 
+const StatHexagon = ({ stats }: { stats: LifeStats['stats'] | null }) => {
+    const chartData = useMemo(() => {
+        if (!stats) return [];
+        return [
+            { stat: 'Health', value: stats.health.total, fullMark: 1000 },
+            { stat: 'Wealth', value: stats.wealth.total, fullMark: 1000 },
+            { stat: 'Social', value: stats.social.total, fullMark: 1000 },
+            { stat: 'Power', value: stats.power.total, fullMark: 1000 },
+            { stat: 'EI', value: stats.emotionalIntelligence.total, fullMark: 1000 },
+        ];
+    }, [stats]);
+    
+    if (!stats) {
+        return <Skeleton className="w-full h-[300px]" />;
+    }
+
+    return (
+        <Card className="glass">
+            <CardHeader>
+                <CardTitle>Core Attributes</CardTitle>
+                <CardDescription>An at-a-glance view of your character's strengths.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <ChartContainer config={{}} className="mx-auto w-full h-[250px]">
+                    <ResponsiveContainer>
+                        <BarChart data={chartData} margin={{ top: 10, right: 10, bottom: 0, left: 10 }}>
+                            <XAxis dataKey="stat" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+                            <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+                            <Bar dataKey="value" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                    </ResponsiveContainer>
+                </ChartContainer>
+            </CardContent>
+        </Card>
+    )
+}
+
 export default function LifeStatsPage() {
   const { user } = useUser();
   const firestore = useFirestore();
@@ -478,8 +518,9 @@ export default function LifeStatsPage() {
                 </CardContent>
             </Card>
             
-            <h2 className="text-2xl font-bold pt-4">Core Attributes</h2>
-             <Accordion type="single" collapsible className="w-full space-y-4">
+            <StatHexagon stats={lifeStats?.stats || null} />
+
+            <Accordion type="single" collapsible className="w-full space-y-4">
                 {isLoading ? (
                     Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-[76px] w-full" />)
                 ) : (
@@ -539,3 +580,5 @@ export default function LifeStatsPage() {
     </>
   );
 }
+
+    
