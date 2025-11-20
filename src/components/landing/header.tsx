@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useUser, useAuth } from '@/firebase';
 import type { User } from 'firebase/auth';
-import { Sun, Moon, Bell, User as UserIcon, Menu, Award } from 'lucide-react';
+import { Sun, Moon, Bell, User as UserIcon, Menu, Award, Sword } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import {
   DropdownMenu,
@@ -36,12 +36,13 @@ import { SignInPrompt } from '../auth/SignInPrompt';
 
 
 const navItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: Home, color: 'sky' },
-  { href: '/life-plan', label: 'Life Plan', icon: Map, color: 'violet' },
-  { href: '/portfolio', label: 'Net Worth', icon: Wallet, color: 'amber' },
-  { href: '/ai-coach', label: 'AI Coach', icon: Brain, color: 'cyan' },
-  { href: '/goals', label: 'Goals', icon: Star, color: 'rose' },
-  { href: '/settings', label: 'Profile', icon: UserIcon, color: 'slate' },
+  { href: '/dashboard', label: 'Dashboard', icon: Home },
+  { href: '/life-plan', label: 'Life Plan', icon: Map },
+  { href: '/portfolio', label: 'Net Worth', icon: Wallet },
+  { href: '/life-stats', label: 'Life Stats', icon: Sword },
+  { href: '/ai-coach', label: 'AI Coach', icon: Brain },
+  { href: '/goals', label: 'Goals', icon: Star },
+  { href: '/settings', label: 'Profile', icon: UserIcon },
 ];
 
 
@@ -85,39 +86,39 @@ export const Header = () => {
 
   return (
     <header className="sticky top-0 z-40 flex h-14 items-center gap-4 border-b border-border/20 bg-background/80 px-4 backdrop-blur-lg lg:h-[60px] lg:px-6">
-        <div className="flex-1 md:flex-none">
-            <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-                <SheetTrigger asChild>
-                    <Button variant="outline" size="icon" className="shrink-0 md:hidden">
-                    <Menu className="h-5 w-5" />
-                    <span className="sr-only">Toggle navigation menu</span>
-                    </Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="flex flex-col glass !border-r-0">
-                    <nav className="grid gap-2 text-lg font-medium">
-                    <Link
-                        href="#"
-                        className="flex items-center gap-2 text-lg font-semibold mb-4"
-                    >
-                        <Logo className="h-6 w-6 text-primary" />
-                        <span>Hyperion Life</span>
-                    </Link>
-                    {user && navItems.map(item => (
-                        <MobileNavLink key={item.href} {...item} closeSheet={() => setIsSheetOpen(false)} />
-                    ))}
-                    </nav>
-                </SheetContent>
-            </Sheet>
-        </div>
+      <div className="flex flex-1 items-center justify-start md:hidden">
+        <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+          <SheetTrigger asChild>
+            <Button variant="outline" size="icon" className="shrink-0">
+              <Menu className="h-5 w-5" />
+              <span className="sr-only">Toggle navigation menu</span>
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="flex flex-col glass !border-r-0">
+            <nav className="grid gap-2 text-lg font-medium">
+              <Link
+                href="#"
+                className="flex items-center gap-2 text-lg font-semibold mb-4"
+              >
+                <Logo className="h-6 w-6 text-primary" />
+                <span>Hyperion Life</span>
+              </Link>
+              {user && navItems.map(item => (
+                <MobileNavLink key={item.href} {...item} closeSheet={() => setIsSheetOpen(false)} />
+              ))}
+            </nav>
+          </SheetContent>
+        </Sheet>
+      </div>
 
-        <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center">
-            <Link href="/" className="flex items-center justify-center gap-3 font-semibold text-foreground transition-opacity duration-300">
-                <span className="text-primary">
-                    <Logo className="h-7 w-7" />
-                </span>
-                <span className="text-xl font-bold hidden sm:inline">Hyperion Life</span>
-            </Link>
-        </div>
+      <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center">
+        <Link href="/" className="flex items-center justify-center gap-3 font-semibold text-foreground transition-opacity duration-300">
+          <span className="text-primary">
+            <Logo className="h-7 w-7" />
+          </span>
+          <span className="text-xl font-bold hidden sm:inline">Hyperion Life</span>
+        </Link>
+      </div>
 
       <div className="flex flex-1 items-center justify-end gap-2">
         <Button

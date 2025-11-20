@@ -33,7 +33,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { Calendar as CalendarIcon, CheckCircle } from 'lucide-react';
 import { useUser, useFirestore, addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase';
-import { collection, doc } from 'firebase/firestore';
+import { collection, doc, increment, serverTimestamp, runTransaction } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { goalCategories, Goal, GoalCategory } from '@/app/goals/page';
@@ -104,16 +104,51 @@ export function GoalDialog({ isOpen, setIsOpen, goal }: GoalDialogProps) {
     form.reset();
   };
   
-  const handleMarkAsComplete = () => {
+  const handleMarkAsComplete = async () => {
     if (!firestore || !user || !goal?.id) return;
     
     const goalDocRef = doc(firestore, `users/${user.uid}/goals`, goal.id);
-    updateDocumentNonBlocking(goalDocRef, { currentAmount: goal.targetAmount });
+    const lifeStatsRef = doc(firestore, `users/${user.uid}/lifeStats`, user.uid);
+    const xpGained = 100;
 
-    toast({
-        title: "Goal Complete!",
-        description: `Congratulations! You've reached your goal: "${goal.title}". You earned 100 MP!`,
-    });
+    try {
+        await runTransaction(firestore, async (transaction) => {
+            const lifeStatsDoc = await transaction.get(lifeStatsRef);
+
+            if (!lifeStatsDoc.exists()) {
+                // Initialize stats if they don't exist
+                transaction.set(lifeStatsRef, {
+                    userId: user.uid,
+                    level: 1,
+                    xp: xpGained,
+                    stats: { health: 0, social: 0, power: 0, wealth: 100, emotionalIntelligence: 0 },
+                    netWorth: 0,
+                });
+            } else {
+                // Atomically update XP and a relevant stat
+                transaction.update(lifeStatsRef, { 
+                    xp: increment(xpGained),
+                    'stats.wealth': increment(20) // Example: completing a goal boosts wealth
+                });
+            }
+
+            // Mark goal as complete
+            transaction.update(goalDocRef, { currentAmount: goal.targetAmount });
+        });
+
+        toast({
+            title: "Goal Complete! +100 XP",
+            description: `Congratulations on reaching your goal: "${goal.title}"`,
+        });
+
+    } catch (e) {
+        console.error("Transaction failed: ", e);
+        toast({
+            variant: "destructive",
+            title: "Uh oh! Something went wrong.",
+            description: "Could not update your stats. Please try again.",
+        });
+    }
 
     setIsOpen(false);
   }

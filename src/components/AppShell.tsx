@@ -9,8 +9,8 @@ import {
   Wallet,
   Brain,
   Star,
-  Settings,
   User,
+  Sword,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUser } from '@/firebase';
@@ -24,6 +24,7 @@ const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: Home, color: 'sky' },
   { href: '/life-plan', label: 'Life Plan', icon: Map, color: 'violet' },
   { href: '/portfolio', label: 'Net Worth', icon: Wallet, color: 'amber' },
+  { href: '/life-stats', label: 'Life Stats', icon: Sword, color: 'green' },
   { href: '/ai-coach', label: 'AI Coach', icon: Brain, color: 'cyan' },
   { href: '/goals', label: 'Goals', icon: Star, color: 'rose' },
   { href: '/settings', label: 'Profile', icon: User, color: 'slate' },
@@ -50,6 +51,13 @@ const colorClasses: { [key: string]: { [key: string]: string } } = {
         hoverBg: 'hover:bg-amber-400/20',
         hoverText: 'hover:text-amber-300',
         shadow: 'shadow-amber-500/50'
+    },
+    green: {
+        text: 'text-green-400',
+        bg: 'bg-green-400/10',
+        hoverBg: 'hover:bg-green-400/20',
+        hoverText: 'hover:text-green-300',
+        shadow: 'shadow-green-500/50'
     },
     cyan: {
         text: 'text-cyan-400',

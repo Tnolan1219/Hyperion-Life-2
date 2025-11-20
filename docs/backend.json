@@ -681,6 +681,42 @@
         }
       },
       "required": ["id", "userId", "name", "category"]
+    },
+    "LifeStats": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "LifeStats",
+      "type": "object",
+      "description": "Represents the gamified life statistics for a user.",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "The Firebase Auth UID of the user."
+        },
+        "level": {
+          "type": "number",
+          "description": "The user's overall level in the Hyperion Self progression."
+        },
+        "xp": {
+          "type": "number",
+          "description": "The user's current experience points."
+        },
+        "stats": {
+          "type": "object",
+          "description": "The main stat categories for the user.",
+          "properties": {
+            "health": { "type": "number", "default": 0 },
+            "social": { "type": "number", "default": 0 },
+            "power": { "type": "number", "default": 0 },
+            "wealth": { "type": "number", "default": 0 },
+            "emotionalIntelligence": { "type": "number", "default": 0 }
+          }
+        },
+        "netWorth": {
+          "type": "number",
+          "description": "The user's current net worth, mirrored for the 'gold bar' display."
+        }
+      },
+      "required": ["userId", "level", "xp", "stats", "netWorth"]
     }
   },
   "auth": {
@@ -876,6 +912,14 @@
         }
       },
       {
+        "path": "/users/{userId}/lifeStats/{statsId}",
+        "definition": {
+          "entityName": "LifeStats",
+          "schema": { "$ref": "#/backend/entities/LifeStats" },
+          "description": "Stores the user's gamified life statistics. The document ID should match the user's UID."
+        }
+      },
+      {
         "path": "/tips/{tipId}",
         "definition": {
           "entityName": "Tip",
@@ -964,6 +1008,6 @@
         }
       }
     ],
-    "reasoning": "The Firestore data structure is designed to ensure Authorization Independence, Clarity of Intent, and support secure list operations (QAPs). User-owned data is stored in hierarchical paths under the `/users/{userId}` collection, ensuring clear ownership. This eliminates the need for `get()` calls in security rules to check ownership, enabling atomic operations. Tips, Links, and NewsCache are stored in root-level collections, allowing global read access without compromising user data.\n\nAuthorization Independence is achieved by avoiding hierarchical authorization dependencies. For instance, assets, debts, goals, advice and AI sessions are stored under the user's document, making it easy to check ownership directly in the security rules without needing to access parent documents.\n\nQAPs are supported through structural segregation. Publicly accessible data (tips, links, newsCache) is stored separately from user-specific data, enabling secure `list` operations. User-specific data (assets, debts, goals, advice, aiSessions) benefits from path-based ownership, further simplifying and securing `list` operations. The addition of income and expenses collections under the user's document maintains this ownership-based security model."
+    "reasoning": "The Firestore data structure is designed to ensure Authorization Independence, Clarity of Intent, and support secure list operations (QAPs). User-owned data is stored in hierarchical paths under the `/users/{userId}` collection, ensuring clear ownership. This eliminates the need for `get()` calls in security rules to check ownership, enabling atomic operations. Tips, Links, and NewsCache are stored in root-level collections, allowing global read access without compromising user data.\n\nAuthorization Independence is achieved by avoiding hierarchical authorization dependencies. For instance, assets, debts, goals, advice and AI sessions are stored under the user's document, making it easy to check ownership directly in the security rules without needing to access parent documents.\n\nQAPs are supported through structural segregation. Publicly accessible data (tips, links, newsCache) is stored separately from user-specific data, enabling secure `list` operations. User-specific data (assets, debts, goals, advice, aiSessions) benefits from path-based ownership, further simplifying and securing `list` operations. The addition of income, expenses, contacts, and lifeStats collections under the user's document maintains this ownership-based security model."
   }
 }
