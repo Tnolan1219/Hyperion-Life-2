@@ -1,7 +1,8 @@
+
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, doc, increment, runTransaction } from 'firebase/firestore';
@@ -15,7 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { GoalDialog } from '@/components/goals/GoalDialog';
 import { differenceInDays } from 'date-fns';
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from 'recharts';
+import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from 'recharts';
 import { ChartContainer } from '@/components/ui/chart';
 
 // Define the structure of the LifeStats document
@@ -342,16 +343,39 @@ const CharacterAvatar = ({ level, avatarData }: { level: number, avatarData: Lif
 }
 
 // Placeholder components for new features
-const BalanceMeter = () => (
-    <Card className="glass">
-        <CardHeader>
-            <CardTitle>Balance Meter</CardTitle>
-        </CardHeader>
-        <CardContent>
-            <p className="text-muted-foreground">Circular chart showing stat distribution coming soon.</p>
-        </CardContent>
-    </Card>
-);
+const BalanceMeter = ({ statsData }: { statsData: LifeStats['stats'] | null }) => {
+    const chartData = useMemo(() => {
+        if (!statsData) return [];
+        return Object.entries(statConfig).map(([key, config]) => ({
+            subject: config.label,
+            value: statsData[key as StatKey]?.total || 0,
+            fullMark: 1000,
+        }));
+    }, [statsData]);
+
+    return (
+        <Card className="glass">
+            <CardHeader>
+                <CardTitle>Balance Meter</CardTitle>
+                <CardDescription>A visual representation of your life balance.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                {chartData.length > 0 ? (
+                    <ChartContainer config={{}} className="h-64 w-full">
+                        <RadarChart data={chartData}>
+                            <PolarGrid />
+                            <PolarAngleAxis dataKey="subject" />
+                            <PolarRadiusAxis angle={30} domain={[0, 1000]} />
+                            <Radar name="Stats" dataKey="value" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.6} />
+                        </RadarChart>
+                    </ChartContainer>
+                ) : (
+                    <p className="text-muted-foreground">Not enough data to display balance.</p>
+                )}
+            </CardContent>
+        </Card>
+    )
+};
 const MilestoneBadges = () => (
      <Card className="glass">
         <CardHeader>
@@ -372,9 +396,9 @@ const ProgressTimeline = () => (
         </CardContent>
     </Card>
 )
-const QuickActions = () => (
+const QuickActions = ({ onAddGoal }: { onAddGoal: () => void }) => (
      <div className="mt-8 col-span-3 flex justify-center gap-4">
-        <Button>Add Goal</Button>
+        <Button onClick={onAddGoal}>Add Goal</Button>
         <Button variant="outline">Check Systems</Button>
         <Button variant="outline">View Milestones</Button>
     </div>
@@ -462,6 +486,15 @@ export default function LifeStatsPage() {
     setSelectedGoal(undefined);
     setIsGoalDialogOpen(true);
   };
+  
+  const goalInFocus = useMemo(() => {
+    if (!goals || goals.length === 0) return null;
+    // Find the goal with the highest progress percentage that isn't complete
+    return [...goals]
+        .filter(g => g.currentAmount < g.targetAmount)
+        .sort((a, b) => (b.currentAmount / b.targetAmount) - (a.currentAmount / a.targetAmount))[0];
+  }, [goals])
+
 
   return (
     <>
@@ -504,14 +537,41 @@ export default function LifeStatsPage() {
         {/* Right Panel: Advisor */}
         <div className="lg:col-span-4 space-y-8">
             <AiAdvisorPanel onCompleteQuest={handleCompleteQuest} />
-            <BalanceMeter />
+            <BalanceMeter statsData={lifeStats?.stats || null} />
             <MilestoneBadges />
         </div>
 
         {/* Bottom Section */}
         <div className="lg:col-span-12">
             <ProgressTimeline />
-            <QuickActions />
+            <QuickActions onAddGoal={handleAddGoal} />
+        </div>
+
+         {/* Goals Section */}
+        <div className="lg:col-span-12 mt-8">
+            <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-bold">Financial Quests (Goals)</h2>
+                <Button onClick={handleAddGoal}><PlusCircle className="mr-2 h-4 w-4" /> Add Goal</Button>
+            </div>
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {goals && goals.map(goal => (
+                    <GoalCard key={goal.id} goal={goal} onEdit={handleEditGoal} />
+                ))}
+             </div>
+             {goals && goals.length === 0 && (
+                <Card className="col-span-full flex flex-col items-center justify-center text-center py-12 glass">
+                     <CardHeader>
+                        <div className="flex items-center justify-center h-16 w-16 bg-primary/10 rounded-full mx-auto mb-4">
+                            <Target className="h-8 w-8 text-primary" />
+                        </div>
+                        <CardTitle>Set a Financial Goal</CardTitle>
+                        <CardDescription>Start tracking your progress towards your financial ambitions.</CardDescription>
+                     </CardHeader>
+                     <CardContent>
+                        <Button onClick={handleAddGoal}>Create a Goal</Button>
+                     </CardContent>
+                 </Card>
+             )}
         </div>
 
       </div>
