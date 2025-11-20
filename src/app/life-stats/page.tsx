@@ -378,13 +378,13 @@ export default function LifeStatsPage() {
                                 {isLoading ? <Skeleton className="h-3 w-full mt-2" /> : <Progress value={xpPercentage} />}
                                 <div className="text-xs text-muted-foreground mt-1.5 flex justify-between">
                                     <span>XP</span>
-                                    {isLoading ? <Skeleton className="h-4 w-20" /> : <span>{levelInfo.currentXp.toLocaleString()} / {levelInfo.xpToNextLevel.toLocaleString()}</span>}
+                                    {isLoading ? <div className="inline-block"><Skeleton className="h-4 w-24" /></div> : <span>{levelInfo.currentXp.toLocaleString()} / {levelInfo.xpToNextLevel.toLocaleString()}</span>}
                                 </div>
                             </div>
                         </div>
                          <div className="text-center md:text-right">
-                            <p className="text-sm font-medium text-muted-foreground">Net Worth</p>
-                            {isLoading ? <Skeleton className="h-10 w-32 mt-1 mx-auto md:mr-0" /> : <p className="text-4xl font-bold text-amber-400">{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', notation: 'compact' }).format(lifeStats?.netWorth || 0)}</p>}
+                            <div className="text-sm font-medium text-muted-foreground">Net Worth</div>
+                            {isLoading ? <Skeleton className="h-10 w-32 mt-1 mx-auto md:mr-0" /> : <div className="text-4xl font-bold text-amber-400">{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', notation: 'compact' }).format(lifeStats?.netWorth || 0)}</div>}
                         </div>
                     </div>
                 </CardContent>
@@ -434,3 +434,5 @@ export default function LifeStatsPage() {
     </div>
   );
 }
+
+    
