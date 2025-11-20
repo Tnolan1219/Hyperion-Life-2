@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useMemo, useState } from 'react';
@@ -282,7 +283,9 @@ export default function LifeStatsPage() {
                 <CardHeader>
                     <div className="flex justify-between items-center">
                         <CardTitle>Level {isLoading ? <Skeleton className="h-6 w-10 inline-block" /> : levelInfo.level}</CardTitle>
-                        <CardDescription>XP: {isLoading ? <Skeleton className="h-4 w-24 inline-block" /> : `${levelInfo.currentXp.toLocaleString()} / ${levelInfo.xpToNextLevel.toLocaleString()}`}</CardDescription>
+                        <div className="text-sm text-muted-foreground">
+                            XP: {isLoading ? <Skeleton className="h-4 w-24 inline-block" /> : `${levelInfo.currentXp.toLocaleString()} / ${levelInfo.xpToNextLevel.toLocaleString()}`}
+                        </div>
                     </div>
                 </CardHeader>
                 <CardContent>
