@@ -7,17 +7,18 @@ import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Sword, Heart, MessageSquare, Brain, Gem, Zap } from 'lucide-react';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 // Define the structure of the LifeStats document
 interface LifeStats {
   level: number;
   xp: number;
   stats: {
-    health: number;
-    social: number;
-    power: number;
-    wealth: number;
-    emotionalIntelligence: number;
+    health: { total: number; strength: number; endurance: number; nutrition: number; };
+    social: { total: number; relationships: number; communication: number; influence: number; };
+    power: { total: number; leadership: number; decisionMaking: number; resilience: number; };
+    wealth: { total: number; careerSkills: number; networking: number; investing: number; };
+    emotionalIntelligence: { total: number; selfAwareness: number; empathy: number; regulation: number; };
   };
   netWorth: number;
 }
@@ -27,65 +28,115 @@ const statConfig = {
   health: {
     label: 'Health & Vitality',
     icon: Heart,
-    color: 'bg-red-500',
+    color: 'text-red-400',
     description: 'Your physical and mental well-being.',
-  },
-  social: {
-    label: 'Social',
-    icon: MessageSquare,
-    color: 'bg-blue-500',
-    description: 'Your relationships and network.',
-  },
-  power: {
-    label: 'Power',
-    icon: Zap,
-    color: 'bg-yellow-500',
-    description: 'Your influence and resilience.',
+    subStats: {
+        strength: 'Strength',
+        endurance: 'Endurance',
+        nutrition: 'Nutrition',
+    }
   },
   wealth: {
     label: 'Wealth',
     icon: Gem,
-    color: 'bg-green-500',
+    color: 'text-green-400',
     description: 'Your financial strength and skills.',
+    subStats: {
+        careerSkills: 'Career Skills',
+        networking: 'Networking',
+        investing: 'Investing',
+    }
+  },
+  social: {
+    label: 'Social',
+    icon: MessageSquare,
+    color: 'text-blue-400',
+    description: 'Your relationships and network.',
+    subStats: {
+        relationships: 'Relationships',
+        communication: 'Communication',
+        influence: 'Influence',
+    }
+  },
+  power: {
+    label: 'Power',
+    icon: Zap,
+    color: 'text-yellow-400',
+    description: 'Your influence and resilience.',
+    subStats: {
+        leadership: 'Leadership',
+        decisionMaking: 'Decision Making',
+        resilience: 'Resilience',
+    }
   },
   emotionalIntelligence: {
     label: 'Emotional Intelligence',
     icon: Brain,
-    color: 'bg-purple-500',
+    color: 'text-purple-400',
     description: 'Your self-awareness and empathy.',
+    subStats: {
+        selfAwareness: 'Self-Awareness',
+        empathy: 'Empathy',
+        regulation: 'Regulation',
+    }
   },
 };
 
 type StatKey = keyof typeof statConfig;
 
-const StatBar = ({ label, value, max, icon: Icon, color, description }: {
-  label: string;
-  value: number;
-  max: number;
-  icon: React.ElementType;
-  color: string;
-  description: string;
-}) => {
-  const percentage = max > 0 ? (value / max) * 100 : 0;
-  return (
-    <Card className="glass hover:border-primary/50">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Icon className="h-5 w-5 text-primary" />
-            {label}
-          </CardTitle>
-          <span className="font-bold text-primary">{value}</span>
+const SubStatBar = ({ label, value }: { label: string; value: number }) => {
+    const max = Math.max(100, value);
+    const percentage = max > 0 ? (value / max) * 100 : 0;
+    return (
+        <div className="space-y-1">
+            <div className="flex justify-between items-center text-xs">
+                <span className="text-muted-foreground">{label}</span>
+                <span className="font-semibold">{value}</span>
+            </div>
+            <Progress value={percentage} className="h-2" />
         </div>
-        <CardDescription>{description}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Progress value={percentage} className="h-3 [&>div]:bg-primary" />
-      </CardContent>
-    </Card>
-  );
+    );
 };
 
+const StatCard = ({ statKey, statsData }: { statKey: StatKey, statsData: LifeStats['stats'] | null}) => {
+    const config = statConfig[statKey];
+    const value = statsData?.[statKey]?.total || 0;
+    const max = Math.max(100, value);
+    const percentage = max > 0 ? (value / max) * 100 : 0;
+
+    return (
+        <Card className="glass">
+             <Accordion type="single" collapsible>
+                <AccordionItem value={statKey} className="border-b-0">
+                    <AccordionTrigger className="p-6 hover:no-underline">
+                        <div className="flex items-center gap-4 w-full">
+                            <config.icon className={`h-6 w-6 ${config.color}`} />
+                             <div className="flex-grow text-left">
+                                <CardTitle className="text-lg">{config.label}</CardTitle>
+                                <CardDescription>{config.description}</CardDescription>
+                            </div>
+                            <div className="flex flex-col items-end w-24">
+                                <span className="text-2xl font-bold text-primary">{value}</span>
+                                <Progress value={percentage} className="h-2 w-full mt-1" />
+                            </div>
+                        </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="px-6 pb-6">
+                        <div className="space-y-4 pt-4 border-t border-border/50">
+                             {Object.entries(config.subStats).map(([subKey, subLabel]) => (
+                                <SubStatBar 
+                                    key={subKey}
+                                    label={subLabel}
+                                    value={(statsData?.[statKey] as any)?.[subKey] || 0}
+                                />
+                            ))}
+                        </div>
+                    </AccordionContent>
+                </AccordionItem>
+            </Accordion>
+        </Card>
+    );
+}
 
 const CharacterPlaceholder = () => (
     <div className="sticky top-24 flex flex-col items-center justify-center h-full">
@@ -150,38 +201,24 @@ export default function LifeStatsPage() {
 
             {isLoading ? (
                 Array.from({ length: 5 }).map((_, i) => (
-                    <Card key={i} className="glass">
+                    <Card key={i} className="glass h-36">
                         <CardHeader>
                             <div className="flex items-center justify-between">
-                                <Skeleton className="h-6 w-48" />
-                                <Skeleton className="h-6 w-12" />
+                                <Skeleton className="h-10 w-48" />
+                                <Skeleton className="h-8 w-24" />
                             </div>
-                            <Skeleton className="h-4 w-64 mt-2" />
+                             <Skeleton className="h-4 w-64 mt-2" />
                         </CardHeader>
-                        <CardContent>
-                           <Skeleton className="h-3 w-full" />
-                        </CardContent>
                     </Card>
                 ))
             ) : (
-                Object.keys(statConfig).map((key) => {
-                    const statKey = key as StatKey;
-                    const config = statConfig[statKey];
-                    const value = lifeStats?.stats?.[statKey] || 0;
-                    // For now, max is just a placeholder
-                    const max = Math.max(100, value); 
-                    return (
-                        <StatBar
-                            key={statKey}
-                            label={config.label}
-                            value={value}
-                            max={max}
-                            icon={config.icon}
-                            color={config.color}
-                            description={config.description}
-                        />
-                    );
-                })
+                 Object.keys(statConfig).map((key) => (
+                    <StatCard 
+                        key={key} 
+                        statKey={key as StatKey}
+                        statsData={lifeStats?.stats || null}
+                    />
+                ))
             )}
         </div>
 

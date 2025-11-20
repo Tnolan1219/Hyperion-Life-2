@@ -704,11 +704,51 @@
           "type": "object",
           "description": "The main stat categories for the user.",
           "properties": {
-            "health": { "type": "number", "default": 0 },
-            "social": { "type": "number", "default": 0 },
-            "power": { "type": "number", "default": 0 },
-            "wealth": { "type": "number", "default": 0 },
-            "emotionalIntelligence": { "type": "number", "default": 0 }
+            "health": {
+              "type": "object",
+              "properties": {
+                "total": { "type": "number", "default": 0 },
+                "strength": { "type": "number", "default": 0 },
+                "endurance": { "type": "number", "default": 0 },
+                "nutrition": { "type": "number", "default": 0 }
+              }
+            },
+            "wealth": {
+              "type": "object",
+              "properties": {
+                "total": { "type": "number", "default": 0 },
+                "careerSkills": { "type": "number", "default": 0 },
+                "networking": { "type": "number", "default": 0 },
+                "investing": { "type": "number", "default": 0 }
+              }
+            },
+            "social": {
+              "type": "object",
+              "properties": {
+                "total": { "type": "number", "default": 0 },
+                "relationships": { "type": "number", "default": 0 },
+                "communication": { "type": "number", "default": 0 },
+                "influence": { "type": "number", "default": 0 }
+              }
+            },
+            "power": {
+              "type": "object",
+              "properties": {
+                "total": { "type": "number", "default": 0 },
+                "leadership": { "type": "number", "default": 0 },
+                "decisionMaking": { "type": "number", "default": 0 },
+                "resilience": { "type": "number", "default": 0 }
+              }
+            },
+            "emotionalIntelligence": {
+              "type": "object",
+              "properties": {
+                "total": { "type": "number", "default": 0 },
+                "selfAwareness": { "type": "number", "default": 0 },
+                "empathy": { "type": "number", "default": 0 },
+                "regulation": { "type": "number", "default": 0 }
+              }
+            }
           }
         },
         "netWorth": {
