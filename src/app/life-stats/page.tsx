@@ -6,9 +6,10 @@ import { Progress } from '@/components/ui/progress';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Sword, Heart, MessageSquare, Brain, Gem, Zap } from 'lucide-react';
+import { Sword, Heart, MessageSquare, Brain, Gem, Zap, Info } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { cn } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 
 // Define the structure of the LifeStats document
@@ -32,6 +33,7 @@ const statConfig = {
     icon: Heart,
     color: 'text-red-400',
     description: 'Your physical and mental well-being.',
+    tooltip: 'Increased by logging workouts, healthy meals, and mindfulness sessions.',
     subStats: {
         strength: 'Strength',
         endurance: 'Endurance',
@@ -43,6 +45,7 @@ const statConfig = {
     icon: Gem,
     color: 'text-green-400',
     description: 'Your financial strength and skills.',
+    tooltip: 'Increased by completing financial goals, making investments, and improving career skills.',
     subStats: {
         careerSkills: 'Career Skills',
         networking: 'Networking',
@@ -54,6 +57,7 @@ const statConfig = {
     icon: MessageSquare,
     color: 'text-blue-400',
     description: 'Your relationships and network.',
+    tooltip: 'Increased by networking, and spending quality time with family & friends.',
     subStats: {
         relationships: 'Relationships',
         communication: 'Communication',
@@ -65,6 +69,7 @@ const statConfig = {
     icon: Zap,
     color: 'text-yellow-400',
     description: 'Your influence and resilience.',
+    tooltip: 'Increased by leading projects, making impactful decisions, and overcoming challenges.',
     subStats: {
         leadership: 'Leadership',
         decisionMaking: 'Decision Making',
@@ -76,6 +81,7 @@ const statConfig = {
     icon: Brain,
     color: 'text-purple-400',
     description: 'Your self-awareness and empathy.',
+    tooltip: 'Increased by journaling, practicing empathy, and mindfulness exercises.',
     subStats: {
         selfAwareness: 'Self-Awareness',
         empathy: 'Empathy',
@@ -114,7 +120,19 @@ const StatCard = ({ statKey, statsData }: { statKey: StatKey, statsData: LifeSta
                         <div className="flex items-center gap-4 w-full">
                             <config.icon className={`h-6 w-6 ${config.color}`} />
                              <div className="flex-grow text-left">
-                                <CardTitle className="text-lg">{config.label}</CardTitle>
+                                <div className="flex items-center gap-2">
+                                    <CardTitle className="text-lg">{config.label}</CardTitle>
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger>
+                                                <Info className="h-3.5 w-3.5 text-muted-foreground/80" />
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>{config.tooltip}</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                </div>
                                 <CardDescription>{config.description}</CardDescription>
                             </div>
                             <div className="flex flex-col items-end w-24">
