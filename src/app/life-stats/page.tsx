@@ -124,7 +124,7 @@ const StatCard = ({ statKey, statsData }: { statKey: StatKey, statsData: LifeSta
                                     <CardTitle className="text-lg">{config.label}</CardTitle>
                                     <TooltipProvider>
                                         <Tooltip>
-                                            <TooltipTrigger>
+                                            <TooltipTrigger asChild onClick={(e) => e.stopPropagation()}>
                                                 <Info className="h-3.5 w-3.5 text-muted-foreground/80" />
                                             </TooltipTrigger>
                                             <TooltipContent>
