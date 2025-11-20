@@ -1,3 +1,4 @@
+
 'use client';
 
 import React from 'react';
@@ -33,7 +34,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { Calendar as CalendarIcon, CheckCircle } from 'lucide-react';
 import { useUser, useFirestore, addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase';
-import { collection, doc, increment, serverTimestamp, runTransaction } from 'firebase/firestore';
+import { collection, doc, increment, runTransaction } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { goalCategories, Goal, GoalCategory } from '@/app/goals/page';
@@ -117,18 +118,27 @@ export function GoalDialog({ isOpen, setIsOpen, goal }: GoalDialogProps) {
 
             if (!lifeStatsDoc.exists()) {
                 // Initialize stats if they don't exist
+                const newStats = {
+                    health: { total: 0, strength: 0, endurance: 0, nutrition: 0 },
+                    wealth: { total: 100, careerSkills: 0, networking: 0, investing: 100 },
+                    social: { total: 0, relationships: 0, communication: 0, influence: 0 },
+                    power: { total: 0, leadership: 0, decisionMaking: 0, resilience: 0 },
+                    emotionalIntelligence: { total: 0, selfAwareness: 0, empathy: 0, regulation: 0 },
+                };
                 transaction.set(lifeStatsRef, {
+                    id: user.uid,
                     userId: user.uid,
                     level: 1,
                     xp: xpGained,
-                    stats: { health: 0, social: 0, power: 0, wealth: 100, emotionalIntelligence: 0 },
+                    stats: newStats,
                     netWorth: 0,
                 });
             } else {
                 // Atomically update XP and a relevant stat
                 transaction.update(lifeStatsRef, { 
                     xp: increment(xpGained),
-                    'stats.wealth': increment(20) // Example: completing a goal boosts wealth
+                    'stats.wealth.total': increment(20),
+                    'stats.wealth.investing': increment(20)
                 });
             }
 
@@ -137,7 +147,7 @@ export function GoalDialog({ isOpen, setIsOpen, goal }: GoalDialogProps) {
         });
 
         toast({
-            title: "Goal Complete! +100 XP",
+            title: `Goal Complete! +${xpGained} XP`,
             description: `Congratulations on reaching your goal: "${goal.title}"`,
         });
 
