@@ -41,6 +41,9 @@ const QuestCard = ({ quest, onComplete, isCompleted }: { quest: Quest, onComplet
                     <p className="font-semibold">{quest.title}</p>
                     <p className="text-xs text-muted-foreground">{quest.type} Quest</p>
                 </div>
+                <div className="text-right">
+                    <p className="font-bold text-primary">+{quest.xp} XP</p>
+                </div>
             </div>
             <p className="text-sm text-muted-foreground">{quest.description}</p>
             <div className="flex justify-end gap-2">
@@ -140,3 +143,5 @@ export function AiAdvisorPanel({ onCompleteQuest }: { onCompleteQuest: (quest: Q
     </Card>
   )
 }
+
+    

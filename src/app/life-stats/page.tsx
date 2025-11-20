@@ -12,14 +12,6 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { AiAdvisorPanel } from '@/components/life-stats/AiAdvisorPanel';
-import {
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  Radar,
-  RadarChart,
-  ResponsiveContainer,
-} from 'recharts';
 import { useToast } from '@/hooks/use-toast';
 
 
@@ -154,7 +146,7 @@ const StatCard = ({ statKey, statsData }: { statKey: StatKey, statsData: LifeSta
                     </AccordionTrigger>
                     <AccordionContent className="px-4 pb-4">
                         <div className="space-y-4 pt-4 border-t border-border/50">
-                             {Object.entries(config.subStats).map(([subKey, subLabel]) => (
+                             {statsData && Object.entries(config.subStats).map(([subKey, subLabel]) => (
                                 <SubStatBar 
                                     key={subKey}
                                     label={subLabel}
@@ -246,34 +238,6 @@ const CharacterAvatar = ({ level }: { level: number }) => {
     );
 }
 
-const StatHexagon = ({ statsData }: { statsData: LifeStats['stats'] | null }) => {
-    const data = useMemo(() => {
-        if (!statsData) return [];
-        return Object.keys(statConfig).map(key => ({
-            subject: statConfig[key as StatKey].label,
-            value: statsData[key as StatKey]?.total || 0,
-            fullMark: 1000,
-        }));
-    }, [statsData]);
-
-    return (
-        <ResponsiveContainer width="100%" height={300}>
-            <RadarChart cx="50%" cy="50%" outerRadius="80%" data={data}>
-                <defs>
-                    <linearGradient id="radarFill" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.6}/>
-                        <stop offset="95%" stopColor="hsl(var(--secondary))" stopOpacity={0.4}/>
-                    </linearGradient>
-                </defs>
-                <PolarGrid stroke="hsl(var(--border) / 0.5)" />
-                <PolarAngleAxis dataKey="subject" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} />
-                <PolarRadiusAxis angle={30} domain={[0, 1000]} tick={false} axisLine={false} />
-                <Radar name="Stats" dataKey="value" stroke="hsl(var(--primary))" fill="url(#radarFill)" fillOpacity={0.6} />
-            </RadarChart>
-        </ResponsiveContainer>
-    );
-};
-
 export default function LifeStatsPage() {
   const { user } = useUser();
   const firestore = useFirestore();
@@ -309,7 +273,6 @@ export default function LifeStatsPage() {
           await runTransaction(firestore, async (transaction) => {
               const lifeStatsDoc = await transaction.get(lifeStatsRef);
               if (!lifeStatsDoc.exists()) {
-                   // If doc doesn't exist, create it. This is a fallback.
                   const newStats = {
                       health: { total: 0, strength: 0, endurance: 0, nutrition: 0 },
                       wealth: { total: 0, careerSkills: 0, networking: 0, investing: 0 },
@@ -331,7 +294,6 @@ export default function LifeStatsPage() {
                       netWorth: 0
                   });
               } else {
-                  // Atomically update XP and the specific stat
                   const mainStat = quest.stat.split('.')[0];
                   transaction.update(lifeStatsRef, {
                       xp: increment(quest.xp),
@@ -358,48 +320,39 @@ export default function LifeStatsPage() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-4xl font-bold text-primary">Life Stats</h1>
-        <p className="text-muted-foreground mt-2">
-          Level up your life. Track your progress toward your ultimate self.
-        </p>
+      <div className="flex justify-between items-center">
+        <div>
+            <h1 className="text-4xl font-bold text-primary">Life Stats</h1>
+            <p className="text-muted-foreground mt-2">
+            Your gamified character sheet for life.
+            </p>
+        </div>
+        <div className="hidden sm:flex items-center gap-2 glass rounded-full px-3 py-1.5 text-sm font-semibold text-amber-400 shadow-[0_0_15px_rgba(252,163,17,0.2)] hover:shadow-[0_0_20px_rgba(252,163,17,0.4)] transition-shadow">
+            <Gem className="h-5 w-5" />
+             {isLoading ? <Skeleton className="h-5 w-20" /> : <span>{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', notation: 'compact' }).format(lifeStats?.netWorth || 0)}</span>}
+        </div>
       </div>
       
-      {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-        {/* Left Column: Stats */}
         <div className="lg:col-span-3 space-y-6">
             <Card className="glass">
                 <CardContent className="p-4 md:p-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                    <div className="flex justify-between items-center">
                         <div>
                              {isLoading ? <Skeleton className="h-10 w-24 mb-2" /> : <p className="text-4xl font-bold text-primary">Level {levelInfo.level}</p>}
-                            <div className="w-full">
-                                {isLoading ? <Skeleton className="h-3 w-full mt-2" /> : <Progress value={xpPercentage} />}
-                                <div className="text-xs text-muted-foreground mt-1.5 flex justify-between">
-                                    <span>XP</span>
-                                    {isLoading ? <div className="inline-block"><Skeleton className="h-4 w-24" /></div> : <span>{levelInfo.currentXp.toLocaleString()} / {levelInfo.xpToNextLevel.toLocaleString()}</span>}
-                                </div>
-                            </div>
                         </div>
-                         <div className="text-center md:text-right">
-                            <div className="text-sm font-medium text-muted-foreground">Net Worth</div>
-                            {isLoading ? <Skeleton className="h-10 w-32 mt-1 mx-auto md:mr-0" /> : <div className="text-4xl font-bold text-amber-400">{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', notation: 'compact' }).format(lifeStats?.netWorth || 0)}</div>}
+                        <div className="w-1/2">
+                            {isLoading ? <Skeleton className="h-3 w-full mt-2" /> : <Progress value={xpPercentage} />}
+                            <div className="text-xs text-muted-foreground mt-1.5 flex justify-between">
+                                <span>XP</span>
+                                {isLoading ? <div className="inline-block"><Skeleton className="h-4 w-24" /></div> : <span>{levelInfo.currentXp.toLocaleString()} / {levelInfo.xpToNextLevel.toLocaleString()}</span>}
+                            </div>
                         </div>
                     </div>
                 </CardContent>
             </Card>
-             <Card className="glass">
-                <CardHeader>
-                    <CardTitle>Stat Distribution</CardTitle>
-                    <CardDescription>A visual summary of your core attributes.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    {isLoading ? <Skeleton className="h-[300px] w-full" /> : <StatHexagon statsData={lifeStats?.stats || null} />}
-                </CardContent>
-            </Card>
             
-            <h2 className="text-2xl font-bold pt-4">Detailed Stats</h2>
+            <h2 className="text-2xl font-bold pt-4">Core Attributes</h2>
              <Accordion type="single" collapsible className="w-full space-y-4">
                 {isLoading ? (
                     Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-[76px] w-full" />)
@@ -415,7 +368,6 @@ export default function LifeStatsPage() {
             </Accordion>
         </div>
 
-        {/* Right Column: Character & AI */}
         <div className="lg:col-span-2">
             <div className="sticky top-24 space-y-8">
                 <Card className="glass">
@@ -434,3 +386,5 @@ export default function LifeStatsPage() {
     </div>
   );
 }
+
+    
