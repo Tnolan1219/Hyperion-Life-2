@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useMemo, useState } from 'react';
@@ -19,20 +18,27 @@ import { differenceInDays } from 'date-fns';
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from 'recharts';
 import { ChartContainer } from '@/components/ui/chart';
 
-
 // Define the structure of the LifeStats document
 interface LifeStats {
   id?: string;
   level: number;
   xp: number;
   stats: {
-    health: { total: number; strength: number; endurance: number; nutrition: number; };
+    health: { total: number; strength: number; endurance: number; nutrition: number; speed: number; physique: number; };
     social: { total: number; relationships: number; communication: number; influence: number; };
     power: { total: number; leadership: number; decisionMaking: number; resilience: number; };
     wealth: { total: number; careerSkills: number; networking: number; investing: number; };
     emotionalIntelligence: { total: number; selfAwareness: number; empathy: number; regulation: number; };
   };
   netWorth: number;
+  avatar: {
+      stage: string;
+      appearance: {
+          aura: string;
+          outfit: string;
+          animation: string;
+      }
+  }
 }
 
 export type Goal = {
@@ -148,6 +154,8 @@ const statConfig = {
         strength: 'Strength',
         endurance: 'Endurance',
         nutrition: 'Nutrition',
+        speed: 'Speed',
+        physique: 'Physique',
     }
   },
   wealth: {
@@ -267,119 +275,111 @@ const StatCard = ({ statKey, statsData }: { statKey: StatKey, statsData: LifeSta
     );
 }
 
-const CharacterAvatar = ({ level }: { level: number }) => {
+const CharacterAvatar = ({ level, avatarData }: { level: number, avatarData: LifeStats['avatar'] | null }) => {
     const auraOpacity = useMemo(() => Math.min(0.1 + (level - 1) * 0.05, 0.5), [level]);
     const coreOpacity = useMemo(() => Math.min(0.8 + (level - 1) * 0.02, 1.0), [level]);
+    const stage = avatarData?.stage || "Initiate";
 
     return (
-        <div className="relative w-48 h-48 md:w-56 md:h-56">
-            <div 
-                className="absolute inset-0 rounded-full bg-primary/10 animate-pulse"
-                style={{ animationDuration: '4s' }}
-            />
-            <div 
-                className={cn(
-                    "absolute inset-2 rounded-full border-2 border-primary/30",
-                    "animate-spin-slow"
-                )}
-                style={{ animationDuration: '20s' }}
-            />
-             <div 
-                className={cn(
-                    "absolute inset-4 rounded-full border-2 border-dashed border-primary/20",
-                     "animate-spin-slow-reverse"
-                )}
-                style={{ animationDuration: '25s' }}
-            />
-
-            <div className="absolute inset-0 flex items-center justify-center animate-breathing">
-                <svg viewBox="0 0 100 100" className="w-32 h-32 md:w-40 md:h-40 drop-shadow-[0_0_10px_hsl(var(--primary))]">
-                    <defs>
-                        <linearGradient id="avatarGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                            <stop offset="0%" stopColor="hsl(var(--primary))" />
-                            <stop offset="100%" stopColor="hsl(var(--secondary))" />
-                        </linearGradient>
-                         <filter id="glow">
-                            <feGaussianBlur stdDeviation="3.5" result="coloredBlur" />
-                            <feMerge>
-                                <feMergeNode in="coloredBlur" />
-                                <feMergeNode in="SourceGraphic" />
-                            </feMerge>
-                        </filter>
-                    </defs>
-                    
-                    {/* Aura - scales with level */}
-                    <circle cx="50" cy="50" r="35" fill="hsl(var(--primary))" filter="url(#glow)" style={{ opacity: auraOpacity, transition: 'opacity 1s ease-in-out' }} />
-                    
-                    {/* Body */}
-                    <path d="M50 40 Q50 60 40 75 L60 75 Q50 60 50 40" fill="url(#avatarGradient)" style={{ opacity: coreOpacity, transition: 'opacity 1s ease-in-out' }} />
-                    {/* Head */}
-                    <circle cx="50" cy="30" r="12" fill="url(#avatarGradient)" style={{ opacity: coreOpacity, transition: 'opacity 1s ease-in-out' }} />
-                </svg>
+        <div className="relative w-full h-full flex flex-col items-center justify-center">
+             <div className="text-center mb-4">
+                <p className="text-3xl font-bold text-primary">Level {level}</p>
+                <p className="font-semibold text-lg text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">{stage}</p>
             </div>
-            <style jsx>{`
-                @keyframes spin-slow {
-                    from { transform: rotate(0deg); }
-                    to { transform: rotate(360deg); }
-                }
-                @keyframes spin-slow-reverse {
-                    from { transform: rotate(360deg); }
-                    to { transform: rotate(0deg); }
-                }
-                @keyframes breathing {
-                    0%, 100% { transform: scale(1); }
-                    50% { transform: scale(1.05); }
-                }
-                .animate-spin-slow {
-                    animation: spin-slow linear infinite;
-                }
-                .animate-spin-slow-reverse {
-                    animation: spin-slow-reverse linear infinite;
-                }
-                .animate-breathing {
-                    animation: breathing 5s ease-in-out infinite;
-                }
+            <div className="relative w-48 h-48 md:w-64 md:h-64">
+                <div 
+                    className="absolute inset-0 rounded-full bg-primary/10 animate-pulse"
+                    style={{ animationDuration: '4s', animationDelay: `${-level}s` }}
+                />
+                <div 
+                    className={cn(
+                        "absolute inset-2 rounded-full border-2 border-primary/30",
+                        avatarData?.appearance.animation === 'slow-rotation' ? "animate-spin-slow" : ""
+                    )}
+                    style={{ animationDuration: '20s' }}
+                />
+                <div 
+                    className={cn(
+                        "absolute inset-4 rounded-full border-2 border-dashed border-primary/20",
+                        avatarData?.appearance.animation === 'slow-rotation' ? "animate-spin-slow-reverse" : ""
+                    )}
+                    style={{ animationDuration: '25s' }}
+                />
+
+                <div className="absolute inset-0 flex items-center justify-center animate-breathing">
+                    <svg viewBox="0 0 100 100" className="w-40 h-40 md:w-48 md:h-48 drop-shadow-[0_0_15px_hsl(var(--primary))]">
+                        <defs>
+                            <linearGradient id="avatarGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" stopColor="hsl(var(--primary))" />
+                                <stop offset="100%" stopColor="hsl(var(--secondary))" />
+                            </linearGradient>
+                            <filter id="glow">
+                                <feGaussianBlur stdDeviation="3.5" result="coloredBlur" />
+                                <feMerge>
+                                    <feMergeNode in="coloredBlur" />
+                                    <feMergeNode in="SourceGraphic" />
+                                </feMerge>
+                            </filter>
+                        </defs>
+                        
+                        <circle cx="50" cy="50" r="35" fill={`url(#${avatarData?.appearance.aura || 'glow'})`} style={{ opacity: auraOpacity, transition: 'opacity 1s ease-in-out' }} />
+                        
+                        <path d="M50 40 Q50 60 40 75 L60 75 Q50 60 50 40" fill="url(#avatarGradient)" style={{ opacity: coreOpacity, transition: 'opacity 1s ease-in-out' }} />
+                        <circle cx="50" cy="30" r="12" fill="url(#avatarGradient)" style={{ opacity: coreOpacity, transition: 'opacity 1s ease-in-out' }} />
+                    </svg>
+                </div>
+            </div>
+             <style jsx>{`
+                @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+                @keyframes spin-slow-reverse { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }
+                @keyframes breathing { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+                .animate-spin-slow { animation: spin-slow linear infinite; }
+                .animate-spin-slow-reverse { animation: spin-slow-reverse linear infinite; }
+                .animate-breathing { animation: breathing 5s ease-in-out infinite; }
             `}</style>
         </div>
     );
 }
 
-const StatHexagon = ({ stats }: { stats: LifeStats['stats'] | null }) => {
-    const chartData = useMemo(() => {
-        if (!stats) return [];
-        return [
-            { stat: 'Health', value: stats.health.total, fullMark: 1000 },
-            { stat: 'Wealth', value: stats.wealth.total, fullMark: 1000 },
-            { stat: 'Social', value: stats.social.total, fullMark: 1000 },
-            { stat: 'Power', value: stats.power.total, fullMark: 1000 },
-            { stat: 'EI', value: stats.emotionalIntelligence.total, fullMark: 1000 },
-        ];
-    }, [stats]);
-    
-    if (!stats) {
-        return <Skeleton className="w-full h-[300px]" />;
-    }
+// Placeholder components for new features
+const BalanceMeter = () => (
+    <Card className="glass">
+        <CardHeader>
+            <CardTitle>Balance Meter</CardTitle>
+        </CardHeader>
+        <CardContent>
+            <p className="text-muted-foreground">Circular chart showing stat distribution coming soon.</p>
+        </CardContent>
+    </Card>
+);
+const MilestoneBadges = () => (
+     <Card className="glass">
+        <CardHeader>
+            <CardTitle>Badges</CardTitle>
+        </CardHeader>
+        <CardContent>
+            <p className="text-muted-foreground">Display of earned milestone badges coming soon.</p>
+        </CardContent>
+    </Card>
+)
+const ProgressTimeline = () => (
+     <Card className="glass mt-8 col-span-3">
+        <CardHeader>
+            <CardTitle>Progress Timeline</CardTitle>
+        </CardHeader>
+        <CardContent>
+            <p className="text-muted-foreground">A visual timeline of major milestones achieved is coming soon.</p>
+        </CardContent>
+    </Card>
+)
+const QuickActions = () => (
+     <div className="mt-8 col-span-3 flex justify-center gap-4">
+        <Button>Add Goal</Button>
+        <Button variant="outline">Check Systems</Button>
+        <Button variant="outline">View Milestones</Button>
+    </div>
+)
 
-    return (
-        <Card className="glass">
-            <CardHeader>
-                <CardTitle>Core Attributes</CardTitle>
-                <CardDescription>An at-a-glance view of your character's strengths.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <ChartContainer config={{}} className="mx-auto w-full h-[250px]">
-                    <ResponsiveContainer>
-                        <BarChart data={chartData} margin={{ top: 10, right: 10, bottom: 0, left: 10 }}>
-                            <XAxis dataKey="stat" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
-                            <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
-                            <Bar dataKey="value" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                        </BarChart>
-                    </ResponsiveContainer>
-                </ChartContainer>
-            </CardContent>
-        </Card>
-    )
-}
 
 export default function LifeStatsPage() {
   const { user } = useUser();
@@ -414,8 +414,6 @@ export default function LifeStatsPage() {
         xpToNextLevel
     }
   }, [lifeStats]);
-
-  const xpPercentage = (levelInfo.currentXp / levelInfo.xpToNextLevel) * 100;
   
   const { toast } = useToast();
 
@@ -428,26 +426,8 @@ export default function LifeStatsPage() {
           await runTransaction(firestore, async (transaction) => {
               const lifeStatsDoc = await transaction.get(lifeStatsRef);
               if (!lifeStatsDoc.exists()) {
-                  const newStats = {
-                      health: { total: 0, strength: 0, endurance: 0, nutrition: 0 },
-                      wealth: { total: 0, careerSkills: 0, networking: 0, investing: 0 },
-                      social: { total: 0, relationships: 0, communication: 0, influence: 0 },
-                      power: { total: 0, leadership: 0, decisionMaking: 0, resilience: 0 },
-                      emotionalIntelligence: { total: 0, selfAwareness: 0, empathy: 0, regulation: 0 },
-                  };
-                  const mainStat = quest.stat.split('.')[0] as StatKey;
-                  const subStat = quest.stat.split('.')[1];
-                  (newStats[mainStat] as any)[subStat] = quest.statIncrease;
-                  newStats[mainStat].total = quest.statIncrease;
-                  
-                  transaction.set(lifeStatsRef, {
-                      id: user.uid,
-                      userId: user.uid,
-                      level: 1,
-                      xp: quest.xp,
-                      stats: newStats,
-                      netWorth: 0
-                  });
+                  // This part should ideally be handled during onboarding
+                  toast({ variant: "destructive", title: "Life Stats not initialized!" });
               } else {
                   const mainStat = quest.stat.split('.')[0];
                   transaction.update(lifeStatsRef, {
@@ -488,9 +468,9 @@ export default function LifeStatsPage() {
     <div className="space-y-8">
       <div className="flex justify-between items-center">
         <div>
-            <h1 className="text-4xl font-bold text-primary">Life Stats & Goals</h1>
+            <h1 className="text-4xl font-bold text-primary">Hyperion Self – Life Plan</h1>
             <p className="text-muted-foreground mt-2">
-            Your gamified character sheet for life.
+                Your gamified character sheet for life.
             </p>
         </div>
         <div className="hidden sm:flex items-center gap-2 glass rounded-full px-3 py-1.5 text-sm font-semibold text-amber-400 shadow-[0_0_15px_rgba(252,163,17,0.2)] hover:shadow-[0_0_20px_rgba(252,163,17,0.4)] transition-shadow">
@@ -499,86 +479,44 @@ export default function LifeStatsPage() {
         </div>
       </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-        <div className="lg:col-span-3 space-y-6">
-            <Card className="glass">
-                <CardContent className="p-4 md:p-6">
-                    <div className="flex justify-between items-center">
-                        <div>
-                             {isLoading ? <Skeleton className="h-10 w-24 mb-2" /> : <p className="text-4xl font-bold text-primary">Level {levelInfo.level}</p>}
-                        </div>
-                        <div className="w-1/2">
-                            {isLoading ? <Skeleton className="h-3 w-full mt-2" /> : <Progress value={xpPercentage} />}
-                            <div className="text-xs text-muted-foreground mt-1.5 flex justify-between">
-                                <span>XP</span>
-                                {isLoading ? <div className="inline-block"><Skeleton className="h-4 w-24" /></div> : <span>{levelInfo.currentXp.toLocaleString()} / {levelInfo.xpToNextLevel.toLocaleString()}</span>}
-                            </div>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
-            
-            <StatHexagon stats={lifeStats?.stats || null} />
-
-            <Accordion type="single" collapsible className="w-full space-y-4">
-                {isLoading ? (
-                    Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-[76px] w-full" />)
-                ) : (
-                    Object.keys(statConfig).map((key) => (
-                        <StatCard 
-                            key={key} 
-                            statKey={key as StatKey}
-                            statsData={lifeStats?.stats || null}
-                        />
-                    ))
-                )}
-            </Accordion>
-
-            <div className="pt-4">
-                <div className="flex justify-between items-center mb-4">
-                     <h2 className="text-2xl font-bold">Financial Goals</h2>
-                     <Button size="sm" onClick={handleAddGoal}>
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        New Goal
-                    </Button>
-                </div>
-                 <div className="grid gap-6 md:grid-cols-2">
-                    {isLoading ? (
-                         [...Array(2)].map((_, i) => <Skeleton key={i} className="h-48" />)
-                    ) : goals && goals.length > 0 ? (
-                        goals.map(goal => (
-                            <GoalCard key={goal.id} goal={goal} onEdit={handleEditGoal} />
-                        ))
-                    ) : (
-                        <Card onClick={handleAddGoal} className="md:col-span-2 min-h-[200px] flex flex-col items-center justify-center bg-transparent border-2 border-dashed border-border/60 hover:border-primary/80 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1 cursor-pointer hover:bg-muted/30">
-                            <Target className="h-12 w-12 text-muted-foreground mb-4" />
-                            <h3 className="text-xl font-semibold">Set Your First Goal</h3>
-                            <p className="text-md text-muted-foreground mt-1">What's your next big financial objective?</p>
-                        </Card>
-                    )}
-                </div>
-            </div>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* Left Panel: Stats */}
+        <div className="lg:col-span-4 space-y-6">
+            <h2 className="text-2xl font-bold text-center lg:text-left">Core Attributes</h2>
+            {isLoading ? (
+                Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-[76px] w-full" />)
+            ) : (
+                Object.keys(statConfig).map((key) => (
+                    <StatCard 
+                        key={key} 
+                        statKey={key as StatKey}
+                        statsData={lifeStats?.stats || null}
+                    />
+                ))
+            )}
         </div>
 
-        <div className="lg:col-span-2">
-            <div className="sticky top-24 space-y-8">
-                <Card className="glass">
-                    <CardHeader className="text-center">
-                        <CardTitle className="text-2xl">Hyperion Self</CardTitle>
-                        <CardDescription>Your avatar evolves as you level up.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex justify-center">
-                        <CharacterAvatar level={levelInfo.level} />
-                    </CardContent>
-                </Card>
-                <AiAdvisorPanel onCompleteQuest={handleCompleteQuest} />
-            </div>
+        {/* Center Panel: Avatar */}
+        <div className="lg:col-span-4 flex items-center justify-center">
+            <CharacterAvatar level={levelInfo.level} avatarData={lifeStats?.avatar || null} />
         </div>
+
+        {/* Right Panel: Advisor */}
+        <div className="lg:col-span-4 space-y-8">
+            <AiAdvisorPanel onCompleteQuest={handleCompleteQuest} />
+            <BalanceMeter />
+            <MilestoneBadges />
+        </div>
+
+        {/* Bottom Section */}
+        <div className="lg:col-span-12">
+            <ProgressTimeline />
+            <QuickActions />
+        </div>
+
       </div>
     </div>
     <GoalDialog isOpen={isGoalDialogOpen} setIsOpen={setIsGoalDialogOpen} goal={selectedGoal} />
     </>
   );
 }
-
-    

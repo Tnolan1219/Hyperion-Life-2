@@ -190,6 +190,14 @@ service cloud.firestore {
      */
     match /users/{userId}/lifeStats/{statsId} {
         allow get, list, create, update, delete: if isOwner(userId);
+
+        match /quests/{questId} {
+            allow get, list, create, update, delete: if isOwner(userId);
+        }
+
+        match /badges/{badgeId} {
+            allow get, list, create, update, delete: if isOwner(userId);
+        }
     }
 
     /**

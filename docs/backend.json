@@ -6,29 +6,12 @@
       "type": "object",
       "description": "Represents a user of the Hyperion Life platform.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the user.  This corresponds to the Firebase Auth UID.",
-          "format": "uuid"
-        },
-        "profile": {
-          "type": "string",
-          "description": "References the UserProfile entity. (Relationship: User 1:1 UserProfile)"
-        },
-        "preferences": {
-          "type": "string",
-          "description": "References the UserPreferences entity. (Relationship: User 1:1 UserPreferences)"
-        },
-        "persona": {
-          "type": "string",
-          "description": "Summary of the user's AI persona, generated and updated by AI models."
-        }
+        "id": { "type": "string", "description": "Unique identifier for the user.  This corresponds to the Firebase Auth UID.", "format": "uuid" },
+        "profile": { "type": "string", "description": "References the UserProfile entity. (Relationship: User 1:1 UserProfile)" },
+        "preferences": { "type": "string", "description": "References the UserPreferences entity. (Relationship: User 1:1 UserPreferences)" },
+        "persona": { "type": "string", "description": "Summary of the user's AI persona, generated and updated by AI models." }
       },
-      "required": [
-        "id",
-        "profile",
-        "preferences"
-      ]
+      "required": ["id", "profile", "preferences"]
     },
     "UserProfile": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -36,34 +19,14 @@
       "type": "object",
       "description": "Stores profile information for a user.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the UserProfile entity."
-        },
-        "name": {
-          "type": "string",
-          "description": "User's full name."
-        },
-        "age": {
-          "type": "number",
-          "description": "User's age."
-        },
-        "location": {
-          "type": "string",
-          "description": "User's location."
-        },
-        "income": {
-          "type": "number",
-          "description": "User's annual income."
-        },
-        "careerStage": {
-          "type": "string",
-          "description": "User's career stage."
-        }
+        "id": { "type": "string", "description": "Unique identifier for the UserProfile entity." },
+        "name": { "type": "string", "description": "User's full name." },
+        "age": { "type": "number", "description": "User's age." },
+        "location": { "type": "string", "description": "User's location." },
+        "income": { "type": "number", "description": "User's annual income." },
+        "careerStage": { "type": "string", "description": "User's career stage." }
       },
-      "required": [
-        "id"
-      ]
+      "required": ["id"]
     },
     "UserPreferences": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -71,30 +34,13 @@
       "type": "object",
       "description": "Stores user-specific preferences for the application.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the UserPreferences entity."
-        },
-        "riskTolerance": {
-          "type": "string",
-          "description": "User's risk tolerance level."
-        },
-        "darkMode": {
-          "type": "boolean",
-          "description": "Whether dark mode is enabled for the user."
-        },
-        "reducedMotion": {
-          "type": "boolean",
-          "description": "Whether reduced motion is enabled for the user."
-        },
-        "notificationOptIn": {
-          "type": "boolean",
-          "description": "Whether the user has opted into notifications."
-        }
+        "id": { "type": "string", "description": "Unique identifier for the UserPreferences entity." },
+        "riskTolerance": { "type": "string", "description": "User's risk tolerance level." },
+        "darkMode": { "type": "boolean", "description": "Whether dark mode is enabled for the user." },
+        "reducedMotion": { "type": "boolean", "description": "Whether reduced motion is enabled for the user." },
+        "notificationOptIn": { "type": "boolean", "description": "Whether the user has opted into notifications." }
       },
-      "required": [
-        "id"
-      ]
+      "required": ["id"]
     },
     "Asset": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -102,64 +48,19 @@
       "type": "object",
       "description": "Represents an asset owned by a user.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the asset."
-        },
-        "userId": {
-          "type": "string",
-          "description": "Reference to User. (Relationship: User 1:N Asset)"
-        },
-        "type": {
-          "type": "string",
-          "description": "Type of asset (e.g., bank, investment, realEstate, crypto)."
-        },
-        "name": {
-          "type": "string",
-          "description": "Name of the asset."
-        },
-        "institution": {
-          "type": "string",
-          "description": "Institution holding the asset."
-        },
-        "value": {
-          "type": "number",
-          "description": "Current value of the asset."
-        },
-        "currency": {
-          "type": "string",
-          "description": "Currency of the asset."
-        },
-        "tags": {
-          "type": "array",
-          "description": "Tags associated with the asset.",
-          "items": {
-            "type": "string"
-          }
-        },
-        "details": {
-          "type": "string",
-          "description": "Account ID, interest rate, allocation, and notes about the asset."
-        },
-        "updatedAt": {
-          "type": "string",
-          "description": "Last update date and time of the asset.",
-          "format": "date-time"
-        },
-        "createdAt": {
-          "type": "string",
-          "description": "Creation date and time of the asset.",
-          "format": "date-time"
-        }
+        "id": { "type": "string", "description": "Unique identifier for the asset." },
+        "userId": { "type": "string", "description": "Reference to User. (Relationship: User 1:N Asset)" },
+        "type": { "type": "string", "description": "Type of asset (e.g., bank, investment, realEstate, crypto)." },
+        "name": { "type": "string", "description": "Name of the asset." },
+        "institution": { "type": "string", "description": "Institution holding the asset." },
+        "value": { "type": "number", "description": "Current value of the asset." },
+        "currency": { "type": "string", "description": "Currency of the asset." },
+        "tags": { "type": "array", "description": "Tags associated with the asset.", "items": { "type": "string" } },
+        "details": { "type": "string", "description": "Account ID, interest rate, allocation, and notes about the asset." },
+        "updatedAt": { "type": "string", "description": "Last update date and time of the asset.", "format": "date-time" },
+        "createdAt": { "type": "string", "description": "Creation date and time of the asset.", "format": "date-time" }
       },
-      "required": [
-        "id",
-        "userId",
-        "type",
-        "name",
-        "value",
-        "currency"
-      ]
+      "required": ["id", "userId", "type", "name", "value", "currency"]
     },
     "Debt": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -167,69 +68,20 @@
       "type": "object",
       "description": "Represents a debt owed by a user.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the debt."
-        },
-        "userId": {
-          "type": "string",
-          "description": "Reference to User. (Relationship: User 1:N Debt)"
-        },
-        "type": {
-          "type": "string",
-          "description": "Type of debt (e.g., loan, creditCard, mortgage, studentLoan)."
-        },
-        "name": {
-          "type": "string",
-          "description": "Name of the debt."
-        },
-        "lender": {
-          "type": "string",
-          "description": "Lender for the debt."
-        },
-        "balance": {
-          "type": "number",
-          "description": "Current balance of the debt."
-        },
-        "apr": {
-          "type": "number",
-          "description": "Annual percentage rate for the debt."
-        },
-        "minimumPayment": {
-          "type": "number",
-          "description": "Minimum payment due for the debt."
-        },
-        "dueDate": {
-          "type": "string",
-          "description": "Due date for the debt payment.",
-          "format": "date-time"
-        },
-        "strategyMeta": {
-          "type": "string",
-          "description": "Snowball rank and avalanche rank for debt payoff strategies."
-        },
-        "updatedAt": {
-          "type": "string",
-          "description": "Last update date and time of the debt.",
-          "format": "date-time"
-        },
-        "createdAt": {
-          "type": "string",
-          "description": "Creation date and time of the debt.",
-          "format": "date-time"
-        }
+        "id": { "type": "string", "description": "Unique identifier for the debt." },
+        "userId": { "type": "string", "description": "Reference to User. (Relationship: User 1:N Debt)" },
+        "type": { "type": "string", "description": "Type of debt (e.g., loan, creditCard, mortgage, studentLoan)." },
+        "name": { "type": "string", "description": "Name of the debt." },
+        "lender": { "type": "string", "description": "Lender for the debt." },
+        "balance": { "type": "number", "description": "Current balance of the debt." },
+        "apr": { "type": "number", "description": "Annual percentage rate for the debt." },
+        "minimumPayment": { "type": "number", "description": "Minimum payment due for the debt." },
+        "dueDate": { "type": "string", "description": "Due date for the debt payment.", "format": "date-time" },
+        "strategyMeta": { "type": "string", "description": "Snowball rank and avalanche rank for debt payoff strategies." },
+        "updatedAt": { "type": "string", "description": "Last update date and time of the debt.", "format": "date-time" },
+        "createdAt": { "type": "string", "description": "Creation date and time of the debt.", "format": "date-time" }
       },
-      "required": [
-        "id",
-        "userId",
-        "type",
-        "name",
-        "lender",
-        "balance",
-        "apr",
-        "minimumPayment",
-        "dueDate"
-      ]
+      "required": ["id", "userId", "type", "name", "lender", "balance", "apr", "minimumPayment", "dueDate"]
     },
     "Goal": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -237,57 +89,17 @@
       "type": "object",
       "description": "Represents a financial goal set by a user.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the goal."
-        },
-        "userId": {
-          "type": "string",
-          "description": "Reference to User. (Relationship: User 1:N Goal)"
-        },
-        "goalType": {
-          "type": "string",
-          "description": "Type of goal (e.g., emergencyFund, houseDownPayment, retirement)."
-        },
-        "targetAmount": {
-          "type": "number",
-          "description": "Target amount for the goal."
-        },
-        "targetDate": {
-          "type": "string",
-          "description": "Target date for achieving the goal.",
-          "format": "date-time"
-        },
-        "progressAmount": {
-          "type": "number",
-          "description": "Current progress towards the goal."
-        },
-        "milestones": {
-          "type": "array",
-          "description": "Milestones associated with the goal.",
-          "items": {
-            "type": "string"
-          }
-        },
-        "updatedAt": {
-          "type": "string",
-          "description": "Last update date and time of the goal.",
-          "format": "date-time"
-        },
-        "createdAt": {
-          "type": "string",
-          "description": "Creation date and time of the goal.",
-          "format": "date-time"
-        }
+        "id": { "type": "string", "description": "Unique identifier for the goal." },
+        "userId": { "type": "string", "description": "Reference to User. (Relationship: User 1:N Goal)" },
+        "goalType": { "type": "string", "description": "Type of goal (e.g., emergencyFund, houseDownPayment, retirement)." },
+        "targetAmount": { "type": "number", "description": "Target amount for the goal." },
+        "targetDate": { "type": "string", "description": "Target date for achieving the goal.", "format": "date-time" },
+        "progressAmount": { "type": "number", "description": "Current progress towards the goal." },
+        "milestones": { "type": "array", "description": "Milestones associated with the goal.", "items": { "type": "string" } },
+        "updatedAt": { "type": "string", "description": "Last update date and time of the goal.", "format": "date-time" },
+        "createdAt": { "type": "string", "description": "Creation date and time of the goal.", "format": "date-time" }
       },
-      "required": [
-        "id",
-        "userId",
-        "goalType",
-        "targetAmount",
-        "targetDate",
-        "progressAmount"
-      ]
+      "required": ["id", "userId", "goalType", "targetAmount", "targetDate", "progressAmount"]
     },
     "CalendarEvent": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -295,46 +107,15 @@
       "type": "object",
       "description": "Represents an event on the user's calendar.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the calendar event."
-        },
-        "userId": {
-          "type": "string",
-          "description": "Reference to User. (Relationship: User 1:N CalendarEvent)"
-        },
-        "title": {
-          "type": "string",
-          "description": "Title of the event."
-        },
-        "description": {
-          "type": "string",
-          "description": "A more detailed description of the event."
-        },
-        "location": {
-          "type": "string",
-          "description": "The location of the event (e.g., 'Zoom', '123 Main St')."
-        },
-        "start": {
-          "type": "string",
-          "description": "The start date and time of the event in ISO 8601 format.",
-          "format": "date-time"
-        },
-        "end": {
-          "type": "string",
-          "description": "The end date and time of the event in ISO 8601 format.",
-          "format": "date-time"
-        },
-        "category": {
-          "type": "string",
-          "description": "The category of the event for color-coding.",
-          "enum": ["Work", "Personal", "Financial", "Health", "Other"]
-        },
-        "recurring": {
-          "type": "string",
-          "description": "The recurrence rule for the event.",
-          "enum": ["none", "daily", "weekly", "monthly", "yearly"]
-        }
+        "id": { "type": "string", "description": "Unique identifier for the calendar event." },
+        "userId": { "type": "string", "description": "Reference to User. (Relationship: User 1:N CalendarEvent)" },
+        "title": { "type": "string", "description": "Title of the event." },
+        "description": { "type": "string", "description": "A more detailed description of the event." },
+        "location": { "type": "string", "description": "The location of the event (e.g., 'Zoom', '123 Main St')." },
+        "start": { "type": "string", "description": "The start date and time of the event in ISO 8601 format.", "format": "date-time" },
+        "end": { "type": "string", "description": "The end date and time of the event in ISO 8601 format.", "format": "date-time" },
+        "category": { "type": "string", "description": "The category of the event for color-coding.", "enum": ["Work", "Personal", "Financial", "Health", "Other"] },
+        "recurring": { "type": "string", "description": "The recurrence rule for the event.", "enum": ["none", "daily", "weekly", "monthly", "yearly"] }
       },
       "required": ["id", "userId", "title", "start", "end", "category"]
     },
@@ -344,47 +125,15 @@
       "type": "object",
       "description": "Represents a financial tip.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the tip."
-        },
-        "title": {
-          "type": "string",
-          "description": "Title of the tip."
-        },
-        "body": {
-          "type": "string",
-          "description": "Body of the tip."
-        },
-        "tags": {
-          "type": "array",
-          "description": "Tags associated with the tip.",
-          "items": {
-            "type": "string"
-          }
-        },
-        "source": {
-          "type": "string",
-          "description": "Source of the tip."
-        },
-        "priority": {
-          "type": "number",
-          "description": "Priority of the tip."
-        },
-        "publishedAt": {
-          "type": "string",
-          "description": "Date and time the tip was published.",
-          "format": "date-time"
-        }
+        "id": { "type": "string", "description": "Unique identifier for the tip." },
+        "title": { "type": "string", "description": "Title of the tip." },
+        "body": { "type": "string", "description": "Body of the tip." },
+        "tags": { "type": "array", "description": "Tags associated with the tip.", "items": { "type": "string" } },
+        "source": { "type": "string", "description": "Source of the tip." },
+        "priority": { "type": "number", "description": "Priority of the tip." },
+        "publishedAt": { "type": "string", "description": "Date and time the tip was published.", "format": "date-time" }
       },
-      "required": [
-        "id",
-        "title",
-        "body",
-        "source",
-        "priority",
-        "publishedAt"
-      ]
+      "required": ["id", "title", "body", "source", "priority", "publishedAt"]
     },
     "Link": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -392,41 +141,14 @@
       "type": "object",
       "description": "Represents a link to an external resource.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the link."
-        },
-        "title": {
-          "type": "string",
-          "description": "Title of the link."
-        },
-        "url": {
-          "type": "string",
-          "description": "URL of the link.",
-          "format": "uri"
-        },
-        "category": {
-          "type": "string",
-          "description": "Category of the link (e.g., site, resource)."
-        },
-        "priority": {
-          "type": "number",
-          "description": "Priority of the link."
-        },
-        "publishedAt": {
-          "type": "string",
-          "description": "Date and time the link was published.",
-          "format": "date-time"
-        }
+        "id": { "type": "string", "description": "Unique identifier for the link." },
+        "title": { "type": "string", "description": "Title of the link." },
+        "url": { "type": "string", "description": "URL of the link.", "format": "uri" },
+        "category": { "type": "string", "description": "Category of the link (e.g., site, resource)." },
+        "priority": { "type": "number", "description": "Priority of the link." },
+        "publishedAt": { "type": "string", "description": "Date and time the link was published.", "format": "date-time" }
       },
-      "required": [
-        "id",
-        "title",
-        "url",
-        "category",
-        "priority",
-        "publishedAt"
-      ]
+      "required": ["id", "title", "url", "category", "priority", "publishedAt"]
     },
     "NewsCache": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -434,48 +156,15 @@
       "type": "object",
       "description": "Represents a cached news article.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the news article (hash of the URL)."
-        },
-        "title": {
-          "type": "string",
-          "description": "Title of the news article."
-        },
-        "url": {
-          "type": "string",
-          "description": "URL of the news article.",
-          "format": "uri"
-        },
-        "source": {
-          "type": "string",
-          "description": "Source of the news article."
-        },
-        "publishedAt": {
-          "type": "string",
-          "description": "Date and time the news article was published.",
-          "format": "date-time"
-        },
-        "summary": {
-          "type": "string",
-          "description": "Summary of the news article."
-        },
-        "tags": {
-          "type": "array",
-          "description": "Tags associated with the news article.",
-          "items": {
-            "type": "string"
-          }
-        }
+        "id": { "type": "string", "description": "Unique identifier for the news article (hash of the URL)." },
+        "title": { "type": "string", "description": "Title of the news article." },
+        "url": { "type": "string", "description": "URL of the news article.", "format": "uri" },
+        "source": { "type": "string", "description": "Source of the news article." },
+        "publishedAt": { "type": "string", "description": "Date and time the news article was published.", "format": "date-time" },
+        "summary": { "type": "string", "description": "Summary of the news article." },
+        "tags": { "type": "array", "description": "Tags associated with the news article.", "items": { "type": "string" } }
       },
-      "required": [
-        "id",
-        "title",
-        "url",
-        "source",
-        "publishedAt",
-        "summary"
-      ]
+      "required": ["id", "title", "url", "source", "publishedAt", "summary"]
     },
     "Advice": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -483,49 +172,16 @@
       "type": "object",
       "description": "Represents AI-generated financial advice.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the advice."
-        },
-        "userId": {
-          "type": "string",
-          "description": "Reference to User. (Relationship: User 1:N Advice)"
-        },
-        "adviceType": {
-          "type": "string",
-          "description": "Type of advice (e.g., coaching, scenario, nudge)."
-        },
-        "prompt": {
-          "type": "string",
-          "description": "Prompt used to generate the advice."
-        },
-        "response": {
-          "type": "string",
-          "description": "AI-generated response."
-        },
-        "modelMeta": {
-          "type": "string",
-          "description": "Metadata about the AI model used to generate the advice."
-        },
-        "createdAt": {
-          "type": "string",
-          "description": "Date and time the advice was generated.",
-          "format": "date-time"
-        },
-        "feedback": {
-          "type": "string",
-          "description": "User feedback on the advice (rating and notes)."
-        }
+        "id": { "type": "string", "description": "Unique identifier for the advice." },
+        "userId": { "type": "string", "description": "Reference to User. (Relationship: User 1:N Advice)" },
+        "adviceType": { "type": "string", "description": "Type of advice (e.g., coaching, scenario, nudge)." },
+        "prompt": { "type": "string", "description": "Prompt used to generate the advice." },
+        "response": { "type": "string", "description": "AI-generated response." },
+        "modelMeta": { "type": "string", "description": "Metadata about the AI model used to generate the advice." },
+        "createdAt": { "type": "string", "description": "Date and time the advice was generated.", "format": "date-time" },
+        "feedback": { "type": "string", "description": "User feedback on the advice (rating and notes)." }
       },
-      "required": [
-        "id",
-        "userId",
-        "adviceType",
-        "prompt",
-        "response",
-        "modelMeta",
-        "createdAt"
-      ]
+      "required": ["id", "userId", "adviceType", "prompt", "response", "modelMeta", "createdAt"]
     },
     "AiSession": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -533,43 +189,14 @@
       "type": "object",
       "description": "Represents an AI coaching session.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the AI session."
-        },
-        "userId": {
-          "type": "string",
-          "description": "Reference to User. (Relationship: User 1:N AiSession)"
-        },
-        "context": {
-          "type": "string",
-          "description": "Contextual information for the session (goals, risk tolerance, asset summary, debt summary)."
-        },
-        "messages": {
-          "type": "array",
-          "description": "Messages exchanged during the session.",
-          "items": {
-            "type": "string"
-          }
-        },
-        "modelMeta": {
-          "type": "string",
-          "description": "Metadata about the AI model used during the session."
-        },
-        "createdAt": {
-          "type": "string",
-          "description": "Date and time the session was created.",
-          "format": "date-time"
-        }
+        "id": { "type": "string", "description": "Unique identifier for the AI session." },
+        "userId": { "type": "string", "description": "Reference to User. (Relationship: User 1:N AiSession)" },
+        "context": { "type": "string", "description": "Contextual information for the session (goals, risk tolerance, asset summary, debt summary)." },
+        "messages": { "type": "array", "description": "Messages exchanged during the session.", "items": { "type": "string" } },
+        "modelMeta": { "type": "string", "description": "Metadata about the AI model used during the session." },
+        "createdAt": { "type": "string", "description": "Date and time the session was created.", "format": "date-time" }
       },
-      "required": [
-        "id",
-        "userId",
-        "context",
-        "messages",
-        "modelMeta",
-        "createdAt"
-      ]
+      "required": ["id", "userId", "context", "messages", "modelMeta", "createdAt"]
     },
     "Income": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -577,31 +204,12 @@
       "type": "object",
       "description": "Represents a single income transaction for a user.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the income entry."
-        },
-        "userId": {
-          "type": "string",
-          "description": "Reference to User. (Relationship: User 1:N Income)"
-        },
-        "description": {
-          "type": "string",
-          "description": "Description of the income source (e.g., 'Monthly Salary', 'Freelance Project')."
-        },
-        "amount": {
-          "type": "number",
-          "description": "Amount of income received."
-        },
-        "category": {
-          "type": "string",
-          "description": "Category of the income (e.g., 'Salary', 'Bonus', 'Investment')."
-        },
-        "date": {
-          "type": "string",
-          "description": "Date the income was received.",
-          "format": "date-time"
-        }
+        "id": { "type": "string", "description": "Unique identifier for the income entry." },
+        "userId": { "type": "string", "description": "Reference to User. (Relationship: User 1:N Income)" },
+        "description": { "type": "string", "description": "Description of the income source (e.g., 'Monthly Salary', 'Freelance Project')." },
+        "amount": { "type": "number", "description": "Amount of income received." },
+        "category": { "type": "string", "description": "Category of the income (e.g., 'Salary', 'Bonus', 'Investment')." },
+        "date": { "type": "string", "description": "Date the income was received.", "format": "date-time" }
       },
       "required": ["id", "userId", "description", "amount", "category", "date"]
     },
@@ -611,31 +219,12 @@
       "type": "object",
       "description": "Represents a single expense transaction for a user.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the expense entry."
-        },
-        "userId": {
-          "type": "string",
-          "description": "Reference to User. (Relationship: User 1:N Expense)"
-        },
-        "description": {
-          "type": "string",
-          "description": "Description of the expense (e.g., 'Groceries', 'Rent Payment')."
-        },
-        "amount": {
-          "type": "number",
-          "description": "Amount of the expense."
-        },
-        "category": {
-          "type": "string",
-          "description": "Category of the expense (e.g., 'Food', 'Housing', 'Transportation')."
-        },
-        "date": {
-          "type": "string",
-          "description": "Date of the expense.",
-          "format": "date-time"
-        }
+        "id": { "type": "string", "description": "Unique identifier for the expense entry." },
+        "userId": { "type": "string", "description": "Reference to User. (Relationship: User 1:N Expense)" },
+        "description": { "type": "string", "description": "Description of the expense (e.g., 'Groceries', 'Rent Payment')." },
+        "amount": { "type": "number", "description": "Amount of the expense." },
+        "category": { "type": "string", "description": "Category of the expense (e.g., 'Food', 'Housing', 'Transportation')." },
+        "date": { "type": "string", "description": "Date of the expense.", "format": "date-time" }
       },
       "required": ["id", "userId", "description", "amount", "category", "date"]
     },
@@ -645,42 +234,43 @@
       "type": "object",
       "description": "Represents a contact or person in the user's network.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the contact."
-        },
-        "userId": {
-          "type": "string",
-          "description": "Reference to User. (Relationship: User 1:N Contact)"
-        },
-        "name": {
-          "type": "string",
-          "description": "The contact's full name."
-        },
-        "role": {
-          "type": "string",
-          "description": "The contact's role or title (e.g., 'Financial Advisor', 'CEO at Acme Inc.')."
-        },
-        "email": {
-          "type": "string",
-          "description": "The contact's email address.",
-          "format": "email"
-        },
-        "phone": {
-          "type": "string",
-          "description": "The contact's phone number."
-        },
-        "category": {
-          "type": "string",
-          "description": "The category of the contact.",
-          "enum": ["Career", "Mentor", "Financial", "Personal"]
-        },
-        "notes": {
-          "type": "string",
-          "description": "General notes about the contact."
-        }
+        "id": { "type": "string", "description": "Unique identifier for the contact." },
+        "userId": { "type": "string", "description": "Reference to User. (Relationship: User 1:N Contact)" },
+        "name": { "type": "string", "description": "The contact's full name." },
+        "role": { "type": "string", "description": "The contact's role or title (e.g., 'Financial Advisor', 'CEO at Acme Inc.')." },
+        "email": { "type": "string", "description": "The contact's email address.", "format": "email" },
+        "phone": { "type": "string", "description": "The contact's phone number." },
+        "category": { "type": "string", "description": "The category of the contact.", "enum": ["Career", "Mentor", "Financial", "Personal"] },
+        "notes": { "type": "string", "description": "General notes about the contact." }
       },
       "required": ["id", "userId", "name", "category"]
+    },
+    "Quest": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "Quest",
+        "type": "object",
+        "description": "Represents a single quest or challenge for a user to complete.",
+        "properties": {
+            "id": { "type": "string", "description": "Unique identifier for the quest." },
+            "title": { "type": "string", "description": "The title of the quest." },
+            "linkedStat": { "type": "string", "description": "The stat that this quest improves (e.g., 'health.endurance')." },
+            "xpReward": { "type": "number", "description": "The amount of XP awarded upon completion." },
+            "status": { "type": "string", "description": "The current status of the quest.", "enum": ["active", "completed", "archived"] }
+        },
+        "required": ["id", "title", "linkedStat", "xpReward", "status"]
+    },
+    "Badge": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "Badge",
+        "type": "object",
+        "description": "Represents a milestone achievement or badge earned by the user.",
+        "properties": {
+            "id": { "type": "string", "description": "Unique identifier for the badge." },
+            "title": { "type": "string", "description": "The title of the badge (e.g., 'First 5k Run')." },
+            "icon": { "type": "string", "description": "An emoji or icon identifier for the badge." },
+            "earnedAt": { "type": "string", "description": "The date the badge was earned.", "format": "date-time" }
+        },
+        "required": ["id", "title", "icon", "earnedAt"]
     },
     "LifeStats": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -688,18 +278,9 @@
       "type": "object",
       "description": "Represents the gamified life statistics for a user.",
       "properties": {
-        "userId": {
-          "type": "string",
-          "description": "The Firebase Auth UID of the user."
-        },
-        "level": {
-          "type": "number",
-          "description": "The user's overall level in the Hyperion Self progression."
-        },
-        "xp": {
-          "type": "number",
-          "description": "The user's current experience points."
-        },
+        "userId": { "type": "string", "description": "The Firebase Auth UID of the user." },
+        "level": { "type": "number", "description": "The user's overall level in the Hyperion Self progression." },
+        "xp": { "type": "number", "description": "The user's current experience points." },
         "stats": {
           "type": "object",
           "description": "The main stat categories for the user.",
@@ -707,347 +288,58 @@
             "health": {
               "type": "object",
               "properties": {
-                "total": { "type": "number", "default": 0 },
-                "strength": { "type": "number", "default": 0 },
-                "endurance": { "type": "number", "default": 0 },
-                "nutrition": { "type": "number", "default": 0 }
+                "total": { "type": "number", "default": 0 }, "strength": { "type": "number", "default": 0 }, "endurance": { "type": "number", "default": 0 }, "nutrition": { "type": "number", "default": 0 }, "speed": { "type": "number", "default": 0 }, "physique": { "type": "number", "default": 0 }
               }
             },
-            "wealth": {
-              "type": "object",
-              "properties": {
-                "total": { "type": "number", "default": 0 },
-                "careerSkills": { "type": "number", "default": 0 },
-                "networking": { "type": "number", "default": 0 },
-                "investing": { "type": "number", "default": 0 }
-              }
-            },
-            "social": {
-              "type": "object",
-              "properties": {
-                "total": { "type": "number", "default": 0 },
-                "relationships": { "type": "number", "default": 0 },
-                "communication": { "type": "number", "default": 0 },
-                "influence": { "type": "number", "default": 0 }
-              }
-            },
-            "power": {
-              "type": "object",
-              "properties": {
-                "total": { "type": "number", "default": 0 },
-                "leadership": { "type": "number", "default": 0 },
-                "decisionMaking": { "type": "number", "default": 0 },
-                "resilience": { "type": "number", "default": 0 }
-              }
-            },
-            "emotionalIntelligence": {
-              "type": "object",
-              "properties": {
-                "total": { "type": "number", "default": 0 },
-                "selfAwareness": { "type": "number", "default": 0 },
-                "empathy": { "type": "number", "default": 0 },
-                "regulation": { "type": "number", "default": 0 }
-              }
-            }
+            "wealth": { "type": "object", "properties": { "total": { "type": "number", "default": 0 }, "careerSkills": { "type": "number", "default": 0 }, "networking": { "type": "number", "default": 0 }, "investing": { "type": "number", "default": 0 } } },
+            "social": { "type": "object", "properties": { "total": { "type": "number", "default": 0 }, "relationships": { "type": "number", "default": 0 }, "communication": { "type": "number", "default": 0 }, "influence": { "type": "number", "default": 0 } } },
+            "power": { "type": "object", "properties": { "total": { "type": "number", "default": 0 }, "leadership": { "type": "number", "default": 0 }, "decisionMaking": { "type": "number", "default": 0 }, "resilience": { "type": "number", "default": 0 } } },
+            "emotionalIntelligence": { "type": "object", "properties": { "total": { "type": "number", "default": 0 }, "selfAwareness": { "type": "number", "default": 0 }, "empathy": { "type": "number", "default": 0 }, "regulation": { "type": "number", "default": 0 } } }
           }
         },
-        "netWorth": {
-          "type": "number",
-          "description": "The user's current net worth, mirrored for the 'gold bar' display."
+        "netWorth": { "type": "number", "description": "The user's current net worth, mirrored for the 'gold bar' display." },
+        "avatar": {
+            "type": "object",
+            "properties": {
+                "stage": {"type": "string"},
+                "appearance": {
+                    "type": "object",
+                    "properties": { "aura": {"type": "string"}, "outfit": {"type": "string"}, "animation": {"type": "string"} }
+                }
+            }
+        },
+        "balanceMeter": {
+            "type": "object",
+            "properties": { "health": {"type": "number"}, "wealth": {"type": "number"}, "social": {"type": "number"}, "power": {"type": "number"}, "emotionalIntelligence": {"type": "number"} }
         }
       },
       "required": ["userId", "level", "xp", "stats", "netWorth"]
     }
   },
   "auth": {
-    "providers": [
-      "google.com",
-      "password"
-    ]
+    "providers": ["google.com", "password"]
   },
   "firestore": {
     "structure": [
-      {
-        "path": "/users/{userId}",
-        "definition": {
-          "entityName": "User",
-          "schema": {
-            "$ref": "#/backend/entities/User"
-          },
-          "description": "Stores user data.  The 'userId' parameter corresponds to the Firebase Auth UID.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The Firebase Auth UID of the user."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/users/{userId}/profiles/{profileId}",
-        "definition": {
-          "entityName": "UserProfile",
-          "schema": {
-            "$ref": "#/backend/entities/UserProfile"
-          },
-          "description": "Stores user profile information.  The 'userId' parameter corresponds to the Firebase Auth UID.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The Firebase Auth UID of the user."
-            },
-            {
-              "name": "profileId",
-              "description": "The id of the user profile document."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/users/{userId}/preferences/{preferencesId}",
-        "definition": {
-          "entityName": "UserPreferences",
-          "schema": {
-            "$ref": "#/backend/entities/UserPreferences"
-          },
-          "description": "Stores user preferences. The 'userId' parameter corresponds to the Firebase Auth UID.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The Firebase Auth UID of the user."
-            },
-            {
-              "name": "preferencesId",
-              "description": "The id of the user preferences document."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/users/{userId}/assets/{assetId}",
-        "definition": {
-          "entityName": "Asset",
-          "schema": {
-            "$ref": "#/backend/entities/Asset"
-          },
-          "description": "Stores assets owned by the user. The 'userId' parameter corresponds to the Firebase Auth UID.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The Firebase Auth UID of the user."
-            },
-            {
-              "name": "assetId",
-              "description": "The unique identifier of the asset."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/users/{userId}/debts/{debtId}",
-        "definition": {
-          "entityName": "Debt",
-          "schema": {
-            "$ref": "#/backend/entities/Debt"
-          },
-          "description": "Stores debts owed by the user. The 'userId' parameter corresponds to the Firebase Auth UID.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The Firebase Auth UID of the user."
-            },
-            {
-              "name": "debtId",
-              "description": "The unique identifier of the debt."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/users/{userId}/goals/{goalId}",
-        "definition": {
-          "entityName": "Goal",
-          "schema": {
-            "$ref": "#/backend/entities/Goal"
-          },
-          "description": "Stores financial goals set by the user. The 'userId' parameter corresponds to the Firebase Auth UID.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The Firebase Auth UID of the user."
-            },
-            {
-              "name": "goalId",
-              "description": "The unique identifier of the goal."
-            }
-          ]
-        }
-      },
-       {
-        "path": "/users/{userId}/income/{incomeId}",
-        "definition": {
-          "entityName": "Income",
-          "schema": {
-            "$ref": "#/backend/entities/Income"
-          },
-          "description": "Stores income transactions for the user.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The Firebase Auth UID of the user."
-            },
-            {
-              "name": "incomeId",
-              "description": "The unique identifier of the income transaction."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/users/{userId}/expenses/{expenseId}",
-        "definition": {
-          "entityName": "Expense",
-          "schema": {
-            "$ref": "#/backend/entities/Expense"
-          },
-          "description": "Stores expense transactions for the user.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The Firebase Auth UID of the user."
-            },
-            {
-              "name": "expenseId",
-              "description": "The unique identifier of the expense transaction."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/users/{userId}/contacts/{contactId}",
-        "definition": {
-          "entityName": "Contact",
-          "schema": {
-            "$ref": "#/backend/entities/Contact"
-          },
-          "description": "Stores contacts in the user's network. The 'userId' parameter corresponds to the Firebase Auth UID.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The Firebase Auth UID of the user."
-            },
-            {
-              "name": "contactId",
-              "description": "The unique identifier of the contact."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/users/{userId}/calendarEvents/{eventId}",
-        "definition": {
-          "entityName": "CalendarEvent",
-          "schema": { "$ref": "#/backend/entities/CalendarEvent" },
-          "description": "Stores calendar events for the user."
-        }
-      },
-      {
-        "path": "/users/{userId}/lifeStats/{statsId}",
-        "definition": {
-          "entityName": "LifeStats",
-          "schema": { "$ref": "#/backend/entities/LifeStats" },
-          "description": "Stores the user's gamified life statistics. The document ID should match the user's UID."
-        }
-      },
-      {
-        "path": "/tips/{tipId}",
-        "definition": {
-          "entityName": "Tip",
-          "schema": {
-            "$ref": "#/backend/entities/Tip"
-          },
-          "description": "Stores financial tips.",
-          "params": [
-            {
-              "name": "tipId",
-              "description": "The unique identifier of the financial tip."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/links/{linkId}",
-        "definition": {
-          "entityName": "Link",
-          "schema": {
-            "$ref": "#/backend/entities/Link"
-          },
-          "description": "Stores links to external resources.",
-          "params": [
-            {
-              "name": "linkId",
-              "description": "The unique identifier of the link."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/newsCache/{newsCacheId}",
-        "definition": {
-          "entityName": "NewsCache",
-          "schema": {
-            "$ref": "#/backend/entities/NewsCache"
-          },
-          "description": "Stores cached news articles.",
-          "params": [
-            {
-              "name": "newsCacheId",
-              "description": "The unique identifier of the news cache article (hash of the URL)."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/users/{userId}/advice/{adviceId}",
-        "definition": {
-          "entityName": "Advice",
-          "schema": {
-            "$ref": "#/backend/entities/Advice"
-          },
-          "description": "Stores AI-generated financial advice for the user. The 'userId' parameter corresponds to the Firebase Auth UID.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The Firebase Auth UID of the user."
-            },
-            {
-              "name": "adviceId",
-              "description": "The unique identifier of the advice."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/users/{userId}/aiSessions/{aiSessionId}",
-        "definition": {
-          "entityName": "AiSession",
-          "schema": {
-            "$ref": "#/backend/entities/AiSession"
-          },
-          "description": "Stores AI coaching sessions for the user. The 'userId' parameter corresponds to the Firebase Auth UID.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The Firebase Auth UID of the user."
-            },
-            {
-              "name": "aiSessionId",
-              "description": "The unique identifier of the AI session."
-            }
-          ]
-        }
-      }
+      { "path": "/users/{userId}", "definition": { "entityName": "User", "schema": { "$ref": "#/backend/entities/User" }, "description": "Stores user data. The 'userId' parameter corresponds to the Firebase Auth UID." } },
+      { "path": "/users/{userId}/profiles/{profileId}", "definition": { "entityName": "UserProfile", "schema": { "$ref": "#/backend/entities/UserProfile" }, "description": "Stores user profile information." } },
+      { "path": "/users/{userId}/preferences/{preferencesId}", "definition": { "entityName": "UserPreferences", "schema": { "$ref": "#/backend/entities/UserPreferences" }, "description": "Stores user preferences." } },
+      { "path": "/users/{userId}/assets/{assetId}", "definition": { "entityName": "Asset", "schema": { "$ref": "#/backend/entities/Asset" }, "description": "Stores assets owned by the user." } },
+      { "path": "/users/{userId}/debts/{debtId}", "definition": { "entityName": "Debt", "schema": { "$ref": "#/backend/entities/Debt" }, "description": "Stores debts owed by the user." } },
+      { "path": "/users/{userId}/goals/{goalId}", "definition": { "entityName": "Goal", "schema": { "$ref": "#/backend/entities/Goal" }, "description": "Stores financial goals set by the user." } },
+      { "path": "/users/{userId}/income/{incomeId}", "definition": { "entityName": "Income", "schema": { "$ref": "#/backend/entities/Income" }, "description": "Stores income transactions for the user." } },
+      { "path": "/users/{userId}/expenses/{expenseId}", "definition": { "entityName": "Expense", "schema": { "$ref": "#/backend/entities/Expense" }, "description": "Stores expense transactions for the user." } },
+      { "path": "/users/{userId}/contacts/{contactId}", "definition": { "entityName": "Contact", "schema": { "$ref": "#/backend/entities/Contact" }, "description": "Stores contacts in the user's network." } },
+      { "path": "/users/{userId}/calendarEvents/{eventId}", "definition": { "entityName": "CalendarEvent", "schema": { "$ref": "#/backend/entities/CalendarEvent" }, "description": "Stores calendar events for the user." } },
+      { "path": "/users/{userId}/lifeStats/{statsId}", "definition": { "entityName": "LifeStats", "schema": { "$ref": "#/backend/entities/LifeStats" }, "description": "Stores the user's gamified life statistics." } },
+      { "path": "/users/{userId}/lifeStats/{statsId}/quests/{questId}", "definition": { "entityName": "Quest", "schema": { "$ref": "#/backend/entities/Quest" }, "description": "Stores quests for the user." } },
+      { "path": "/users/{userId}/lifeStats/{statsId}/badges/{badgeId}", "definition": { "entityName": "Badge", "schema": { "$ref": "#/backend/entities/Badge" }, "description": "Stores badges earned by the user." } },
+      { "path": "/tips/{tipId}", "definition": { "entityName": "Tip", "schema": { "$ref": "#/backend/entities/Tip" }, "description": "Stores financial tips." } },
+      { "path": "/links/{linkId}", "definition": { "entityName": "Link", "schema": { "$ref": "#/backend/entities/Link" }, "description": "Stores links to external resources." } },
+      { "path": "/newsCache/{newsCacheId}", "definition": { "entityName": "NewsCache", "schema": { "$ref": "#/backend/entities/NewsCache" }, "description": "Stores cached news articles." } },
+      { "path": "/users/{userId}/advice/{adviceId}", "definition": { "entityName": "Advice", "schema": { "$ref": "#/backend/entities/Advice" }, "description": "Stores AI-generated financial advice for the user." } },
+      { "path": "/users/{userId}/aiSessions/{aiSessionId}", "definition": { "entityName": "AiSession", "schema": { "$ref": "#/backend/entities/AiSession" }, "description": "Stores AI coaching sessions for the user." } }
     ],
-    "reasoning": "The Firestore data structure is designed to ensure Authorization Independence, Clarity of Intent, and support secure list operations (QAPs). User-owned data is stored in hierarchical paths under the `/users/{userId}` collection, ensuring clear ownership. This eliminates the need for `get()` calls in security rules to check ownership, enabling atomic operations. Tips, Links, and NewsCache are stored in root-level collections, allowing global read access without compromising user data.\n\nAuthorization Independence is achieved by avoiding hierarchical authorization dependencies. For instance, assets, debts, goals, advice and AI sessions are stored under the user's document, making it easy to check ownership directly in the security rules without needing to access parent documents.\n\nQAPs are supported through structural segregation. Publicly accessible data (tips, links, newsCache) is stored separately from user-specific data, enabling secure `list` operations. User-specific data (assets, debts, goals, advice, aiSessions) benefits from path-based ownership, further simplifying and securing `list` operations. The addition of income, expenses, contacts, and lifeStats collections under the user's document maintains this ownership-based security model."
+    "reasoning": "The Firestore data structure has been updated to support the new gamification features. The 'LifeStats' entity now includes more detailed sub-stats and new objects for 'avatar' and 'balanceMeter'. Crucially, new sub-collections for 'quests' and 'badges' have been added under `/users/{userId}/lifeStats/{statsId}`. This maintains our principle of hierarchical data ownership, ensuring that a user's quests and badges are directly tied to their life stats document and can be secured with the same ownership-based rules, while also allowing for efficient querying of these items without loading the entire LifeStats document."
   }
 }
