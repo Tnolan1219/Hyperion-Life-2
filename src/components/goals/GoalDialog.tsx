@@ -37,7 +37,7 @@ import { useUser, useFirestore, addDocumentNonBlocking, updateDocumentNonBlockin
 import { collection, doc, increment, runTransaction } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { goalCategories, Goal, GoalCategory } from '@/app/goals/page';
+import { goalCategories, Goal, GoalCategory } from '@/app/life-stats/page';
 import { useToast } from '@/hooks/use-toast';
 
 

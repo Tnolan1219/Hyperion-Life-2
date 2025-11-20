@@ -1,5 +1,6 @@
+
 import { create } from 'zustand';
-import { Goal } from '@/app/goals/page';
+import { Goal } from '@/app/life-stats/page';
 
 interface OnboardingState {
   currentStep: number;

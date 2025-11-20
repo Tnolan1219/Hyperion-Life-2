@@ -1,3 +1,4 @@
+
 'use client';
 import {
   Card,
@@ -11,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { useOnboardingStore } from '@/store/onboarding-store';
 import { PlusCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Goal } from '@/app/goals/page';
+import { Goal } from '@/app/life-stats/page';
 
 const quickGoalTemplates: (Omit<Goal, 'id' | 'userId'>)[] = [
   { title: 'Save $1,000 Emergency Fund', targetAmount: 1000, currentAmount: 0, category: 'Savings' },
