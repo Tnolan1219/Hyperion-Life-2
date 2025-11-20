@@ -1,11 +1,11 @@
 
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { useUser, useAuth } from '@/firebase';
+import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import type { User } from 'firebase/auth';
-import { Sun, Moon, Bell, User as UserIcon, Menu, Award, Sword } from 'lucide-react';
+import { Sun, Moon, Bell, User as UserIcon, Menu, Award, Sword, Gem } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import {
   DropdownMenu,
@@ -33,6 +33,7 @@ import { cn } from '@/lib/utils';
 import { Logo } from '../icons/logo';
 import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from '../ui/dialog';
 import { SignInPrompt } from '../auth/SignInPrompt';
+import { doc } from 'firebase/firestore';
 
 
 const navItems = [
@@ -44,6 +45,14 @@ const navItems = [
   { href: '/goals', label: 'Goals', icon: Star },
   { href: '/settings', label: 'Profile', icon: UserIcon },
 ];
+
+const formatCurrency = (value: number) =>
+  new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    notation: 'compact',
+    maximumFractionDigits: 0,
+  }).format(value);
 
 
 function MobileNavLink({
@@ -80,9 +89,16 @@ function MobileNavLink({
 export const Header = () => {
   const { user } = useUser();
   const auth = useAuth();
+  const firestore = useFirestore();
   const { theme, setTheme } = useTheme();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const router = useRouter();
+
+  const lifeStatsRef = useMemoFirebase(
+    () => (user ? doc(firestore, `users/${user.uid}/lifeStats`, user.uid) : null),
+    [user, firestore]
+  );
+  const { data: lifeStats } = useDoc<{netWorth: number}>(lifeStatsRef);
 
   return (
     <header className="sticky top-0 z-40 flex h-14 items-center gap-4 border-b border-border/20 bg-background/80 px-4 backdrop-blur-lg lg:h-[60px] lg:px-6">
@@ -134,8 +150,8 @@ export const Header = () => {
         {user && auth ? (
           <>
             <div className="hidden sm:flex items-center gap-2 glass rounded-full px-3 py-1.5 text-sm font-semibold">
-              <Award className="h-5 w-5 text-amber-400" />
-              <span>1,250 MP</span>
+              <Gem className="h-5 w-5 text-amber-400" />
+              <span>{formatCurrency(lifeStats?.netWorth ?? 0)}</span>
             </div>
             <Button variant="ghost" size="icon" aria-label="Notifications">
               <Bell className="h-5 w-5" />
