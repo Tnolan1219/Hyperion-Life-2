@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useMemo, useState } from 'react';
@@ -10,7 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Sword, Heart, MessageSquare, Brain, Gem, Zap, Info } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { cn } from '@/lib/utils';
-import { Tooltip, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { AiAdvisorPanel } from '@/components/life-stats/AiAdvisorPanel';
 
 // Define the structure of the LifeStats document
