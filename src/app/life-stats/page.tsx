@@ -8,6 +8,8 @@ import { doc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Sword, Heart, MessageSquare, Brain, Gem, Zap } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { cn } from '@/lib/utils';
+
 
 // Define the structure of the LifeStats document
 interface LifeStats {
@@ -138,13 +140,80 @@ const StatCard = ({ statKey, statsData }: { statKey: StatKey, statsData: LifeSta
     );
 }
 
-const CharacterPlaceholder = () => (
+const CharacterAvatar = ({ level }: { level: number }) => (
     <div className="sticky top-24 flex flex-col items-center justify-center h-full">
-        <div className="w-64 h-64 md:w-96 md:h-96 rounded-full flex items-center justify-center bg-primary/5 animate-pulse">
-            <Sword className="w-24 h-24 text-primary/20" />
+        <div className="relative w-64 h-64 md:w-80 md:h-80">
+            <div 
+                className="absolute inset-0 rounded-full bg-primary/10 animate-pulse"
+                style={{ animationDuration: '4s' }}
+            />
+            <div 
+                className={cn(
+                    "absolute inset-4 rounded-full border-2 border-primary/30",
+                    "animate-spin-slow"
+                )}
+                style={{ animationDuration: '20s' }}
+            />
+             <div 
+                className={cn(
+                    "absolute inset-8 rounded-full border-2 border-dashed border-primary/20",
+                     "animate-spin-slow-reverse"
+                )}
+                style={{ animationDuration: '25s' }}
+            />
+
+            <div className="absolute inset-0 flex items-center justify-center animate-breathing">
+                <svg viewBox="0 0 100 100" className="w-48 h-48 drop-shadow-[0_0_10px_hsl(var(--primary))]">
+                    <defs>
+                        <linearGradient id="avatarGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stopColor="hsl(var(--primary))" />
+                            <stop offset="100%" stopColor="hsl(var(--secondary))" />
+                        </linearGradient>
+                         <filter id="glow">
+                            <feGaussianBlur stdDeviation="3.5" result="coloredBlur" />
+                            <feMerge>
+                                <feMergeNode in="coloredBlur" />
+                                <feMergeNode in="SourceGraphic" />
+                            </feMerge>
+                        </filter>
+                    </defs>
+                    
+                    {/* Aura */}
+                    <circle cx="50" cy="50" r="35" fill="hsl(var(--primary) / 0.1)" filter="url(#glow)" />
+                    
+                    {/* Body */}
+                    <path d="M50 40 Q50 60 40 75 L60 75 Q50 60 50 40" fill="url(#avatarGradient)" />
+                    {/* Head */}
+                    <circle cx="50" cy="30" r="12" fill="url(#avatarGradient)" />
+                </svg>
+            </div>
         </div>
-        <h2 className="text-2xl font-bold mt-4 text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">Hyperion Self</h2>
-        <p className="text-muted-foreground">Your character avatar will appear here.</p>
+        <h2 className="text-2xl font-bold mt-8 text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">Hyperion Self</h2>
+        <p className="text-muted-foreground">Your avatar evolves as you level up.</p>
+
+        <style jsx>{`
+            @keyframes spin-slow {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(360deg); }
+            }
+            @keyframes spin-slow-reverse {
+                from { transform: rotate(360deg); }
+                to { transform: rotate(0deg); }
+            }
+            @keyframes breathing {
+                0%, 100% { transform: scale(1); opacity: 0.9; }
+                50% { transform: scale(1.05); opacity: 1; }
+            }
+            .animate-spin-slow {
+                animation: spin-slow linear infinite;
+            }
+            .animate-spin-slow-reverse {
+                animation: spin-slow-reverse linear infinite;
+            }
+            .animate-breathing {
+                animation: breathing 5s ease-in-out infinite;
+            }
+        `}</style>
     </div>
 );
 
@@ -224,7 +293,7 @@ export default function LifeStatsPage() {
 
         {/* Right Column: Character */}
         <div className="lg:col-span-1">
-            <CharacterPlaceholder />
+            <CharacterAvatar level={levelInfo.level} />
         </div>
       </div>
     </div>
