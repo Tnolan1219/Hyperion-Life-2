@@ -94,7 +94,7 @@ export const Header = () => {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const router = useRouter();
 
-  const lifeStatsRef = useMemoFirebase(
+  const lifeStatsRef = useMemo(
     () => (user ? doc(firestore, `users/${user.uid}/lifeStats`, user.uid) : null),
     [user, firestore]
   );
@@ -149,8 +149,8 @@ export const Header = () => {
 
         {user && auth ? (
           <>
-            <div className="hidden sm:flex items-center gap-2 glass rounded-full px-3 py-1.5 text-sm font-semibold">
-              <Gem className="h-5 w-5 text-amber-400" />
+            <div className="hidden sm:flex items-center gap-2 glass rounded-full px-3 py-1.5 text-sm font-semibold text-amber-400 shadow-[0_0_15px_rgba(252,163,17,0.4)]">
+              <Gem className="h-5 w-5" />
               <span>{formatCurrency(lifeStats?.netWorth ?? 0)}</span>
             </div>
             <Button variant="ghost" size="icon" aria-label="Notifications">
