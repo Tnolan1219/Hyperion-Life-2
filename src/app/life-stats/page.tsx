@@ -130,7 +130,7 @@ const StatCard = ({ statKey, statsData }: { statKey: StatKey, statsData: LifeSta
                 <AccordionItem value={statKey} className="border-b-0">
                     <AccordionTrigger className="p-4 hover:no-underline">
                         <div className="flex items-center gap-4 w-full">
-                            <config.icon className={`h-6 w-6 ${config.color}`} />
+                            <config.icon className={cn("h-6 w-6", config.color)} />
                              <div className="flex-grow text-left">
                                 <div className="flex items-center gap-2">
                                     <CardTitle className="text-lg">{config.label}</CardTitle>
@@ -364,36 +364,31 @@ export default function LifeStatsPage() {
           Level up your life. Track your progress toward your ultimate self.
         </p>
       </div>
-
-      {/* Hero Section */}
-      <Card className="glass">
-        <CardContent className="p-4 md:p-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 items-center gap-6">
-                <div className="flex flex-col items-center md:items-start text-center md:text-left">
-                     {isLoading ? <Skeleton className="h-10 w-24 mb-2" /> : <p className="text-4xl font-bold text-primary">Level {levelInfo.level}</p>}
-                    <div className="w-full max-w-sm">
-                        {isLoading ? <Skeleton className="h-3 w-full mt-2" /> : <Progress value={xpPercentage} />}
-                        <div className="text-xs text-muted-foreground mt-1.5 flex justify-between">
-                            <span>XP</span>
-                            {isLoading ? <Skeleton className="h-4 w-20" /> : <span>{levelInfo.currentXp.toLocaleString()} / {levelInfo.xpToNextLevel.toLocaleString()}</span>}
-                        </div>
-                    </div>
-                </div>
-                <div className="flex justify-center">
-                    <CharacterAvatar level={levelInfo.level} />
-                </div>
-                <div className="flex flex-col items-center md:items-end text-center md:text-right">
-                    <p className="text-sm font-medium text-muted-foreground">Net Worth</p>
-                    {isLoading ? <Skeleton className="h-10 w-32 mt-1" /> : <p className="text-4xl font-bold text-amber-400">{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', notation: 'compact' }).format(lifeStats?.netWorth || 0)}</p>}
-                    <p className="text-xs text-muted-foreground mt-1">Your total financial power</p>
-                </div>
-            </div>
-        </CardContent>
-      </Card>
       
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-        <div className="lg:col-span-3 space-y-4">
+        {/* Left Column: Stats */}
+        <div className="lg:col-span-3 space-y-6">
+            <Card className="glass">
+                <CardContent className="p-4 md:p-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                        <div>
+                             {isLoading ? <Skeleton className="h-10 w-24 mb-2" /> : <p className="text-4xl font-bold text-primary">Level {levelInfo.level}</p>}
+                            <div className="w-full">
+                                {isLoading ? <Skeleton className="h-3 w-full mt-2" /> : <Progress value={xpPercentage} />}
+                                <div className="text-xs text-muted-foreground mt-1.5 flex justify-between">
+                                    <span>XP</span>
+                                    {isLoading ? <Skeleton className="h-4 w-20" /> : <span>{levelInfo.currentXp.toLocaleString()} / {levelInfo.xpToNextLevel.toLocaleString()}</span>}
+                                </div>
+                            </div>
+                        </div>
+                         <div className="text-center md:text-right">
+                            <p className="text-sm font-medium text-muted-foreground">Net Worth</p>
+                            {isLoading ? <Skeleton className="h-10 w-32 mt-1 mx-auto md:mr-0" /> : <p className="text-4xl font-bold text-amber-400">{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', notation: 'compact' }).format(lifeStats?.netWorth || 0)}</p>}
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
              <Card className="glass">
                 <CardHeader>
                     <CardTitle>Stat Distribution</CardTitle>
@@ -420,8 +415,18 @@ export default function LifeStatsPage() {
             </Accordion>
         </div>
 
+        {/* Right Column: Character & AI */}
         <div className="lg:col-span-2">
-            <div className="sticky top-24">
+            <div className="sticky top-24 space-y-8">
+                <Card className="glass">
+                    <CardHeader className="text-center">
+                        <CardTitle className="text-2xl">Hyperion Self</CardTitle>
+                        <CardDescription>Your avatar evolves as you level up.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex justify-center">
+                        <CharacterAvatar level={levelInfo.level} />
+                    </CardContent>
+                </Card>
                 <AiAdvisorPanel onCompleteQuest={handleCompleteQuest} />
             </div>
         </div>
