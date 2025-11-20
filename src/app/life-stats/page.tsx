@@ -1,16 +1,16 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from '@/firebase';
+import { doc, collection } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Sword, Heart, MessageSquare, Brain, Gem, Zap, Info } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-
+import { AiAdvisorPanel } from '@/components/life-stats/AiAdvisorPanel';
 
 // Define the structure of the LifeStats document
 interface LifeStats {
@@ -309,9 +309,10 @@ export default function LifeStatsPage() {
             )}
         </div>
 
-        {/* Right Column: Character */}
-        <div className="lg:col-span-1">
+        {/* Right Column: Character & AI Advisor */}
+        <div className="lg:col-span-1 space-y-8">
             <CharacterAvatar level={levelInfo.level} />
+            <AiAdvisorPanel />
         </div>
       </div>
     </div>
