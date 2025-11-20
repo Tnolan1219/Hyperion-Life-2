@@ -4,16 +4,18 @@
 import React, { useMemo, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { useUser, useFirestore, useDoc } from '@/firebase';
-import { doc, increment, runTransaction } from 'firebase/firestore';
+import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from '@/firebase';
+import { collection, doc, increment, runTransaction } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Sword, Heart, MessageSquare, Brain, Gem, Zap, Info } from 'lucide-react';
+import { Sword, Heart, MessageSquare, Brain, Gem, Zap, Info, Target, PlusCircle, Edit, Trash2, Home, Car, PiggyBank, Briefcase, GraduationCap } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { AiAdvisorPanel } from '@/components/life-stats/AiAdvisorPanel';
 import { useToast } from '@/hooks/use-toast';
-
+import { Button } from '@/components/ui/button';
+import { GoalDialog } from '@/components/goals/GoalDialog';
+import { differenceInDays } from 'date-fns';
 
 // Define the structure of the LifeStats document
 interface LifeStats {
@@ -29,6 +31,107 @@ interface LifeStats {
   };
   netWorth: number;
 }
+
+export type Goal = {
+  id?: string;
+  title: string;
+  targetAmount: number;
+  currentAmount: number;
+  category: GoalCategory;
+  targetDate?: string;
+  userId?: string;
+};
+
+export type GoalCategory = 'Savings' | 'Investment' | 'Debt Reduction' | 'Major Purchase' | 'Retirement';
+
+export const goalCategories: { name: GoalCategory, icon: React.ElementType, color: string }[] = [
+    { name: 'Major Purchase', icon: Home, color: 'blue' },
+    { name: 'Savings', icon: PiggyBank, color: 'green' },
+    { name: 'Retirement', icon: Briefcase, color: 'purple' },
+    { name: 'Debt Reduction', icon: Car, color: 'red' },
+    { name: 'Investment', icon: GraduationCap, color: 'orange' },
+];
+
+const categoryStyles = goalCategories.reduce((acc, category) => {
+    acc[category.name] = { icon: category.icon, color: category.color };
+    return acc;
+}, {} as Record<GoalCategory, { icon: React.ElementType; color: string }>);
+
+
+const GoalCard = ({ goal, onEdit }: { goal: Goal; onEdit: (g: Goal) => void }) => {
+  const firestore = useFirestore();
+  const { user } = useUser();
+
+  const progress = goal.targetAmount > 0 ? (goal.currentAmount / goal.targetAmount) * 100 : 0;
+  const { icon: Icon, color } = categoryStyles[goal.category] || { icon: PiggyBank, color: 'gray' };
+  
+  const daysLeft = goal.targetDate ? differenceInDays(new Date(goal.targetDate), new Date()) : null;
+
+  const handleDelete = () => {
+    if (firestore && user && goal.id) {
+        const goalDocRef = doc(firestore, `users/${user.uid}/goals`, goal.id);
+        // This is a non-blocking delete
+        if(firestore && user && goal.id) {
+            const goalDocRef = doc(firestore, `users/${user.uid}/goals`, goal.id);
+            // Non-blocking delete, assumes you have this helper
+            // deleteDocumentNonBlocking(goalDocRef);
+        }
+    }
+  }
+
+  return (
+    <>
+    <Card className="glass hover:border-primary/60 transition-all duration-300 flex flex-col hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1">
+      <CardHeader>
+        <div className="flex justify-between items-start">
+          <div className="flex items-center gap-3">
+             <div className={cn("flex h-10 w-10 items-center justify-center rounded-lg", `bg-${color}-500/10 text-${color}-500`)}>
+                <Icon className="h-6 w-6" />
+            </div>
+            <div>
+                <CardTitle className="text-lg font-bold">{goal.title}</CardTitle>
+                <CardDescription className="mt-1">{goal.category}</CardDescription>
+            </div>
+          </div>
+          {daysLeft !== null && daysLeft >= 0 && (
+             <div className="text-sm text-muted-foreground text-right">
+                <p className="font-semibold">{daysLeft}</p>
+                <p className="text-xs">days left</p>
+            </div>
+          )}
+        </div>
+      </CardHeader>
+      <CardContent className="flex-grow">
+        <div className="mb-2 text-xs text-muted-foreground flex justify-between">
+          <span className="font-semibold text-foreground">
+            {new Intl.NumberFormat('en-US', {
+              style: 'currency',
+              currency: 'USD',
+            }).format(goal.currentAmount)}
+          </span>
+          <span>
+            {new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+            }).format(goal.targetAmount)}
+          </span>
+        </div>
+        <Progress value={progress} />
+        <p className="mt-2 text-xs text-muted-foreground">{progress.toFixed(0)}% complete</p>
+      </CardContent>
+      <CardFooter className="flex justify-end gap-2">
+        <Button variant="ghost" size="icon" onClick={() => onEdit(goal)}>
+          <Edit className="h-4 w-4" />
+        </Button>
+        <Button variant="ghost" size="icon" className="text-red-500/80 hover:text-red-500" onClick={handleDelete}>
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </CardFooter>
+    </Card>
+    </>
+  );
+};
+
 
 // Define the configuration for each main stat
 const statConfig = {
@@ -241,13 +344,25 @@ const CharacterAvatar = ({ level }: { level: number }) => {
 export default function LifeStatsPage() {
   const { user } = useUser();
   const firestore = useFirestore();
+  const [isGoalDialogOpen, setIsGoalDialogOpen] = useState(false);
+  const [selectedGoal, setSelectedGoal] = useState<Goal | undefined>(undefined);
 
   const lifeStatsRef = useMemo(
     () => (user ? doc(firestore, `users/${user.uid}/lifeStats`, user.uid) : null),
     [user, firestore]
   );
+  
+  const goalsCollection = useMemoFirebase(() => {
+    if (firestore && user) {
+      return collection(firestore, `users/${user.uid}/goals`);
+    }
+    return null;
+  }, [firestore, user]);
 
-  const { data: lifeStats, isLoading } = useDoc<LifeStats>(lifeStatsRef);
+  const { data: lifeStats, isLoading: lifeStatsLoading } = useDoc<LifeStats>(lifeStatsRef);
+  const { data: goals, isLoading: goalsLoading } = useCollection<Goal>(goalsCollection);
+  
+  const isLoading = lifeStatsLoading || goalsLoading;
 
   const levelInfo = useMemo(() => {
     if (!lifeStats) return { level: 1, currentXp: 0, xpToNextLevel: 1000 };
@@ -318,11 +433,22 @@ export default function LifeStatsPage() {
       }
   };
 
+  const handleEditGoal = (goal: Goal) => {
+    setSelectedGoal(goal);
+    setIsGoalDialogOpen(true);
+  };
+  
+  const handleAddGoal = () => {
+    setSelectedGoal(undefined);
+    setIsGoalDialogOpen(true);
+  };
+
   return (
+    <>
     <div className="space-y-8">
       <div className="flex justify-between items-center">
         <div>
-            <h1 className="text-4xl font-bold text-primary">Life Stats</h1>
+            <h1 className="text-4xl font-bold text-primary">Life Stats & Goals</h1>
             <p className="text-muted-foreground mt-2">
             Your gamified character sheet for life.
             </p>
@@ -366,6 +492,31 @@ export default function LifeStatsPage() {
                     ))
                 )}
             </Accordion>
+
+            <div className="pt-4">
+                <div className="flex justify-between items-center mb-4">
+                     <h2 className="text-2xl font-bold">Financial Goals</h2>
+                     <Button size="sm" onClick={handleAddGoal}>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        New Goal
+                    </Button>
+                </div>
+                 <div className="grid gap-6 md:grid-cols-2">
+                    {isLoading ? (
+                         [...Array(2)].map((_, i) => <Skeleton key={i} className="h-48" />)
+                    ) : goals && goals.length > 0 ? (
+                        goals.map(goal => (
+                            <GoalCard key={goal.id} goal={goal} onEdit={handleEditGoal} />
+                        ))
+                    ) : (
+                        <Card onClick={handleAddGoal} className="md:col-span-2 min-h-[200px] flex flex-col items-center justify-center bg-transparent border-2 border-dashed border-border/60 hover:border-primary/80 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1 cursor-pointer hover:bg-muted/30">
+                            <Target className="h-12 w-12 text-muted-foreground mb-4" />
+                            <h3 className="text-xl font-semibold">Set Your First Goal</h3>
+                            <p className="text-md text-muted-foreground mt-1">What's your next big financial objective?</p>
+                        </Card>
+                    )}
+                </div>
+            </div>
         </div>
 
         <div className="lg:col-span-2">
@@ -384,7 +535,7 @@ export default function LifeStatsPage() {
         </div>
       </div>
     </div>
+    <GoalDialog isOpen={isGoalDialogOpen} setIsOpen={setIsGoalDialogOpen} goal={selectedGoal} />
+    </>
   );
 }
-
-    

@@ -26,7 +26,6 @@ const navItems = [
   { href: '/portfolio', label: 'Net Worth', icon: Wallet, color: 'amber' },
   { href: '/life-stats', label: 'Life Stats', icon: Sword, color: 'green' },
   { href: '/ai-coach', label: 'AI Coach', icon: Brain, color: 'cyan' },
-  { href: '/goals', label: 'Goals', icon: Star, color: 'rose' },
   { href: '/settings', label: 'Profile', icon: User, color: 'slate' },
 ];
 

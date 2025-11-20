@@ -597,11 +597,7 @@ const BudgetSection = () => {
     );
 };
 
-const DynamicHoldingsSection = dynamic(() => Promise.resolve(HoldingsAnalysisSection), { loading: () => <LoadingSection /> });
-const DynamicDebtsSection = dynamic(() => Promise.resolve(DebtsSection), { loading: () => <LoadingSection /> });
-const DynamicBudgetSection = dynamic(() => Promise.resolve(BudgetSection), { loading: () => <LoadingSection /> });
-
-const DynamicForecastingSection = () => {
+const ForecastingSection = () => {
     const { user } = useUser();
     const firestore = useFirestore();
     
@@ -615,8 +611,8 @@ const DynamicForecastingSection = () => {
         return null;
     }, [firestore, user]);
 
-    const { data: assets } = useCollection<Asset>(assetsCollection);
-    const { data: expenses } = useCollection<Transaction>(expensesCollection);
+    const { data: assets, isLoading: assetsLoading } = useCollection<Asset>(assetsCollection);
+    const { data: expenses, isLoading: expensesLoading } = useCollection<Transaction>(expensesCollection);
     
     const totalValue = useMemo(() => {
          if (!assets) return 0;
@@ -632,6 +628,10 @@ const DynamicForecastingSection = () => {
         return expenses.reduce((acc, expense) => acc + expense.amount, 0) * 12;
     }, [expenses]);
 
+    if (assetsLoading || expensesLoading) {
+        return <LoadingSection />;
+    }
+
      return (
         <div className="space-y-8">
             <FirePlanner currentPortfolioValue={totalValue} annualExpenses={annualExpenses} />
@@ -639,7 +639,7 @@ const DynamicForecastingSection = () => {
     );
 };
 
-const DynamicOverviewSection = () => (
+const OverviewSection = () => (
     <div className="space-y-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             <Card>
@@ -693,6 +693,13 @@ const DynamicOverviewSection = () => (
         </div>
     </div>
 );
+
+
+const DynamicHoldingsSection = dynamic(() => Promise.resolve(HoldingsAnalysisSection), { loading: () => <LoadingSection />, ssr: false });
+const DynamicDebtsSection = dynamic(() => Promise.resolve(DebtsSection), { loading: () => <LoadingSection />, ssr: false });
+const DynamicBudgetSection = dynamic(() => Promise.resolve(BudgetSection), { loading: () => <LoadingSection />, ssr: false });
+const DynamicForecastingSection = dynamic(() => Promise.resolve(ForecastingSection), { loading: () => <LoadingSection />, ssr: false });
+const DynamicOverviewSection = dynamic(() => Promise.resolve(OverviewSection), { loading: () => <LoadingSection />, ssr: false });
 
 
 export default function NetWorthPage() {
