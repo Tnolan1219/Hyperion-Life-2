@@ -99,6 +99,35 @@ const nodeMenu = [
 const defaultNodeWidth = 208;
 const defaultNodeHeight = 88;
 
+const useSystemNodeSnapper = (nodes: Node[], setNodes: (nodes: Node[] | ((prevNodes: Node[]) => Node[])) => void) => {
+    const onNodeDragStop = useCallback((_: any, node: Node) => {
+        if (node.type !== 'system') {
+            return;
+        }
+
+        const systemNodes = nodes.filter(n => n.type === 'system');
+        const otherSystemNodes = systemNodes.filter(n => n.id !== node.id);
+
+        for (const otherNode of otherSystemNodes) {
+            const dx = Math.abs(node.position.x - (otherNode.position.x + (otherNode.width || 0)));
+            const dy = Math.abs(node.position.y - otherNode.position.y);
+
+            if (dx < 20 && dy < 20) {
+                const newX = otherNode.position.x + (otherNode.width || 0) + 10;
+                setNodes(nds =>
+                    nds.map(n =>
+                        n.id === node.id ? { ...n, position: { ...n.position, x: newX, y: otherNode.position.y } } : n
+                    )
+                );
+                break;
+            }
+        }
+    }, [nodes, setNodes]);
+
+    return onNodeDragStop;
+};
+
+
 const getLayoutedElements = (
   nodes: Node[],
   edges: Edge[],
@@ -155,6 +184,10 @@ const getLayoutedElements = (
     const yearOffset = year - minYear;
 
     yearNodes.forEach((node, index) => {
+      // If node has been dragged, we respect its position.
+      // A simple check could be if it has a 'dragging' property set by React Flow.
+      // However, to keep positions relative to the timeline, we recalculate.
+      // A better approach would be to store an offset if dragged. For now, let's relayout.
       if (node.dragging) {
         layoutedNodes.push(node);
         return;
@@ -319,34 +352,6 @@ const GuideLines = ({ nodes, show, type, direction, timeScale }: { nodes: Node[]
     );
 };
 
-function useSystemNodeSnapper(nodes: Node[], setNodes: (nodes: Node[] | ((prevNodes: Node[]) => Node[])) => void) {
-    const onNodeDragStop = useCallback((_: any, node: Node) => {
-        if (node.type !== 'system') {
-            return;
-        }
-
-        const systemNodes = nodes.filter(n => n.type === 'system');
-        const otherSystemNodes = systemNodes.filter(n => n.id !== node.id);
-
-        for (const otherNode of otherSystemNodes) {
-            const dx = Math.abs(node.position.x - (otherNode.position.x + (otherNode.width || 0)));
-            const dy = Math.abs(node.position.y - otherNode.y);
-
-            if (dx < 20 && dy < 20) {
-                const newX = otherNode.position.x + (otherNode.width || 0) + 10;
-                setNodes(nds =>
-                    nds.map(n =>
-                        n.id === node.id ? { ...n, position: { ...n.position, x: newX, y: otherNode.position.y } } : n
-                    )
-                );
-                break;
-            }
-        }
-    }, [nodes, setNodes]);
-
-    return onNodeDragStop;
-};
-
 function LifePlanCanvas() {
     const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
@@ -358,6 +363,7 @@ function LifePlanCanvas() {
     const [layoutDirection, setLayoutDirection] = useState<'TB' | 'LR'>('LR');
     const [showYearGuides, setShowYearGuides] = useState(true);
     const [showMonthGuides, setShowMonthGuides] = useState(false);
+    const [isExpanded, setIsExpanded] = useState(false);
   
     const onNodeDragStop = useSystemNodeSnapper(nodes, setNodes);
 
@@ -511,7 +517,6 @@ function LifePlanCanvas() {
 
 function LifePlanPageContent() {
     const [activeTab, setActiveTab] = useState<'life-plan' | 'timeline' | 'resources' | 'calendar'>('life-plan');
-    const [isExpanded, setIsExpanded] = useState(false);
     
     const {
         nodes, setNodes, onNodesChange,
@@ -521,293 +526,292 @@ function LifePlanPageContent() {
         is3dMode, connectingNodeId, handleNodesChange, onNodeDragStop,
         layoutDirection, timeScale, showYearGuides, showMonthGuides, passedNodes,
         setConnectingNodeId, handleTemplateLoad,
+        setIsExpanded, isExpanded,
         fitView, setLayoutDirection, setTimeScale, setIs3dMode, setShowYearGuides, setShowMonthGuides, handleDeleteNode
     } = LifePlanCanvas();
     
     return (
-        <Tabs 
-            value={activeTab}
-            onValueChange={(value) => setActiveTab(value as any)}
-            className={cn(
-                "flex flex-col",
-                isExpanded ? "fixed inset-0 bg-background z-50 p-0" : "relative h-[calc(100vh-8rem)]"
-            )}
-        >
+        <div className={cn("flex flex-col", isExpanded ? "fixed inset-0 bg-background z-50 p-0 h-screen" : "relative h-[calc(100vh-8rem)]")}>
             <div className="flex flex-col items-center justify-center">
                 <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">
                     Life Plan
                 </h1>
                 <div className="flex items-center justify-center px-4 md:px-8 mt-4">
-                    <TabsList>
-                        <TabsTrigger value="life-plan">
-                            <Map className="mr-2 h-4 w-4" />
-                            Map
-                        </TabsTrigger>
-                        <TabsTrigger value="timeline">
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            Timeline
-                        </TabsTrigger>
-                        <TabsTrigger value="calendar">
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            Calendar
-                        </TabsTrigger>
-                        <TabsTrigger value="resources">
-                            <Users className="mr-2 h-4 w-4" />
-                            Resources
-                        </TabsTrigger>
-                    </TabsList>
+                    <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-auto">
+                        <TabsList>
+                            <TabsTrigger value="life-plan">
+                                <Map className="mr-2 h-4 w-4" />
+                                Map
+                            </TabsTrigger>
+                            <TabsTrigger value="timeline">
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                Timeline
+                            </TabsTrigger>
+                            <TabsTrigger value="calendar">
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                Calendar
+                            </TabsTrigger>
+                            <TabsTrigger value="resources">
+                                <Users className="mr-2 h-4 w-4" />
+                                Resources
+                            </TabsTrigger>
+                        </TabsList>
+                    </Tabs>
                 </div>
             </div>
             
-            <TabsContent value="life-plan" className="flex-grow flex flex-col mt-4">
-                <div className="relative border border-border/20 rounded-xl overflow-hidden h-[85vh]">
-                    <div className={cn("flex-grow h-full relative", is3dMode && 'react-flow-3d-mode')}>
-                        <ReactFlow
-                        nodes={passedNodes}
-                        edges={edges}
-                        onNodesChange={handleNodesChange}
-                        onEdgesChange={onEdgesChange}
-                        onConnect={(params) => setEdges((eds: Edge[]) => addEdge({ ...params, type: 'smoothstep', animated: true }, eds))}
-                        onNodeClick={(e, node) => {
-                            if (connectingNodeId) {
-                                setEdges((eds: Edge[]) => addEdge({ source: connectingNodeId, target: node.id, type: 'smoothstep', animated: true }, eds));
-                                setConnectingNodeId(null);
-                            } else {
-                                setSelectedNode(node);
-                            }
-                        }}
-                        onPaneClick={() => {
-                            setSelectedNode(null);
-                            if (connectingNodeId) {
-                                setConnectingNodeId(null);
-                            }
-                        }}
-                        nodeTypes={nodeTypes}
-                        fitView={false}
-                        panOnScroll
-                        panOnDrag
-                        className={cn('bg-card/30', connectingNodeId && 'cursor-crosshair')}
-                        proOptions={{ hideAttribution: true }}
-                        deleteKeyCode={['Backspace', 'Delete']}
-                        minZoom={0.1}
-                        connectionRadius={120}
-                        onNodeDragStop={onNodeDragStop}
-                        >
-                        <Background gap={24} size={1} color="hsl(var(--border))" />
-                        <GuideLines nodes={nodes} show={showYearGuides} type="year" direction={layoutDirection} timeScale={timeScale} />
-                        <GuideLines nodes={nodes} show={showMonthGuides} type="month" direction={layoutDirection} timeScale={timeScale} />
-                        <NodeResizeControl minWidth={208} minHeight={88} isVisible={selectedNode?.type === 'system' || selectedNode?.type === 'other'}>
-                            <div className="w-full h-full border-2 border-dashed border-primary rounded-lg" />
-                        </NodeResizeControl>
-                        <div className="absolute top-4 right-4 z-10 flex gap-2">
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                <Button variant="outline" className="glass h-auto py-2">
-                                    <PlusCircle className="mr-2 h-4 w-4" /> Add Node
-                                </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent>
-                                {nodeMenu.map(({ type, label, icon: Icon, color }) => (
-                                    <DropdownMenuItem key={type} onClick={() => handleTemplateLoad(type)}>
-                                    <Icon className={cn('mr-2 h-4 w-4', `text-${color}-400`)} />
-                                    <span>{label}</span>
-                                    </DropdownMenuItem>
-                                ))}
-                                </DropdownMenuContent>
-                            </DropdownMenu>
+            <div className="flex-grow mt-4">
+                 <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="h-full">
+                    <TabsContent value="life-plan" className="h-full m-0">
+                        <div className="relative border border-border/20 rounded-xl overflow-hidden h-full">
+                            <div className={cn("flex-grow h-full relative", is3dMode && 'react-flow-3d-mode')}>
+                                <ReactFlow
+                                nodes={passedNodes}
+                                edges={edges}
+                                onNodesChange={handleNodesChange}
+                                onEdgesChange={onEdgesChange}
+                                onConnect={(params) => setEdges((eds: Edge[]) => addEdge({ ...params, type: 'smoothstep', animated: true }, eds))}
+                                onNodeClick={(e, node) => {
+                                    if (connectingNodeId) {
+                                        setEdges((eds: Edge[]) => addEdge({ source: connectingNodeId, target: node.id, type: 'smoothstep', animated: true }, eds));
+                                        setConnectingNodeId(null);
+                                    } else {
+                                        setSelectedNode(node);
+                                    }
+                                }}
+                                onPaneClick={() => {
+                                    setSelectedNode(null);
+                                    if (connectingNodeId) {
+                                        setConnectingNodeId(null);
+                                    }
+                                }}
+                                nodeTypes={nodeTypes}
+                                fitView={false}
+                                panOnScroll
+                                panOnDrag
+                                className={cn('bg-card/30', connectingNodeId && 'cursor-crosshair')}
+                                proOptions={{ hideAttribution: true }}
+                                deleteKeyCode={['Backspace', 'Delete']}
+                                minZoom={0.1}
+                                connectionRadius={120}
+                                onNodeDragStop={onNodeDragStop}
+                                >
+                                <Background gap={24} size={1} color="hsl(var(--border))" />
+                                <GuideLines nodes={nodes} show={showYearGuides} type="year" direction={layoutDirection} timeScale={timeScale} />
+                                <GuideLines nodes={nodes} show={showMonthGuides} type="month" direction={layoutDirection} timeScale={timeScale} />
+                                <NodeResizeControl minWidth={208} minHeight={88} isVisible={selectedNode?.type === 'system' || selectedNode?.type === 'other'}>
+                                    <div className="w-full h-full border-2 border-dashed border-primary rounded-lg" />
+                                </NodeResizeControl>
+                                <div className="absolute top-4 right-4 z-10 flex gap-2">
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                        <Button variant="outline" className="glass h-auto py-2">
+                                            <PlusCircle className="mr-2 h-4 w-4" /> Add Node
+                                        </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent>
+                                        {nodeMenu.map(({ type, label, icon: Icon, color }) => (
+                                            <DropdownMenuItem key={type} onClick={() => handleTemplateLoad(type)}>
+                                            <Icon className={cn('mr-2 h-4 w-4', `text-${color}-400`)} />
+                                            <span>{label}</span>
+                                            </DropdownMenuItem>
+                                        ))}
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
 
-                            <Button variant="outline" className="glass h-auto py-2" onClick={() => handleTemplateLoad('system')}>
-                                <Repeat className="mr-2 h-4 w-4" /> Add System
-                            </Button>
-                            
+                                    <Button variant="outline" className="glass h-auto py-2" onClick={() => handleTemplateLoad('system')}>
+                                        <Repeat className="mr-2 h-4 w-4" /> Add System
+                                    </Button>
+                                    
 
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                <Button variant="outline" className="glass h-auto py-2">
-                                    <Zap className="mr-2 h-4 w-4" /> Templates
-                                </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent>
-                                <DropdownMenuItem onClick={() => handleTemplateLoad('default')}>
-                                    Standard Career Path
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleTemplateLoad('earlyRetirement')}>
-                                    Early Retirement (FIRE)
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleTemplateLoad('startup')}>
-                                    Startup Founder
-                                </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                        </div>
-                        
-                        <Panel position="top-left">
-                            <Button variant="ghost" size="icon" onClick={() => setIsExpanded(!isExpanded)} title={isExpanded ? "Collapse" : "Expand"}>
-                                    {isExpanded ? <Shrink className="h-5 w-5" /> : <Maximize className="h-5 w-5"/>}
-                            </Button>
-                        </Panel>
-
-                        <Panel position="bottom-center" className={cn(isExpanded && "block")}>
-                            <div className={cn("flex flex-col md:flex-row items-center gap-2 glass p-2 rounded-2xl")}>
-                                <Button variant="ghost" size="icon" onClick={() => fitView({ duration: 500 })} title="Fit View">
-                                    <ZoomIn className="h-5 w-5"/>
-                                </Button>
-                                <Button variant="ghost" size="icon" onClick={() => setLayoutDirection('TB')} title="Top-to-Bottom Layout">
-                                    <LayoutIcon className="h-5 w-5"/>
-                                </Button>
-                                <Button variant="ghost" size="icon" onClick={() => setLayoutDirection('LR')} title="Left-to-Right Layout">
-                                    <Rows className="h-5 w-5"/>
-                                </Button>
-                                <Slider defaultValue={[timeScale]} min={0.25} max={4} step={0.25} onValueChange={(value) => setTimeScale(value[0])} className="w-32" />
-                                <Button variant="ghost" size="icon" onClick={() => setIs3dMode(!is3dMode)} title="Toggle 3D Roadmap View" className={cn(is3dMode && 'text-primary bg-primary/10')}>
-                                    <Route className="h-5 w-5" />
-                                </Button>
-                                <Button variant="ghost" size="icon" onClick={() => setShowYearGuides(!showYearGuides)} title="Toggle Year Guides" className={cn(showYearGuides && 'text-primary bg-primary/10')}>
-                                    <CalendarIcon className="h-5 w-5" />
-                                </Button>
-                                <Button variant="ghost" size="icon" onClick={() => setShowMonthGuides(!showMonthGuides)} title="Toggle Month Guides" className={cn(showMonthGuides && 'text-primary bg-primary/10')}>
-                                    <CalendarDays className="h-5 w-5" />
-                                </Button>
-                            </div>
-                        </Panel>
-                        </ReactFlow>
-
-                        <div className="absolute top-0 right-0 h-full w-auto pointer-events-none">
-                            <NodeEditor
-                            selectedNode={selectedNode}
-                            onNodeDataChange={(nodeId: string, newData: any) => setNodes((nds: Node[]) => nds.map((n: Node) => n.id === nodeId ? { ...n, data: { ...n.data, ...newData } } : n))}
-                            closeEditor={() => setSelectedNode(null)}
-                            startConnecting={() => {
-                                if (selectedNode) {
-                                    setConnectingNodeId(selectedNode.id);
-                                }
-                                setSelectedNode(null);
-                            }}
-                            onDeleteNode={() => {
-                                if (selectedNode) handleDeleteNode(selectedNode.id);
-                            }}
-                            onCenterNode={() => {
-                                if (selectedNode) handleFocusNode(selectedNode.id);
-                            }}
-                            />
-                        </div>
-                        <style jsx global>{`
-                            .react-flow__edge-path {
-                                filter: drop-shadow(0 0 5px hsl(var(--primary)));
-                            }
-
-                            .react-flow__handle {
-                                width: 16px;
-                                height: 16px;
-                                border-radius: 99px;
-                                border-width: 3px;
-                                border-color: hsl(var(--primary));
-                                background: hsl(var(--background));
-                            }
-
-                            .react-flow__handle.connecting,
-                            [data-connecting='true'] .react-flow__handle {
-                                animation: pulse 1.5s infinite;
-                            }
-
-                            @keyframes pulse {
-                                0%, 100% {
-                                    box-shadow: 0 0 0 0 hsl(var(--primary) / 0.7);
-                                }
-                                50% {
-                                    box-shadow: 0 0 0 10px hsl(var(--primary) / 0);
-                                }
-                            }
-
-                            .react-flow__node {
-                                --glow-color-career: hsl(28 90% 60%);
-                                --glow-color-education: hsl(210 90% 60%);
-                                --glow-color-financial: hsl(140 80% 50%);
-                                --glow-color-lifeEvent: hsl(330 90% 65%);
-                                --glow-color-goal: hsl(270 90% 65%);
-                                --glow-color-health: hsl(0 80% 60%);
-                                --glow-color-other: hsl(180 80% 50%);
-                                --glow-color-system: hsl(220 80% 70%);
-                                --glow-color-default: hsl(var(--primary));
-                            }
-                            
-                            .react-flow__node.selected,
-                            .react-flow__node:hover {
-                                box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px var(--glow-color, var(--glow-color-default)), 0 0 15px var(--glow-color, var(--glow-color-default));
-                            }
-                            .react-flow__node[data-type='career']:hover, .react-flow__node[data-type='career'].selected { --glow-color: var(--glow-color-career); }
-                            .react-flow__node[data-type='education']:hover, .react-flow__node[data-type='education'].selected { --glow-color: var(--glow-color-education); }
-                            .react-flow__node[data-type='financial']:hover, .react-flow__node[data-type='financial'].selected { --glow-color: var(--glow-color-financial); }
-                            .react-flow__node[data-type='lifeEvent']:hover, .react-flow__node[data-type='lifeEvent'].selected { --glow-color: var(--glow-color-lifeEvent); }
-                            .react-flow__node[data-type='goal']:hover, .react-flow__node[data-type='goal'].selected { --glow-color: var(--glow-color-goal); }
-                            .react-flow__node[data-type='health']:hover, .react-flow__node[data-type='health'].selected { --glow-color: var(--glow-color-health); }
-                            .react-flow__node[data-type='other']:hover, .react-flow__node[data-type='other'].selected { --glow-color: var(--glow-color-other); }
-                            .react-flow__node[data-type='system']:hover, .react-flow__node[data-type='system'].selected { --glow-color: var(--glow-color-system); }
-
-                            .react-flow__resize-control.handle {
-                                width: 10px;
-                                height: 10px;
-                                border-radius: 2px;
-                                background-color: hsl(var(--primary));
-                                border-color: hsl(var(--primary-foreground));
-                                border-width: 2px;
-                            }
-                            
-                            .react-flow__node-other .editable-content {
-                                background-color: transparent;
-                                border: none;
-                                width: 100%;
-                                height: 100%;
-                                padding: 1rem;
-                                outline: none;
-                                resize: none;
-                                color: inherit;
-                            }
-
-                            .react-flow-3d-mode .react-flow__viewport {
-                                perspective: 1000px;
-                                transform: scale(1) translate(0px, 0px) rotateX(60deg) rotateZ(0deg);
-                                transition: transform 0.5s;
-                            }
-                            .react-flow-3d-mode .react-flow__node {
-                                transform: rotateX(-60deg) rotateZ(0deg);
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                        <Button variant="outline" className="glass h-auto py-2">
+                                            <Zap className="mr-2 h-4 w-4" /> Templates
+                                        </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent>
+                                        <DropdownMenuItem onClick={() => handleTemplateLoad('default')}>
+                                            Standard Career Path
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => handleTemplateLoad('earlyRetirement')}>
+                                            Early Retirement (FIRE)
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => handleTemplateLoad('startup')}>
+                                            Startup Founder
+                                        </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </div>
                                 
-                            }
-                            .react-flow-3d-mode .react-flow__edge-path[data-node-type='career'] { --edge-color: hsl(28 90% 60%); }
-                            .react-flow-3d-mode .react-flow__edge-path[data-node-type='education'] { --edge-color: hsl(210 90% 60%); }
-                            .react-flow-3d-mode .react-flow__edge-path[data-node-type='financial'] { --edge-color: hsl(140 80% 50%); }
-                            .react-flow-3d-mode .react-flow__edge-path[data-node-type='lifeEvent'] { --edge-color: hsl(330 90% 65%); }
-                            .react-flow-3d-mode .react-flow__edge-path[data-node-type='goal'] { --edge-color: hsl(270 90% 65%); }
-                            .react-flow-3d-mode .react-flow__edge-path[data-node-type='health'] { --edge-color: hsl(0 80% 60%); }
-                            .react-flow-3d-mode .react-flow__edge-path[data-node-type='other'] { --edge-color: hsl(180 80% 50%); }
-                            
-                            .react-flow-3d-mode .react-flow__edge-path {
-                                stroke-width: 10;
-                                stroke: var(--edge-color, hsl(var(--primary)));
-                                filter: none;
-                                stroke-dasharray: 1 12;
-                                stroke-linecap: round;
-                            }
+                                <Panel position="top-left">
+                                    <Button variant="ghost" size="icon" onClick={() => setIsExpanded(!isExpanded)} title={isExpanded ? "Collapse" : "Expand"}>
+                                            {isExpanded ? <Shrink className="h-5 w-5" /> : <Maximize className="h-5 w-5"/>}
+                                    </Button>
+                                </Panel>
+
+                                <Panel position="bottom-center" className={cn(isExpanded && "block")}>
+                                    <div className={cn("flex flex-col md:flex-row items-center gap-2 glass p-2 rounded-2xl")}>
+                                        <Button variant="ghost" size="icon" onClick={() => fitView({ duration: 500 })} title="Fit View">
+                                            <ZoomIn className="h-5 w-5"/>
+                                        </Button>
+                                        <Button variant="ghost" size="icon" onClick={() => setLayoutDirection('TB')} title="Top-to-Bottom Layout">
+                                            <LayoutIcon className="h-5 w-5"/>
+                                        </Button>
+                                        <Button variant="ghost" size="icon" onClick={() => setLayoutDirection('LR')} title="Left-to-Right Layout">
+                                            <Rows className="h-5 w-5"/>
+                                        </Button>
+                                        <Slider defaultValue={[timeScale]} min={0.25} max={4} step={0.25} onValueChange={(value) => setTimeScale(value[0])} className="w-32" />
+                                        <Button variant="ghost" size="icon" onClick={() => setIs3dMode(!is3dMode)} title="Toggle 3D Roadmap View" className={cn(is3dMode && 'text-primary bg-primary/10')}>
+                                            <Route className="h-5 w-5" />
+                                        </Button>
+                                        <Button variant="ghost" size="icon" onClick={() => setShowYearGuides(!showYearGuides)} title="Toggle Year Guides" className={cn(showYearGuides && 'text-primary bg-primary/10')}>
+                                            <CalendarIcon className="h-5 w-5" />
+                                        </Button>
+                                        <Button variant="ghost" size="icon" onClick={() => setShowMonthGuides(!showMonthGuides)} title="Toggle Month Guides" className={cn(showMonthGuides && 'text-primary bg-primary/10')}>
+                                            <CalendarDays className="h-5 w-5" />
+                                        </Button>
+                                    </div>
+                                </Panel>
+                                </ReactFlow>
+
+                                <div className="absolute top-0 right-0 h-full w-auto pointer-events-none">
+                                    <NodeEditor
+                                    selectedNode={selectedNode}
+                                    onNodeDataChange={(nodeId: string, newData: any) => setNodes((nds: Node[]) => nds.map((n: Node) => n.id === nodeId ? { ...n, data: { ...n.data, ...newData } } : n))}
+                                    closeEditor={() => setSelectedNode(null)}
+                                    startConnecting={() => {
+                                        if (selectedNode) {
+                                            setConnectingNodeId(selectedNode.id);
+                                        }
+                                        setSelectedNode(null);
+                                    }}
+                                    onDeleteNode={() => {
+                                        if (selectedNode) handleDeleteNode(selectedNode.id);
+                                    }}
+                                    onCenterNode={() => {
+                                        if (selectedNode) handleFocusNode(selectedNode.id);
+                                    }}
+                                    />
+                                </div>
+                                <style jsx global>{`
+                                    .react-flow__edge-path {
+                                        filter: drop-shadow(0 0 5px hsl(var(--primary)));
+                                    }
+
+                                    .react-flow__handle {
+                                        width: 16px;
+                                        height: 16px;
+                                        border-radius: 99px;
+                                        border-width: 3px;
+                                        border-color: hsl(var(--primary));
+                                        background: hsl(var(--background));
+                                    }
+
+                                    .react-flow__handle.connecting,
+                                    [data-connecting='true'] .react-flow__handle {
+                                        animation: pulse 1.5s infinite;
+                                    }
+
+                                    @keyframes pulse {
+                                        0%, 100% {
+                                            box-shadow: 0 0 0 0 hsl(var(--primary) / 0.7);
+                                        }
+                                        50% {
+                                            box-shadow: 0 0 0 10px hsl(var(--primary) / 0);
+                                        }
+                                    }
+
+                                    .react-flow__node {
+                                        --glow-color-career: hsl(28 90% 60%);
+                                        --glow-color-education: hsl(210 90% 60%);
+                                        --glow-color-financial: hsl(140 80% 50%);
+                                        --glow-color-lifeEvent: hsl(330 90% 65%);
+                                        --glow-color-goal: hsl(270 90% 65%);
+                                        --glow-color-health: hsl(0 80% 60%);
+                                        --glow-color-other: hsl(180 80% 50%);
+                                        --glow-color-system: hsl(220 80% 70%);
+                                        --glow-color-default: hsl(var(--primary));
+                                    }
+                                    
+                                    .react-flow__node.selected,
+                                    .react-flow__node:hover {
+                                        box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px var(--glow-color, var(--glow-color-default)), 0 0 15px var(--glow-color, var(--glow-color-default));
+                                    }
+                                    .react-flow__node[data-type='career']:hover, .react-flow__node[data-type='career'].selected { --glow-color: var(--glow-color-career); }
+                                    .react-flow__node[data-type='education']:hover, .react-flow__node[data-type='education'].selected { --glow-color: var(--glow-color-education); }
+                                    .react-flow__node[data-type='financial']:hover, .react-flow__node[data-type='financial'].selected { --glow-color: var(--glow-color-financial); }
+                                    .react-flow__node[data-type='lifeEvent']:hover, .react-flow__node[data-type='lifeEvent'].selected { --glow-color: var(--glow-color-lifeEvent); }
+                                    .react-flow__node[data-type='goal']:hover, .react-flow__node[data-type='goal'].selected { --glow-color: var(--glow-color-goal); }
+                                    .react-flow__node[data-type='health']:hover, .react-flow__node[data-type='health'].selected { --glow-color: var(--glow-color-health); }
+                                    .react-flow__node[data-type='other']:hover, .react-flow__node[data-type='other'].selected { --glow-color: var(--glow-color-other); }
+                                    .react-flow__node[data-type='system']:hover, .react-flow__node[data-type='system'].selected { --glow-color: var(--glow-color-system); }
+
+                                    .react-flow__resize-control.handle {
+                                        width: 10px;
+                                        height: 10px;
+                                        border-radius: 2px;
+                                        background-color: hsl(var(--primary));
+                                        border-color: hsl(var(--primary-foreground));
+                                        border-width: 2px;
+                                    }
+                                    
+                                    .react-flow__node-other .editable-content {
+                                        background-color: transparent;
+                                        border: none;
+                                        width: 100%;
+                                        height: 100%;
+                                        padding: 1rem;
+                                        outline: none;
+                                        resize: none;
+                                        color: inherit;
+                                    }
+
+                                    .react-flow-3d-mode .react-flow__viewport {
+                                        perspective: 1000px;
+                                        transform: scale(1) translate(0px, 0px) rotateX(60deg) rotateZ(0deg);
+                                        transition: transform 0.5s;
+                                    }
+                                    .react-flow-3d-mode .react-flow__node {
+                                        transform: rotateX(-60deg) rotateZ(0deg);
+                                        
+                                    }
+                                    .react-flow-3d-mode .react-flow__edge-path[data-node-type='career'] { --edge-color: hsl(28 90% 60%); }
+                                    .react-flow-3d-mode .react-flow__edge-path[data-node-type='education'] { --edge-color: hsl(210 90% 60%); }
+                                    .react-flow-3d-mode .react-flow__edge-path[data-node-type='financial'] { --edge-color: hsl(140 80% 50%); }
+                                    .react-flow-3d-mode .react-flow__edge-path[data-node-type='lifeEvent'] { --edge-color: hsl(330 90% 65%); }
+                                    .react-flow-3d-mode .react-flow__edge-path[data-node-type='goal'] { --edge-color: hsl(270 90% 65%); }
+                                    .react-flow-3d-mode .react-flow__edge-path[data-node-type='health'] { --edge-color: hsl(0 80% 60%); }
+                                    .react-flow-3d-mode .react-flow__edge-path[data-node-type='other'] { --edge-color: hsl(180 80% 50%); }
+                                    
+                                    .react-flow-3d-mode .react-flow__edge-path {
+                                        stroke-width: 10;
+                                        stroke: var(--edge-color, hsl(var(--primary)));
+                                        filter: none;
+                                        stroke-dasharray: 1 12;
+                                        stroke-linecap: round;
+                                    }
 
 
-                        `}
-</style>
-                    </div>
-                </div>
-                <div className={cn('pt-8 pb-8 flex-shrink-0 w-full', isExpanded && 'hidden')}>
-                    <AIPlanGenerator onGenerate={handleAIGenerate} />
-                </div>
-            </TabsContent>
-            <TabsContent value="timeline" className="flex-grow mt-0">
-                <TimelineView nodes={nodes} onFocusNode={(nodeId) => { handleFocusNode(nodeId); setActiveTab('life-plan'); }} />
-            </TabsContent>
-            <TabsContent value="calendar" className="flex-grow mt-0">
-                <FullCalendar />
-            </TabsContent>
-            <TabsContent value="resources" className="flex-grow mt-0">
-                <ResourcesView />
-            </TabsContent>
-        </Tabs>
+                                `}</style>
+                            </div>
+                        </div>
+                        <div className={cn('pt-8 pb-8 flex-shrink-0 w-full', isExpanded && 'hidden')}>
+                            <AIPlanGenerator onGenerate={handleAIGenerate} />
+                        </div>
+                    </TabsContent>
+                    <TabsContent value="timeline" className="flex-grow mt-0">
+                        <TimelineView nodes={nodes} onFocusNode={(nodeId) => { handleFocusNode(nodeId); setActiveTab('life-plan'); }} />
+                    </TabsContent>
+                    <TabsContent value="calendar" className="flex-grow mt-0">
+                        <FullCalendar />
+                    </TabsContent>
+                    <TabsContent value="resources" className="flex-grow mt-0">
+                        <ResourcesView />
+                    </TabsContent>
+                </Tabs>
+            </div>
+        </div>
     );
 }
 
