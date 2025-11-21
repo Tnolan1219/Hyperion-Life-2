@@ -117,22 +117,8 @@ export function GoalDialog({ isOpen, setIsOpen, goal }: GoalDialogProps) {
             const lifeStatsDoc = await transaction.get(lifeStatsRef);
 
             if (!lifeStatsDoc.exists()) {
-                // Initialize stats if they don't exist
-                const newStats = {
-                    health: { total: 0, strength: 0, endurance: 0, nutrition: 0 },
-                    wealth: { total: 100, careerSkills: 0, networking: 0, investing: 100 },
-                    social: { total: 0, relationships: 0, communication: 0, influence: 0 },
-                    power: { total: 0, leadership: 0, decisionMaking: 0, resilience: 0 },
-                    emotionalIntelligence: { total: 0, selfAwareness: 0, empathy: 0, regulation: 0 },
-                };
-                transaction.set(lifeStatsRef, {
-                    id: user.uid,
-                    userId: user.uid,
-                    level: 1,
-                    xp: xpGained,
-                    stats: newStats,
-                    netWorth: 0,
-                });
+                toast({ variant: "destructive", title: "Life Stats not initialized!" });
+                return;
             } else {
                 // Atomically update XP and a relevant stat
                 transaction.update(lifeStatsRef, { 
@@ -309,3 +295,5 @@ export function GoalDialog({ isOpen, setIsOpen, goal }: GoalDialogProps) {
     </Dialog>
   );
 }
+
+    

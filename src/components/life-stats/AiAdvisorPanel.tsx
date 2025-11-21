@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '../ui/scroll-area';
 
-type Quest = {
+export type Quest = {
   type: 'Daily' | 'Weekly' | 'Milestone';
   title: string;
   description: string;

@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, doc, increment, runTransaction } from 'firebase/firestore';
@@ -11,14 +11,13 @@ import { Sword, Heart, MessageSquare, Brain, Gem, Zap, Info, Target, PlusCircle,
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
-import { AiAdvisorPanel } from '@/components/life-stats/AiAdvisorPanel';
+import { AiAdvisorPanel, Quest } from '@/components/life-stats/AiAdvisorPanel';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { GoalDialog } from '@/components/goals/GoalDialog';
 import { differenceInDays } from 'date-fns';
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from 'recharts';
 import { ChartContainer } from '@/components/ui/chart';
-import { CardFooter } from '@/components/ui/card';
 
 // Define the structure of the LifeStats document
 interface LifeStats {
@@ -40,7 +39,21 @@ interface LifeStats {
           outfit: string;
           animation: string;
       }
+  };
+  balanceMeter: {
+    health: number;
+    wealth: number;
+    social: number;
+    power: number;
+    emotionalIntelligence: number;
   }
+}
+
+export type Badge = {
+    id?: string;
+    title: string;
+    icon: string;
+    earnedAt: string;
 }
 
 export type Goal = {
@@ -361,32 +374,68 @@ const BalanceMeter = ({ statsData }: { statsData: LifeStats['stats'] | null }) =
                 <CardDescription>A visual representation of your life balance.</CardDescription>
             </CardHeader>
             <CardContent>
-                {chartData.length > 0 ? (
+                {statsData ? (
                     <ChartContainer config={{}} className="h-64 w-full">
                         <RadarChart data={chartData}>
                             <PolarGrid />
                             <PolarAngleAxis dataKey="subject" />
-                            <PolarRadiusAxis angle={30} domain={[0, 1000]} />
+                            <PolarRadiusAxis angle={30} domain={[0, 1000]} tick={false} axisLine={false} />
                             <Radar name="Stats" dataKey="value" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.6} />
                         </RadarChart>
                     </ChartContainer>
                 ) : (
-                    <p className="text-muted-foreground">Not enough data to display balance.</p>
+                    <div className="h-64 flex items-center justify-center">
+                        <Skeleton className="h-full w-full" />
+                    </div>
                 )}
             </CardContent>
         </Card>
     )
 };
-const MilestoneBadges = () => (
-     <Card className="glass">
-        <CardHeader>
-            <CardTitle>Badges</CardTitle>
-        </CardHeader>
-        <CardContent>
-            <p className="text-muted-foreground">Display of earned milestone badges coming soon.</p>
-        </CardContent>
-    </Card>
-)
+
+const MilestoneBadges = () => {
+    const { user } = useUser();
+    const firestore = useFirestore();
+
+    const badgesRef = useMemoFirebase(() => {
+        if (user && firestore) {
+            return collection(firestore, `users/${user.uid}/lifeStats/${user.uid}/badges`);
+        }
+        return null;
+    }, [user, firestore]);
+
+    const { data: badges, isLoading } = useCollection<Badge>(badgesRef);
+
+    return (
+        <Card className="glass">
+            <CardHeader>
+                <CardTitle>Badges</CardTitle>
+                <CardDescription>Your unlocked achievements.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-wrap gap-4">
+                {isLoading && Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-10 w-10 rounded-full" />)}
+                {badges && badges.map(badge => (
+                     <TooltipProvider key={badge.id}>
+                        <Tooltip>
+                            <TooltipTrigger>
+                                <div className="text-3xl p-2 bg-muted rounded-full">
+                                    {badge.icon || '🏆'}
+                                </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p className="font-semibold">{badge.title}</p>
+                                <p className="text-sm text-muted-foreground">Earned: {new Date(badge.earnedAt).toLocaleDateString()}</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                ))}
+                {badges?.length === 0 && !isLoading && (
+                    <p className="text-sm text-muted-foreground">No badges earned yet. Complete quests and goals to unlock them!</p>
+                )}
+            </CardContent>
+        </Card>
+    )
+};
 const ProgressTimeline = () => (
      <Card className="glass mt-8 col-span-3">
         <CardHeader>
@@ -442,7 +491,7 @@ export default function LifeStatsPage() {
   
   const { toast } = useToast();
 
-  const handleCompleteQuest = async (quest: { xp: number, stat: string, statIncrease: number, title: string }) => {
+  const handleCompleteQuest = async (quest: Quest) => {
       if (!user || !firestore) return;
 
       const lifeStatsRef = doc(firestore, `users/${user.uid}/lifeStats`, user.uid);
@@ -451,16 +500,18 @@ export default function LifeStatsPage() {
           await runTransaction(firestore, async (transaction) => {
               const lifeStatsDoc = await transaction.get(lifeStatsRef);
               if (!lifeStatsDoc.exists()) {
-                  // This part should ideally be handled during onboarding
-                  toast({ variant: "destructive", title: "Life Stats not initialized!" });
-              } else {
-                  const mainStat = quest.stat.split('.')[0];
-                  transaction.update(lifeStatsRef, {
-                      xp: increment(quest.xp),
-                      [`stats.${quest.stat}`]: increment(quest.statIncrease),
-                      [`stats.${mainStat}.total`]: increment(quest.statIncrease)
-                  });
+                   toast({ variant: "destructive", title: "Life Stats not initialized!" });
+                   // In a real app, you might initialize the document here.
+                   return;
               }
+              const mainStat = quest.stat.split('.')[0];
+              const updateData: { [key: string]: any } = {
+                  xp: increment(quest.xp),
+                  [`stats.${quest.stat}`]: increment(quest.statIncrease),
+                  [`stats.${mainStat}.total`]: increment(quest.statIncrease)
+              };
+
+              transaction.update(lifeStatsRef, updateData);
           });
           
           toast({
@@ -490,7 +541,6 @@ export default function LifeStatsPage() {
   
   const goalInFocus = useMemo(() => {
     if (!goals || goals.length === 0) return null;
-    // Find the goal with the highest progress percentage that isn't complete
     return [...goals]
         .filter(g => g.currentAmount < g.targetAmount)
         .sort((a, b) => (b.currentAmount / b.targetAmount) - (a.currentAmount / a.targetAmount))[0];
@@ -533,7 +583,7 @@ export default function LifeStatsPage() {
                 <CharacterAvatar level={levelInfo.level} avatarData={lifeStats?.avatar || null} />
             </div>
         </div>
-
+        
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pt-8">
              <div className="lg:col-span-1">
                 <AiAdvisorPanel onCompleteQuest={handleCompleteQuest} />
@@ -561,7 +611,7 @@ export default function LifeStatsPage() {
                     <GoalCard key={goal.id} goal={goal} onEdit={handleEditGoal} />
                 ))}
              </div>
-             {goals && goals.length === 0 && (
+             {goals && goals.length === 0 && !goalsLoading && (
                 <Card className="col-span-full flex flex-col items-center justify-center text-center py-12 glass">
                      <CardHeader>
                         <div className="flex items-center justify-center h-16 w-16 bg-primary/10 rounded-full mx-auto mb-4">
@@ -575,9 +625,16 @@ export default function LifeStatsPage() {
                      </CardContent>
                  </Card>
              )}
+             {goalsLoading && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-64 w-full" />)}
+                </div>
+             )}
         </div>
     </div>
     <GoalDialog isOpen={isGoalDialogOpen} setIsOpen={setIsGoalDialogOpen} goal={selectedGoal} />
     </>
   );
 }
+
+    
