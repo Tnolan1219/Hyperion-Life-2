@@ -104,6 +104,34 @@ dagreGraph.setDefaultEdgeLabel(() => ({}));
 const defaultNodeWidth = 208;
 const defaultNodeHeight = 88;
 
+const useSystemNodeSnapper = (nodes: Node[], setNodes: (nodes: Node[] | ((prevNodes: Node[]) => Node[])) => void) => {
+    const onNodeDragStop = useCallback((_: any, node: Node) => {
+        if (node.type !== 'system') {
+            return;
+        }
+
+        const systemNodes = nodes.filter(n => n.type === 'system');
+        const otherSystemNodes = systemNodes.filter(n => n.id !== node.id);
+
+        for (const otherNode of otherSystemNodes) {
+            const dx = Math.abs(node.position.x - (otherNode.position.x + (otherNode.width || 0)));
+            const dy = Math.abs(node.position.y - otherNode.y);
+
+            if (dx < 20 && dy < 20) {
+                const newX = otherNode.position.x + (otherNode.width || 0) + 10;
+                setNodes(nds =>
+                    nds.map(n =>
+                        n.id === node.id ? { ...n, position: { ...n.position, x: newX, y: otherNode.position.y } } : n
+                    )
+                );
+                break;
+            }
+        }
+    }, [nodes, setNodes]);
+
+    return onNodeDragStop;
+};
+
 const getLayoutedElements = (
   nodes: Node[],
   edges: Edge[],
@@ -111,71 +139,91 @@ const getLayoutedElements = (
 ) => {
   const { direction, timeScale, is3dMode } = options;
   const isHorizontal = direction === 'LR';
-  const ranksep = isHorizontal ? 150 * timeScale : 100;
-  const nodesep = isHorizontal ? 100 : 150 * timeScale;
-
-
-  if (!is3dMode) {
-    dagreGraph.setGraph({ rankdir: direction, nodesep: ranksep, ranksep: nodesep });
-
-    nodes.forEach((node) => {
-      const isSystem = node.type === 'system';
-      const nodeWidth = isSystem ? node.width || 250 : defaultNodeWidth;
-      const nodeHeight = isSystem ? node.height || 64 : defaultNodeHeight;
-      dagreGraph.setNode(node.id, { width: nodeWidth, height: nodeHeight });
-    });
-
-    edges.forEach((edge) => {
-      dagreGraph.setEdge(edge.source, edge.target);
-    });
-    dagre.layout(dagreGraph);
-  }
   
-  const years = nodes.map(n => n.data.year).filter(Boolean);
-  const minYear = Math.min(...years, new Date().getFullYear());
-
-  const layoutedNodes = nodes.map((node) => {
-    const nodeWithPosition = !is3dMode ? dagreGraph.node(node.id) : null;
-    const isSystem = node.type === 'system';
-    const nodeWidth = isSystem ? node.width || 250 : defaultNodeWidth;
-    const nodeHeight = isSystem ? node.height || 64 : defaultNodeHeight;
-
-    
-    node.targetPosition = isHorizontal ? 'left' : 'top';
-    node.sourcePosition = isHorizontal ? 'right' : 'bottom';
-    
-    if (is3dMode) {
-        const yearOffset = (node.data.year || minYear) - minYear;
-        node.position = {
-            x: (Math.random() - 0.5) * 400,
-            y: yearOffset * 200 * timeScale,
-        };
-    } else if (nodeWithPosition) {
-       node.position = {
-            x: nodeWithPosition.x - nodeWidth / 2,
-            y: nodeWithPosition.y - nodeHeight / 2,
-        };
-    }
-
-    return node;
-  });
-
-  const layoutedEdges = edges.map(edge => {
-    if (is3dMode) {
+  if (is3dMode) {
+    // 3D Layout Logic
+    const years = nodes.map(n => n.data.year).filter(Boolean);
+    const minYear = Math.min(...years, new Date().getFullYear());
+    const layoutedNodes = nodes.map((node) => {
+      const yearOffset = (node.data.year || minYear) - minYear;
+      node.position = {
+          x: (Math.random() - 0.5) * 400,
+          y: yearOffset * 200 * timeScale,
+      };
+      node.targetPosition = isHorizontal ? 'left' : 'top';
+      node.sourcePosition = isHorizontal ? 'right' : 'bottom';
+      return node;
+    });
+    const layoutedEdges = edges.map(edge => {
       edge.type = 'smoothstep';
       edge.animated = false;
       edge.data = { ...edge.data, is3dMode: true, sourceNodeType: nodes.find(n => n.id === edge.source)?.type };
-    } else {
-      edge.type = 'smoothstep';
-      edge.animated = true;
-      edge.data = { ...edge.data, is3dMode: false };
+      return edge;
+    });
+    return { nodes: layoutedNodes, edges: layoutedEdges };
+  }
+
+  // 2D Spacetime Layout Logic
+  const yearNodes = nodes.filter(n => n.data.year && n.type !== 'system');
+  const systemNodes = nodes.filter(n => n.type === 'system');
+  const years = yearNodes.map(n => n.data.year).filter(Boolean);
+  const minYear = years.length > 0 ? Math.min(...years) : new Date().getFullYear();
+
+  const nodesByYear: { [year: number]: Node[] } = {};
+  yearNodes.forEach(node => {
+    const year = node.data.year || minYear;
+    if (!nodesByYear[year]) {
+      nodesByYear[year] = [];
     }
+    nodesByYear[year].push(node);
+  });
+
+  const layoutedNodes: Node[] = [];
+  const yearGap = isHorizontal ? 300 * timeScale : 200 * timeScale;
+  const nodeGap = isHorizontal ? 120 : 150;
+
+  Object.keys(nodesByYear).sort().forEach(yearStr => {
+    const year = parseInt(yearStr);
+    const yearNodes = nodesByYear[year];
+    const yearOffset = year - minYear;
+
+    yearNodes.forEach((node, index) => {
+      if (node.dragging) {
+        layoutedNodes.push(node);
+        return;
+      }
+      
+      const xPos = isHorizontal ? yearOffset * yearGap : index * (defaultNodeWidth + 50);
+      const yPos = isHorizontal ? index * nodeGap : yearOffset * yearGap;
+
+      node.position = {
+        x: xPos,
+        y: yPos
+      };
+      node.targetPosition = isHorizontal ? 'left' : 'top';
+      node.sourcePosition = isHorizontal ? 'right' : 'bottom';
+      layoutedNodes.push(node);
+    });
+  });
+
+  // Position system nodes separately at the top
+  let currentX = 10;
+  systemNodes.forEach(node => {
+    node.position = { x: currentX, y: 10 };
+    currentX += (node.width || defaultNodeWidth) + 10;
+    layoutedNodes.push(node);
+  });
+
+
+  const layoutedEdges = edges.map(edge => {
+    edge.type = 'smoothstep';
+    edge.animated = true;
+    edge.data = { ...edge.data, is3dMode: false };
     return edge;
   });
 
   return { nodes: layoutedNodes, edges: layoutedEdges };
 };
-
 
 
 function AIPlanGenerator({ onGenerate }: { onGenerate: (nodes: Node[], edges: Edge[]) => void }) {
@@ -281,10 +329,7 @@ const GuideLines = ({ nodes, show, type, direction, timeScale }: { nodes: Node[]
     const totalYears = maxYear - minYear + 1;
     const items = type === 'year' ? Array.from({ length: totalYears }, (_, i) => minYear + i) : Array.from({ length: totalYears * 12 }, (_, i) => i);
     
-    const ranksep = direction === 'LR' ? 150 * timeScale : 100;
-    const nodesep = direction === 'LR' ? 100 : 150 * timeScale;
-    
-    const yearScale = direction === 'TB' ? nodesep : ranksep;
+    const yearScale = direction === 'LR' ? 300 * timeScale : 200 * timeScale;
 
     return (
         <div className={cn("absolute inset-0 pointer-events-none z-0", direction === 'TB' ? 'flex flex-col' : 'flex flex-row')}>
@@ -324,46 +369,18 @@ function LifePlanPageContent({
     const [showYearGuides, setShowYearGuides] = useState(true);
     const [showMonthGuides, setShowMonthGuides] = useState(false);
   
-    const useSystemNodeSnapper = (nodes: Node[], setNodes: (nodes: Node[] | ((prevNodes: Node[]) => Node[])) => void) => {
-        const onNodeDragStop = useCallback((_: any, node: Node) => {
-            if (node.type !== 'system') {
-                return;
-            }
-
-            const systemNodes = nodes.filter(n => n.type === 'system');
-            const otherSystemNodes = systemNodes.filter(n => n.id !== node.id);
-
-            for (const otherNode of otherSystemNodes) {
-                const dx = Math.abs(node.position.x - (otherNode.position.x + (otherNode.width || 0)));
-                const dy = Math.abs(node.position.y - otherNode.position.y);
-
-                if (dx < 20 && dy < 20) {
-                    const newX = otherNode.position.x + (otherNode.width || 0) + 10;
-                    setNodes(nds =>
-                        nds.map(n =>
-                            n.id === node.id ? { ...n, position: { ...n.position, x: newX, y: otherNode.position.y } } : n
-                        )
-                    );
-                    break;
-                }
-            }
-        }, [nodes, setNodes]);
-
-        return onNodeDragStop;
-    };
-    
     const onNodeDragStop = useSystemNodeSnapper(nodes, setNodes);
 
     const onLayout = useCallback((direction: 'TB' | 'LR', currentNodes: Node[], currentEdges: Edge[], scale: number, is3d: boolean) => {
         const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(currentNodes, currentEdges, { direction, timeScale: scale, is3dMode: is3d });
         setNodes([...layoutedNodes]);
         setEdges([...layoutedEdges]);
-        window.requestAnimationFrame(() => fitView({ duration: 500 }));
+        window.requestAnimationFrame(() => fitView({ duration: 500, padding: 0.1 }));
     }, [setNodes, setEdges, fitView]);
     
     useEffect(() => {
-      onLayout(layoutDirection, nodes, edges, timeScale, is3dMode);
-      // eslint-disable-next-line react-hooks/exhaustive-deps
+        onLayout(layoutDirection, nodes, edges, timeScale, is3dMode);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [timeScale, is3dMode, layoutDirection]);
 
 
@@ -752,5 +769,3 @@ export default function LifePlanPage() {
     </Tabs>
     );
 }
-
-    
