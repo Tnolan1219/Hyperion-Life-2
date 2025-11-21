@@ -51,6 +51,7 @@ import {
   Search as SearchIcon,
   Shrink,
   Repeat,
+  Route,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { NodeEditor } from '@/components/life-plan/NodeEditor';
@@ -68,6 +69,7 @@ import { ContactManager } from '@/components/life-plan/resources/ContactManager'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CalendarView } from '@/components/life-plan/calendar/CalendarView';
 import { FullCalendar } from '@/components/life-plan/calendar/FullCalendar';
+import { Slider } from '@/components/ui/slider';
 
 
 const initialNodes: Node[] = lifePlanTemplates.default.nodes;
@@ -98,41 +100,68 @@ dagreGraph.setDefaultEdgeLabel(() => ({}));
 const defaultNodeWidth = 208;
 const defaultNodeHeight = 88;
 
-const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = 'TB') => {
+const getLayoutedElements = (
+  nodes: Node[],
+  edges: Edge[],
+  options: { direction: 'TB' | 'LR', timeScale: number, is3dMode: boolean }
+) => {
+  const { direction, timeScale, is3dMode } = options;
   const isHorizontal = direction === 'LR';
-  dagreGraph.setGraph({ rankdir: direction, nodesep: 100, ranksep: 100 });
 
-  nodes.forEach((node) => {
-    const nodeWidth = node.width || defaultNodeWidth;
-    const nodeHeight = node.height || defaultNodeHeight;
-    dagreGraph.setNode(node.id, { width: nodeWidth, height: nodeHeight });
-  });
-
+  if (!is3dMode) {
+    dagreGraph.setGraph({ rankdir: direction, nodesep: 100, ranksep: 100 * timeScale });
+    nodes.forEach((node) => {
+      dagreGraph.setNode(node.id, { width: node.width || defaultNodeWidth, height: node.height || defaultNodeHeight });
+    });
+    edges.forEach((edge) => {
+      dagreGraph.setEdge(edge.source, edge.target);
+    });
+    dagre.layout(dagreGraph);
+  }
   
-  edges.forEach((edge) => {
-    dagreGraph.setEdge(edge.source, edge.target);
-  });
-
-  dagre.layout(dagreGraph);
+  const years = nodes.map(n => n.data.year).filter(Boolean);
+  const minYear = Math.min(...years);
 
   const layoutedNodes = nodes.map((node) => {
-    const nodeWithPosition = dagreGraph.node(node.id);
+    const nodeWithPosition = !is3dMode ? dagreGraph.node(node.id) : null;
     const nodeWidth = node.width || defaultNodeWidth;
     const nodeHeight = node.height || defaultNodeHeight;
     
     node.targetPosition = isHorizontal ? 'left' : 'top';
     node.sourcePosition = isHorizontal ? 'right' : 'bottom';
     
-    node.position = {
-      x: nodeWithPosition.x - nodeWidth / 2,
-      y: nodeWithPosition.y - nodeHeight / 2,
-    };
+    if (is3dMode) {
+        const yearOffset = (node.data.year || minYear) - minYear;
+        node.position = {
+            x: (Math.random() - 0.5) * 400,
+            y: yearOffset * 200 * timeScale,
+        };
+    } else if (nodeWithPosition) {
+       node.position = {
+            x: nodeWithPosition.x - nodeWidth / 2,
+            y: nodeWithPosition.y - nodeHeight / 2,
+        };
+    }
 
     return node;
   });
 
-  return { nodes: layoutedNodes, edges };
+  const layoutedEdges = edges.map(edge => {
+    if (is3dMode) {
+      edge.type = 'smoothstep';
+      edge.animated = false;
+      edge.data = { ...edge.data, is3dMode: true, sourceNodeType: nodes.find(n => n.id === edge.source)?.type };
+    } else {
+      edge.type = 'smoothstep';
+      edge.animated = true;
+      edge.data = { ...edge.data, is3dMode: false };
+    }
+    return edge;
+  });
+
+  return { nodes: layoutedNodes, edges: layoutedEdges };
 };
+
 
 function AIPlanGenerator({ onGenerate }: { onGenerate: (nodes: Node[], edges: Edge[]) => void }) {
     const [prompt, setPrompt] = useState('');
@@ -258,26 +287,31 @@ const GuideLines = ({ nodes, show, type, direction }: { nodes: Node[], show: boo
     );
 };
 
-function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSelectedNode, onFocusNode, onTemplateLoad, selectedNode, connectingNodeId, setConnectingNodeId, onDeleteNode, isExpanded, setIsExpanded, onNodeDragStop }: any) {
+function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSelectedNode, onFocusNode, onTemplateLoad, selectedNode, connectingNodeId, setConnectingNodeId, onDeleteNode, isExpanded, setIsExpanded, onNodeDragStop, timeScale, setTimeScale, is3dMode, setIs3dMode }: any) {
   const { fitView } = useReactFlow();
   const [layoutDirection, setLayoutDirection] = useState<'TB' | 'LR'>('TB');
   const [showYearGuides, setShowYearGuides] = useState(false);
   const [showMonthGuides, setShowMonthGuides] = useState(false);
 
-
   const onLayout = useCallback((direction: 'TB' | 'LR') => {
     setLayoutDirection(direction);
-    const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(nodes, edges, direction);
+    const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(nodes, edges, { direction, timeScale, is3dMode });
     setNodes([...layoutedNodes]);
     setEdges([...layoutedEdges]);
     window.requestAnimationFrame(() => fitView({ duration: 500 }));
-  }, [nodes, edges, setNodes, setEdges, fitView]);
+  }, [nodes, edges, setNodes, setEdges, fitView, timeScale, is3dMode]);
 
+  const passedNodes = useMemo(() => {
+    return nodes.map((node: Node) => ({
+      ...node,
+      data: { ...node.data, is3dMode },
+    }));
+  }, [nodes, is3dMode]);
 
   return (
-    <div className="flex-grow h-full relative">
+    <div className={cn("flex-grow h-full relative", is3dMode && 'react-flow-3d-mode')}>
         <ReactFlow
-          nodes={nodes}
+          nodes={passedNodes}
           edges={edges}
           onNodesChange={onNodesChange}
           onEdgesChange={(changes) => setEdges((prevEdges: any) => addEdge(changes, prevEdges))}
@@ -370,6 +404,10 @@ function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSe
                 <Button variant="ghost" size="icon" onClick={() => onLayout('LR')} title="Left-to-Right Layout">
                     <Rows className="h-5 w-5"/>
                 </Button>
+                <Slider defaultValue={[timeScale]} min={0.25} max={4} step={0.25} onValueChange={(value) => setTimeScale(value[0])} className="w-32" />
+                <Button variant="ghost" size="icon" onClick={() => setIs3dMode(!is3dMode)} title="Toggle 3D Roadmap View" className={cn(is3dMode && 'text-primary bg-primary/10')}>
+                    <Route className="h-5 w-5" />
+                </Button>
                 <Button variant="ghost" size="icon" onClick={() => setShowYearGuides(!showYearGuides)} title="Toggle Year Guides" className={cn(showYearGuides && 'text-primary bg-primary/10')}>
                     <CalendarIcon className="h-5 w-5" />
                 </Button>
@@ -449,6 +487,31 @@ function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSe
                 color: inherit;
             }
 
+            .react-flow-3d-mode .react-flow__viewport {
+                perspective: 1000px;
+                transform: scale(1) translate(0px, 0px) rotateX(60deg) rotateZ(0deg);
+                transition: transform 0.5s;
+            }
+            .react-flow-3d-mode .react-flow__node {
+                transform: rotateX(-60deg) rotateZ(0deg);
+                
+            }
+            .react-flow-3d-mode .react-flow__edge-path[data-node-type='career'] { --edge-color: hsl(28 90% 60%); }
+            .react-flow-3d-mode .react-flow__edge-path[data-node-type='education'] { --edge-color: hsl(210 90% 60%); }
+            .react-flow-3d-mode .react-flow__edge-path[data-node-type='financial'] { --edge-color: hsl(140 80% 50%); }
+            .react-flow-3d-mode .react-flow__edge-path[data-node-type='lifeEvent'] { --edge-color: hsl(330 90% 65%); }
+            .react-flow-3d-mode .react-flow__edge-path[data-node-type='goal'] { --edge-color: hsl(270 90% 65%); }
+            .react-flow-3d-mode .react-flow__edge-path[data-node-type='other'] { --edge-color: hsl(180 80% 50%); }
+            
+            .react-flow-3d-mode .react-flow__edge-path {
+                stroke-width: 10;
+                stroke: var(--edge-color, hsl(var(--primary)));
+                filter: none;
+                stroke-dasharray: 1 12;
+                stroke-linecap: round;
+            }
+
+
         `}</style>
     </div>
   );
@@ -504,8 +567,17 @@ function LifePlanPageContent({
     const { fitView, setCenter, getNode, getViewport } = useReactFlow();
     const [selectedNode, setSelectedNode] = useState<Node | null>(null);
     const [connectingNodeId, setConnectingNodeId] = useState<string | null>(null);
+    const [timeScale, setTimeScale] = useState(1);
+    const [is3dMode, setIs3dMode] = useState(false);
 
     const onNodeDragStop = useSystemNodeSnapper(nodes, setNodes);
+
+    React.useEffect(() => {
+        const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(nodes, edges, { direction: 'LR', timeScale, is3dMode });
+        setNodes(layoutedNodes);
+        setEdges(layoutedEdges);
+        window.requestAnimationFrame(() => fitView({duration: 500}));
+    }, [timeScale, is3dMode]);
 
     const handleNodesChange = (changes: NodeChange[]) => {
       onNodesChange(changes);
@@ -580,7 +652,7 @@ function LifePlanPageContent({
 
         const template = lifePlanTemplates[templateName as keyof typeof lifePlanTemplates];
         if (template) {
-            const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(template.nodes, template.edges, 'LR');
+            const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(template.nodes, template.edges, { direction: 'LR', timeScale, is3dMode });
             setNodes(layoutedNodes);
             setEdges(layoutedEdges);
         } else {
@@ -591,7 +663,7 @@ function LifePlanPageContent({
     };
 
     const handleAIGenerate = (aiNodes: Node[], aiEdges: Edge[]) => {
-        const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(aiNodes, aiEdges, 'LR');
+        const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(aiNodes, aiEdges, { direction: 'LR', timeScale, is3dMode });
         setNodes(layoutedNodes);
         setEdges(layoutedEdges);
         setSelectedNode(null);
@@ -656,6 +728,10 @@ function LifePlanPageContent({
                 isExpanded={isExpanded}
                 setIsExpanded={setIsExpanded}
                 onNodeDragStop={onNodeDragStop}
+                timeScale={timeScale}
+                setTimeScale={setTimeScale}
+                is3dMode={is3dMode}
+                setIs3dMode={setIs3dMode}
                 />
             </div>
             <div className={cn('pt-8 pb-8 flex-shrink-0 w-full', isExpanded && 'hidden')}>

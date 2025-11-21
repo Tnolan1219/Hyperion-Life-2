@@ -1,4 +1,3 @@
-
 'use client';
 import React from 'react';
 import { Handle, Position, NodeResizer, useReactFlow, useNodeId } from 'reactflow';
@@ -38,6 +37,7 @@ type CustomNodeProps = {
   };
   type: keyof typeof iconMap;
   selected: boolean;
+  is3dMode?: boolean;
 };
 
 const formatCurrency = (value?: number) => {
@@ -56,7 +56,7 @@ const formatCurrency = (value?: number) => {
 }
 
 
-const CustomNode = ({ data, type, selected }: CustomNodeProps) => {
+const CustomNode = ({ data, type, selected, is3dMode }: CustomNodeProps) => {
   const color = colorMap[type];
   const Icon = iconMap[type];
   const colorClass = colorMap[type as keyof typeof colorMap];
@@ -80,6 +80,25 @@ const CustomNode = ({ data, type, selected }: CustomNodeProps) => {
       })
     );
   };
+  
+    if (is3dMode) {
+        return (
+            <div className="relative group">
+                <Handle type="target" position={Position.Top} className="!opacity-0" />
+                <div className={cn(
+                    "w-20 h-20 rounded-full flex flex-col items-center justify-center border-4 transition-all duration-300",
+                    selected ? 'border-primary shadow-lg shadow-primary/20 scale-110' : `border-${colorClass}-400/50`,
+                    `bg-${colorClass}-400/10`
+                )}>
+                    <Icon className={cn("h-8 w-8", `text-${colorClass}-400`)} />
+                </div>
+                <p className="absolute -bottom-6 left-1/2 -translate-x-1/2 w-32 text-center text-xs font-semibold text-foreground opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-background/50 rounded-md p-1">
+                    {data.title}
+                </p>
+                <Handle type="source" position={Position.Bottom} className="!opacity-0" />
+            </div>
+        )
+    }
   
   if (type === 'other') {
     return (
