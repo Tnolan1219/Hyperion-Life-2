@@ -302,7 +302,7 @@ const GuideLines = ({ nodes, show, type, direction, timeScale }: { nodes: Node[]
     );
 };
 
-function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSelectedNode, onFocusNode, onTemplateLoad, selectedNode, connectingNodeId, setConnectingNodeId, onDeleteNode, isExpanded, setIsExpanded, onNodeDragStop, timeScale, setTimeScale, is3dMode, setIs3dMode, onLayout }: any) {
+function LifePlanCanvas({ nodes, edges, onNodesChange, setEdges, setSelectedNode, onFocusNode, onTemplateLoad, selectedNode, connectingNodeId, setConnectingNodeId, onDeleteNode, isExpanded, setIsExpanded, onNodeDragStop, timeScale, setTimeScale, is3dMode, setIs3dMode, onLayout }: any) {
   const { fitView } = useReactFlow();
   const [layoutDirection, setLayoutDirection] = useState<'TB' | 'LR'>('LR');
   const [showYearGuides, setShowYearGuides] = useState(false);
@@ -314,6 +314,12 @@ function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSe
       data: { ...node.data, is3dMode },
     }));
   }, [nodes, is3dMode]);
+  
+  useEffect(() => {
+    if (onLayout) {
+      onLayout(layoutDirection);
+    }
+  }, [timeScale, is3dMode, layoutDirection, onLayout]);
 
   return (
     <div className={cn("flex-grow h-full relative", is3dMode && 'react-flow-3d-mode')}>
@@ -405,10 +411,10 @@ function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSe
                 <Button variant="ghost" size="icon" onClick={() => fitView({ duration: 500 })} title="Fit View">
                     <ZoomIn className="h-5 w-5"/>
                 </Button>
-                <Button variant="ghost" size="icon" onClick={() => { setLayoutDirection('TB'); onLayout('TB'); }} title="Top-to-Bottom Layout">
+                <Button variant="ghost" size="icon" onClick={() => { setLayoutDirection('TB'); }} title="Top-to-Bottom Layout">
                     <LayoutIcon className="h-5 w-5"/>
                 </Button>
-                <Button variant="ghost" size="icon" onClick={() => { setLayoutDirection('LR'); onLayout('LR'); }} title="Left-to-Right Layout">
+                <Button variant="ghost" size="icon" onClick={() => { setLayoutDirection('LR'); }} title="Left-to-Right Layout">
                     <Rows className="h-5 w-5"/>
                 </Button>
                 <Slider defaultValue={[timeScale]} min={0.25} max={4} step={0.25} onValueChange={(value) => setTimeScale(value[0])} className="w-32" />
@@ -432,7 +438,7 @@ function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSe
               closeEditor={() => setSelectedNode(null)}
               startConnecting={() => {
                   if (selectedNode) {
-                    setNodes(nodes.map(n => n.id === selectedNode.id ? {...n, data: { ...n.data, connecting: true }} : n));
+                    setNodes((nds: Node[]) => nds.map(n => n.id === selectedNode.id ? {...n, data: { ...n.data, connecting: true }} : n));
                     setConnectingNodeId(selectedNode.id);
                   }
                   setSelectedNode(null);
@@ -563,15 +569,11 @@ function useSystemNodeSnapper(nodes: Node[], setNodes: (nodes: Node[] | ((prevNo
 }
 
 const useOnLayout = (
-  nodes: Node[],
-  edges: Edge[],
   setNodes: (nodes: Node[]) => void,
   setEdges: (edges: Edge[]) => void,
-  fitView: (options?: { duration?: number }) => void,
-  timeScale: number,
-  is3dMode: boolean
+  fitView: (options?: { duration?: number }) => void
 ) => {
-  return useCallback((direction: 'TB' | 'LR') => {
+  return useCallback((nodes: Node[], edges: Edge[], direction: 'TB' | 'LR', timeScale: number, is3dMode: boolean) => {
     const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
       nodes,
       edges,
@@ -580,7 +582,7 @@ const useOnLayout = (
     setNodes([...layoutedNodes]);
     setEdges([...layoutedEdges]);
     window.requestAnimationFrame(() => fitView({ duration: 500 }));
-  }, [nodes, edges, setNodes, setEdges, fitView, timeScale, is3dMode]);
+  }, [setNodes, setEdges, fitView]);
 };
 
 
@@ -600,12 +602,16 @@ function LifePlanPageContent({
 
     const onNodeDragStop = useSystemNodeSnapper(nodes, setNodes);
 
-    const onLayout = useOnLayout(nodes, edges, setNodes, setEdges, fitView, timeScale, is3dMode);
-
+    const onLayout = useCallback((direction: 'TB' | 'LR') => {
+        const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(nodes, edges, { direction, timeScale, is3dMode });
+        setNodes([...layoutedNodes]);
+        setEdges([...layoutedEdges]);
+        window.requestAnimationFrame(() => fitView({ duration: 500 }));
+    }, [nodes, edges, setNodes, setEdges, fitView, timeScale, is3dMode]);
 
     useEffect(() => {
         onLayout('LR');
-    }, [timeScale, is3dMode, onLayout]);
+    }, [onLayout]);
 
     const handleNodesChange = (changes: NodeChange[]) => {
       onNodesChange(changes);
@@ -807,3 +813,5 @@ export default function LifePlanPage() {
   );
 }
 
+
+    
