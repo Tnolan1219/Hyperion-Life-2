@@ -99,24 +99,14 @@ const defaultNodeWidth = 208;
 const YEAR_GAP_HORIZONTAL = 350;
 const YEAR_GAP_VERTICAL = 250;
 const NODE_GAP_VERTICAL = 120;
-const NODE_GAP_HORIZONTAL = 250;
+
 
 const getLayoutedElements = (
   nodes: Node[],
   edges: Edge[],
-  options: { direction: 'TB' | 'LR', timeScale: number, is3dMode: boolean }
+  options: { direction: 'TB' | 'LR', timeScale: number }
 ) => {
-  const { direction, timeScale, is3dMode } = options;
-  if (is3dMode) {
-      // 3D mode doesn't need complex layouting, just basic positioning
-      const layoutedNodes = nodes.map(node => ({
-          ...node,
-          position: node.position, // Keep original position for 3d
-          targetPosition: Position.Top,
-          sourcePosition: Position.Bottom,
-      }));
-      return { nodes: layoutedNodes, edges };
-  }
+  const { direction, timeScale } = options;
   
   const isHorizontal = direction === 'LR';
 
@@ -144,10 +134,10 @@ const getLayoutedElements = (
     nodesInYear.forEach((node, index) => {
       const xPos = isHorizontal 
         ? yearOffset * YEAR_GAP_HORIZONTAL * timeScale
-        : node.position.x; // Preserve x for vertical layout
+        : index * NODE_GAP_VERTICAL;
         
       const yPos = isHorizontal
-        ? index * NODE_GAP_VERTICAL // Stack vertically for horizontal layout
+        ? index * NODE_GAP_VERTICAL
         : yearOffset * YEAR_GAP_VERTICAL * timeScale;
       
       node.position = { x: xPos, y: yPos };
@@ -203,6 +193,7 @@ function useSystemNodeSnapper(nodes: Node[], setNodes: (nodes: Node[] | ((prevNo
 
     return onNodeDragStop;
 }
+
 
 function AIPlanGenerator({ onGenerate }: { onGenerate: (nodes: Node[], edges: Edge[]) => void }) {
     const [prompt, setPrompt] = useState('');
@@ -295,35 +286,26 @@ const ResourcesView = () => (
     </div>
 );
 
-const GuideLines = ({ nodes, show, type, direction, timeScale }: { nodes: Node[], show: boolean, type: 'year' | 'month', direction: 'TB' | 'LR', timeScale: number }) => {
-    if (!show || nodes.length === 0) return null;
+const GuideLines = ({ show, timeScale, yearRange, direction }: { show: boolean, timeScale: number, yearRange: {min: number, max: number}, direction: 'TB' | 'LR' }) => {
+    if (!show || yearRange.max < yearRange.min) return null;
 
-    const years = [...new Set(nodes.map(n => n.data.year).filter(y => y))].sort();
-    if (years.length === 0) return null;
-    
-    const minYear = Math.min(...years);
-    const maxYear = Math.max(...years);
+    const totalYears = yearRange.max - yearRange.min + 1;
+    const years = Array.from({ length: totalYears }, (_, i) => yearRange.min + i);
 
-    const totalYears = maxYear - minYear + 1;
-    const items = type === 'year' ? Array.from({ length: totalYears }, (_, i) => minYear + i) : Array.from({ length: totalYears * 12 }, (_, i) => i);
-    
     const yearScale = direction === 'LR' ? YEAR_GAP_HORIZONTAL * timeScale : YEAR_GAP_VERTICAL * timeScale;
 
     return (
         <div className={cn("absolute inset-0 pointer-events-none z-0", direction === 'TB' ? 'flex flex-col' : 'flex flex-row')}>
-            {items.map((item, index) => (
+            {years.map((year) => (
                 <div 
-                    key={index}
+                    key={year}
                     className={cn(
                         'border-dashed border-primary/20',
                         direction === 'TB' ? 'w-full border-t' : 'h-full border-l',
-                        type === 'month' && 'border-primary/10'
                     )}
-                    style={direction === 'TB' ? { minHeight: type === 'year' ? yearScale : yearScale / 12 } : { minWidth: type === 'year' ? yearScale : yearScale / 12 }}
+                    style={direction === 'TB' ? { minHeight: yearScale } : { minWidth: yearScale }}
                 >
-                    {type === 'year' && (
-                        <span className="text-xs text-primary/40 p-1 font-semibold">{item}</span>
-                    )}
+                    <span className="text-xs text-primary/40 p-1 font-semibold">{year}</span>
                 </div>
             ))}
         </div>
@@ -338,7 +320,6 @@ function useLifePlan() {
     const [selectedNode, setSelectedNode] = useState<Node | null>(null);
     const [connectingNodeId, setConnectingNodeId] = useState<string | null>(null);
     const [timeScale, setTimeScale] = useState(1);
-    const [is3dMode, setIs3dMode] = useState(false);
     const [layoutDirection, setLayoutDirection] = useState<'TB' | 'LR'>('LR');
     const [showYearGuides, setShowYearGuides] = useState(true);
     const [showMonthGuides, setShowMonthGuides] = useState(false);
@@ -346,29 +327,20 @@ function useLifePlan() {
   
     const onNodeDragStop = useSystemNodeSnapper(nodes, setNodes);
 
-    const onLayout = useCallback((direction: 'TB' | 'LR', currentNodes: Node[], currentEdges: Edge[], scale: number, is3d: boolean) => {
-        const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(currentNodes, currentEdges, { direction, timeScale: scale, is3dMode: is3d });
+    useEffect(() => {
+        const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(nodes, edges, { direction: layoutDirection, timeScale });
         setNodes(layoutedNodes);
         setEdges(layoutedEdges);
-    }, [setNodes, setEdges]);
-    
-    // This effect re-runs the layout whenever the nodes array fundamentally changes (e.g. adding/deleting)
-    useEffect(() => {
-        onLayout(layoutDirection, nodes, edges, timeScale, is3dMode);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [nodes.length, timeScale, layoutDirection, is3dMode]);
+    }, [nodes.length, timeScale, layoutDirection]);
 
 
     const passedNodes = useMemo(() => {
         return nodes.map((node: Node) => ({
         ...node,
-        data: { ...node.data, is3dMode, connecting: node.id === connectingNodeId },
+        data: { ...node.data, connecting: node.id === connectingNodeId },
         }));
-    }, [nodes, is3dMode, connectingNodeId]);
-
-    const handleNodesChange = (changes: NodeChange[]) => {
-      onNodesChange(changes);
-    };
+    }, [nodes, connectingNodeId]);
 
     const handleDeleteNode = (nodeId: string) => {
         setNodes(nds => nds.filter(n => n.id !== nodeId));
@@ -418,7 +390,7 @@ function useLifePlan() {
 
         const template = lifePlanTemplates[templateName as keyof typeof lifePlanTemplates];
         if (template) {
-            const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(template.nodes, template.edges, { direction: layoutDirection, timeScale, is3dMode });
+            const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(template.nodes, template.edges, { direction: layoutDirection, timeScale });
             setNodes(layoutedNodes);
             setEdges(layoutedEdges);
         } else {
@@ -428,7 +400,7 @@ function useLifePlan() {
     };
 
     const handleAIGenerate = (aiNodes: Node[], aiEdges: Edge[]) => {
-        const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(aiNodes, aiEdges, { direction: layoutDirection, timeScale, is3dMode });
+        const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(aiNodes, aiEdges, { direction: layoutDirection, timeScale });
         setNodes(layoutedNodes);
         setEdges(layoutedEdges);
         setSelectedNode(null);
@@ -447,7 +419,7 @@ function useLifePlan() {
         nodes,
         edges,
         passedNodes,
-        handleNodesChange,
+        onNodesChange,
         onEdgesChange,
         selectedNode,
         setSelectedNode,
@@ -465,8 +437,6 @@ function useLifePlan() {
         setLayoutDirection,
         timeScale,
         setTimeScale,
-        is3dMode,
-        setIs3dMode,
         showYearGuides,
         setShowYearGuides,
         showMonthGuides,
@@ -480,7 +450,7 @@ function LifePlanCanvas() {
         nodes,
         edges,
         passedNodes,
-        handleNodesChange,
+        onNodesChange,
         onEdgesChange,
         selectedNode,
         setSelectedNode,
@@ -498,8 +468,6 @@ function LifePlanCanvas() {
         setLayoutDirection,
         timeScale,
         setTimeScale,
-        is3dMode,
-        setIs3dMode,
         showYearGuides,
         setShowYearGuides,
         showMonthGuides,
@@ -508,260 +476,259 @@ function LifePlanCanvas() {
   
     const [activeTab, setActiveTab] = useState<'life-plan' | 'timeline' | 'resources' | 'calendar'>('life-plan');
 
+    const yearRange = useMemo(() => {
+        const years = nodes.map(n => n.data.year).filter(y => y);
+        if (years.length === 0) return { min: new Date().getFullYear(), max: new Date().getFullYear() + 1 };
+        return { min: Math.min(...years), max: Math.max(...years) };
+    }, [nodes]);
+
     return (
-        <div className={cn("flex flex-col h-full")}>
-            <div className="flex flex-col items-center justify-center">
-                <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">
-                    Life Plan
-                </h1>
-                <div className="flex items-center justify-center px-4 md:px-8 mt-4">
-                    <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-auto">
-                        <TabsList>
-                            <TabsTrigger value="life-plan">
-                                <Map className="mr-2 h-4 w-4" />
-                                Map
-                            </TabsTrigger>
-                            <TabsTrigger value="timeline">
-                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                Timeline
-                            </TabsTrigger>
-                            <TabsTrigger value="calendar">
-                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                Calendar
-                            </TabsTrigger>
-                            <TabsTrigger value="resources">
-                                <Users className="mr-2 h-4 w-4" />
-                                Resources
-                            </TabsTrigger>
-                        </TabsList>
-                    </Tabs>
-                </div>
-            </div>
-            
-            <div className={cn("flex-grow mt-4", isExpanded ? "fixed inset-0 bg-background z-50 p-4" : "relative")}>
-                 <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="h-full">
-                    <TabsContent value="life-plan" className="h-full m-0">
-                        <div className="relative border border-border/20 rounded-xl overflow-hidden h-full">
-                                <ReactFlow
-                                nodes={passedNodes}
-                                edges={edges}
-                                onNodesChange={handleNodesChange}
-                                onEdgesChange={onEdgesChange}
-                                onConnect={(params) => setEdges((eds: Edge[]) => addEdge({ ...params, type: 'smoothstep', animated: true }, eds))}
-                                onNodeClick={(e, node) => {
-                                    if (connectingNodeId) {
-                                        setEdges((eds: Edge[]) => addEdge({ source: connectingNodeId, target: node.id, type: 'smoothstep', animated: true }, eds));
-                                        setConnectingNodeId(null);
-                                    } else {
-                                        setSelectedNode(node);
-                                    }
-                                }}
-                                onPaneClick={() => {
-                                    setSelectedNode(null);
-                                    if (connectingNodeId) {
-                                        setConnectingNodeId(null);
-                                    }
-                                }}
-                                nodeTypes={nodeTypes}
-                                fitView={false}
-                                panOnScroll
-                                panOnDrag
-                                className={cn('bg-card/30', connectingNodeId && 'cursor-crosshair')}
-                                proOptions={{ hideAttribution: true }}
-                                deleteKeyCode={['Backspace', 'Delete']}
-                                minZoom={0.1}
-                                connectionRadius={120}
-                                onNodeDragStop={onNodeDragStop}
-                                >
-                                <Background gap={24} size={1} color="hsl(var(--border))" />
-                                <GuideLines nodes={nodes} show={showYearGuides} type="year" direction={layoutDirection} timeScale={timeScale} />
-                                <GuideLines nodes={nodes} show={showMonthGuides} type="month" direction={layoutDirection} timeScale={timeScale} />
-                                <NodeResizeControl minWidth={208} minHeight={88} isVisible={selectedNode?.type === 'system' || selectedNode?.type === 'other'}>
-                                    <div className="w-full h-full border-2 border-dashed border-primary rounded-lg" />
-                                </NodeResizeControl>
-                                <div className="absolute top-4 right-4 z-10 flex gap-2">
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                        <Button variant="outline" className="glass h-auto py-2">
-                                            <PlusCircle className="mr-2 h-4 w-4" /> Add Node
-                                        </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent>
-                                        {nodeMenu.map(({ type, label, icon: Icon, color }) => (
-                                            <DropdownMenuItem key={type} onClick={() => handleTemplateLoad(type)}>
-                                            <Icon className={cn('mr-2 h-4 w-4', `text-${color}-400`)} />
-                                            <span>{label}</span>
-                                            </DropdownMenuItem>
-                                        ))}
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-
-                                    <Button variant="outline" className="glass h-auto py-2" onClick={() => handleTemplateLoad('system')}>
-                                        <Repeat className="mr-2 h-4 w-4" /> Add System
-                                    </Button>
-                                    
-
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                        <Button variant="outline" className="glass h-auto py-2">
-                                            <Zap className="mr-2 h-4 w-4" /> Templates
-                                        </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent>
-                                        <DropdownMenuItem onClick={() => handleTemplateLoad('default')}>
-                                            Standard Career Path
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem onClick={() => handleTemplateLoad('earlyRetirement')}>
-                                            Early Retirement (FIRE)
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem onClick={() => handleTemplateLoad('startup')}>
-                                            Startup Founder
-                                        </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                </div>
-                                
-                                <Panel position="top-left">
-                                    <Button variant="ghost" size="icon" onClick={() => setIsExpanded(!isExpanded)} title={isExpanded ? "Collapse" : "Expand"}>
-                                            {isExpanded ? <Shrink className="h-5 w-5" /> : <Maximize className="h-5 w-5"/>}
-                                    </Button>
-                                </Panel>
-
-                                <Panel position="bottom-center" className={cn(isExpanded && "block")}>
-                                    <div className={cn("flex flex-col md:flex-row items-center gap-2 glass p-2 rounded-2xl")}>
-                                        <Button variant="ghost" size="icon" onClick={() => fitView({ duration: 500 })} title="Fit View">
-                                            <ZoomIn className="h-5 w-5"/>
-                                        </Button>
-                                        <Button variant="ghost" size="icon" onClick={() => setLayoutDirection('TB')} title="Top-to-Bottom Layout">
-                                            <LayoutIcon className="h-5 w-5"/>
-                                        </Button>
-                                        <Button variant="ghost" size="icon" onClick={() => setLayoutDirection('LR')} title="Left-to-Right Layout">
-                                            <Rows className="h-5 w-5"/>
-                                        </Button>
-                                        <Slider defaultValue={[timeScale]} min={0.25} max={4} step={0.25} onValueChange={(value) => setTimeScale(value[0])} className="w-32" />
-                                        <Button variant="ghost" size="icon" onClick={() => setIs3dMode(!is3dMode)} title="Toggle 3D Roadmap View" className={cn(is3dMode && 'text-primary bg-primary/10')}>
-                                            <Route className="h-5 w-5" />
-                                        </Button>
-                                        <Button variant="ghost" size="icon" onClick={() => setShowYearGuides(!showYearGuides)} title="Toggle Year Guides" className={cn(showYearGuides && 'text-primary bg-primary/10')}>
-                                            <CalendarIcon className="h-5 w-5" />
-                                        </Button>
-                                        <Button variant="ghost" size="icon" onClick={() => setShowMonthGuides(!showMonthGuides)} title="Toggle Month Guides" className={cn(showMonthGuides && 'text-primary bg-primary/10')}>
-                                            <CalendarDays className="h-5 w-5" />
-                                        </Button>
-                                    </div>
-                                </Panel>
-                                </ReactFlow>
-
-                                <div className="absolute top-0 right-0 h-full w-auto pointer-events-none">
-                                    <NodeEditor
-                                    selectedNode={selectedNode}
-                                    onNodeDataChange={(nodeId: string, newData: any) => setNodes((nds: Node[]) => nds.map((n: Node) => n.id === nodeId ? { ...n, data: { ...n.data, ...newData } } : n))}
-                                    closeEditor={() => setSelectedNode(null)}
-                                    startConnecting={() => {
-                                        if (selectedNode) {
-                                            setConnectingNodeId(selectedNode.id);
-                                        }
-                                        setSelectedNode(null);
-                                    }}
-                                    onDeleteNode={() => {
-                                        if (selectedNode) handleDeleteNode(selectedNode.id);
-                                    }}
-                                    onCenterNode={() => {
-                                        if (selectedNode) handleFocusNode(selectedNode.id);
-                                    }}
-                                    />
-                                </div>
-                                <style jsx global>{`
-                                    .react-flow__edge-path {
-                                        filter: drop-shadow(0 0 5px hsl(var(--primary)));
-                                    }
-
-                                    .react-flow__handle {
-                                        width: 16px !important;
-                                        height: 16px !important;
-                                        border-radius: 99px;
-                                        border-width: 3px !important;
-                                        border-color: hsl(var(--primary)) !important;
-                                        background: hsl(var(--background)) !important;
-                                    }
-
-                                    .react-flow__handle.connecting,
-                                    [data-connecting='true'] .react-flow__handle {
-                                        animation: pulse 1.5s infinite;
-                                    }
-
-                                    @keyframes pulse {
-                                        0%, 100% {
-                                            box-shadow: 0 0 0 0 hsl(var(--primary) / 0.7);
-                                        }
-                                        50% {
-                                            box-shadow: 0 0 0 10px hsl(var(--primary) / 0);
-                                        }
-                                    }
-
-                                    .react-flow__node {
-                                        --glow-color-career: hsl(28 90% 60%);
-                                        --glow-color-education: hsl(210 90% 60%);
-                                        --glow-color-financial: hsl(140 80% 50%);
-                                        --glow-color-lifeEvent: hsl(330 90% 65%);
-                                        --glow-color-goal: hsl(270 90% 65%);
-                                        --glow-color-health: hsl(0 80% 60%);
-                                        --glow-color-other: hsl(180 80% 50%);
-                                        --glow-color-system: hsl(220 80% 70%);
-                                        --glow-color-default: hsl(var(--primary));
-                                    }
-                                    
-                                    .react-flow__node.selected,
-                                    .react-flow__node:hover {
-                                        box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px var(--glow-color, var(--glow-color-default)), 0 0 15px var(--glow-color, var(--glow-color-default));
-                                    }
-                                    .react-flow__node[data-type='career']:hover, .react-flow__node[data-type='career'].selected { --glow-color: var(--glow-color-career); }
-                                    .react-flow__node[data-type='education']:hover, .react-flow__node[data-type='education'].selected { --glow-color: var(--glow-color-education); }
-                                    .react-flow__node[data-type='financial']:hover, .react-flow__node[data-type='financial'].selected { --glow-color: var(--glow-color-financial); }
-                                    .react-flow__node[data-type='lifeEvent']:hover, .react-flow__node[data-type='lifeEvent'].selected { --glow-color: var(--glow-color-lifeEvent); }
-                                    .react-flow__node[data-type='goal']:hover, .react-flow__node[data-type='goal'].selected { --glow-color: var(--glow-color-goal); }
-                                    .react-flow__node[data-type='health']:hover, .react-flow__node[data-type='health'].selected { --glow-color: var(--glow-color-health); }
-                                    .react-flow__node[data-type='other']:hover, .react-flow__node[data-type='other'].selected { --glow-color: var(--glow-color-other); }
-                                    .react-flow__node[data-type='system']:hover, .react-flow__node[data-type='system'].selected { --glow-color: var(--glow-color-system); }
-
-                                    .react-flow__resize-control.handle {
-                                        width: 10px;
-                                        height: 10px;
-                                        border-radius: 2px;
-                                        background-color: hsl(var(--primary));
-                                        border-color: hsl(var(--primary-foreground));
-                                        border-width: 2px;
-                                    }
-                                    
-                                    .react-flow__node-other .editable-content {
-                                        background-color: transparent;
-                                        border: none;
-                                        width: 100%;
-                                        height: 100%;
-                                        padding: 1rem;
-                                        outline: none;
-                                        resize: none;
-                                        color: inherit;
-                                    }
-                                    
-                                `}</style>
-                        </div>
-                        <div className={cn('pt-8 pb-8 flex-shrink-0 w-full', isExpanded && 'hidden')}>
-                            <AIPlanGenerator onGenerate={handleAIGenerate} />
-                        </div>
-                    </TabsContent>
-                    <TabsContent value="timeline" className="flex-grow mt-0">
-                        <TimelineView nodes={nodes} onFocusNode={(nodeId) => { handleFocusNode(nodeId); setActiveTab('life-plan'); }} />
-                    </TabsContent>
-                    <TabsContent value="calendar" className="flex-grow mt-0">
-                        <FullCalendar />
-                    </TabsContent>
-                    <TabsContent value="resources" className="flex-grow mt-0">
-                        <ResourcesView />
-                    </TabsContent>
+      <div className={cn("flex flex-col", isExpanded ? "fixed inset-0 bg-background z-50 p-0 h-screen" : "relative h-[calc(100vh-8rem)]")}>
+        <div className="flex flex-col items-center justify-center">
+            <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">
+                Life Plan
+            </h1>
+            <div className="flex items-center justify-center px-4 md:px-8 mt-4">
+                <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-auto">
+                    <TabsList>
+                        <TabsTrigger value="life-plan">
+                            <Map className="mr-2 h-4 w-4" />
+                            Map
+                        </TabsTrigger>
+                        <TabsTrigger value="timeline">
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            Timeline
+                        </TabsTrigger>
+                        <TabsTrigger value="calendar">
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            Calendar
+                        </TabsTrigger>
+                        <TabsTrigger value="resources">
+                            <Users className="mr-2 h-4 w-4" />
+                            Resources
+                        </TabsTrigger>
+                    </TabsList>
                 </Tabs>
             </div>
         </div>
+        
+        <div className={cn("flex-grow mt-4", isExpanded ? "p-4" : "")}>
+             <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="h-full">
+                <TabsContent value="life-plan" className="h-full m-0">
+                    <div className="relative border border-border/20 rounded-xl overflow-hidden h-full">
+                            <ReactFlow
+                            nodes={passedNodes}
+                            edges={edges}
+                            onNodesChange={onNodesChange}
+                            onEdgesChange={onEdgesChange}
+                            onConnect={(params) => setEdges((eds: Edge[]) => addEdge({ ...params, type: 'smoothstep', animated: true }, eds))}
+                            onNodeClick={(e, node) => {
+                                if (connectingNodeId) {
+                                    setEdges((eds: Edge[]) => addEdge({ source: connectingNodeId, target: node.id, type: 'smoothstep', animated: true }, eds));
+                                    setConnectingNodeId(null);
+                                } else {
+                                    setSelectedNode(node);
+                                }
+                            }}
+                            onPaneClick={() => {
+                                setSelectedNode(null);
+                                if (connectingNodeId) {
+                                    setConnectingNodeId(null);
+                                }
+                            }}
+                            nodeTypes={nodeTypes}
+                            fitView={false}
+                            panOnScroll
+                            panOnDrag
+                            className={cn('bg-card/30', connectingNodeId && 'cursor-crosshair')}
+                            proOptions={{ hideAttribution: true }}
+                            deleteKeyCode={['Backspace', 'Delete']}
+                            minZoom={0.1}
+                            connectionRadius={120}
+                            onNodeDragStop={onNodeDragStop}
+                            >
+                            <Background gap={24} size={1} color="hsl(var(--border))" />
+                            <GuideLines show={showYearGuides} timeScale={timeScale} yearRange={yearRange} direction={layoutDirection} />
+                            <NodeResizeControl minWidth={208} minHeight={88} isVisible={selectedNode?.type === 'system' || selectedNode?.type === 'other'}>
+                                <div className="w-full h-full border-2 border-dashed border-primary rounded-lg" />
+                            </NodeResizeControl>
+                            <div className="absolute top-4 right-4 z-10 flex gap-2">
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" className="glass h-auto py-2">
+                                        <PlusCircle className="mr-2 h-4 w-4" /> Add Node
+                                    </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent>
+                                    {nodeMenu.map(({ type, label, icon: Icon, color }) => (
+                                        <DropdownMenuItem key={type} onClick={() => handleTemplateLoad(type)}>
+                                        <Icon className={cn('mr-2 h-4 w-4', `text-${color}-400`)} />
+                                        <span>{label}</span>
+                                        </DropdownMenuItem>
+                                    ))}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+
+                                <Button variant="outline" className="glass h-auto py-2" onClick={() => handleTemplateLoad('system')}>
+                                    <Repeat className="mr-2 h-4 w-4" /> Add System
+                                </Button>
+                                
+
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" className="glass h-auto py-2">
+                                        <Zap className="mr-2 h-4 w-4" /> Templates
+                                    </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent>
+                                    <DropdownMenuItem onClick={() => handleTemplateLoad('default')}>
+                                        Standard Career Path
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => handleTemplateLoad('earlyRetirement')}>
+                                        Early Retirement (FIRE)
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => handleTemplateLoad('startup')}>
+                                        Startup Founder
+                                    </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </div>
+                            
+                            <Panel position="top-left">
+                                <Button variant="ghost" size="icon" onClick={() => setIsExpanded(!isExpanded)} title={isExpanded ? "Collapse" : "Expand"}>
+                                        {isExpanded ? <Shrink className="h-5 w-5" /> : <Maximize className="h-5 w-5"/>}
+                                </Button>
+                            </Panel>
+
+                            <Panel position="bottom-center" className={cn(isExpanded && "block")}>
+                                <div className={cn("flex flex-col md:flex-row items-center gap-2 glass p-2 rounded-2xl")}>
+                                    <Button variant="ghost" size="icon" onClick={() => fitView({ duration: 500 })} title="Fit View">
+                                        <ZoomIn className="h-5 w-5"/>
+                                    </Button>
+                                    <Button variant="ghost" size="icon" onClick={() => setLayoutDirection('TB')} title="Top-to-Bottom Layout" className={cn(layoutDirection === 'TB' && 'text-primary bg-primary/10')}>
+                                        <LayoutIcon className="h-5 w-5"/>
+                                    </Button>
+                                    <Button variant="ghost" size="icon" onClick={() => setLayoutDirection('LR')} title="Left-to-Right Layout" className={cn(layoutDirection === 'LR' && 'text-primary bg-primary/10')}>
+                                        <Rows className="h-5 w-5"/>
+                                    </Button>
+                                    <Slider defaultValue={[timeScale]} min={0.25} max={4} step={0.25} onValueChange={(value) => setTimeScale(value[0])} className="w-32" />
+                                    <Button variant="ghost" size="icon" onClick={() => setShowYearGuides(!showYearGuides)} title="Toggle Year Guides" className={cn(showYearGuides && 'text-primary bg-primary/10')}>
+                                        <CalendarIcon className="h-5 w-5" />
+                                    </Button>
+                                </div>
+                            </Panel>
+                            </ReactFlow>
+
+                            <div className="absolute top-0 right-0 h-full w-auto pointer-events-none">
+                                <NodeEditor
+                                selectedNode={selectedNode}
+                                onNodeDataChange={(nodeId: string, newData: any) => setNodes((nds: Node[]) => nds.map((n: Node) => n.id === nodeId ? { ...n, data: { ...n.data, ...newData } } : n))}
+                                closeEditor={() => setSelectedNode(null)}
+                                startConnecting={() => {
+                                    if (selectedNode) {
+                                        setConnectingNodeId(selectedNode.id);
+                                    }
+                                    setSelectedNode(null);
+                                }}
+                                onDeleteNode={() => {
+                                    if (selectedNode) handleDeleteNode(selectedNode.id);
+                                }}
+                                onCenterNode={() => {
+                                    if (selectedNode) handleFocusNode(selectedNode.id);
+                                }}
+                                />
+                            </div>
+                            <style jsx global>{`
+                                .react-flow__edge-path {
+                                    filter: drop-shadow(0 0 5px hsl(var(--primary)));
+                                }
+
+                                .react-flow__handle {
+                                    width: 16px !important;
+                                    height: 16px !important;
+                                    border-radius: 99px;
+                                    border-width: 3px !important;
+                                    border-color: hsl(var(--primary)) !important;
+                                    background: hsl(var(--background)) !important;
+                                }
+
+                                .react-flow__handle.connecting,
+                                [data-connecting='true'] .react-flow__handle {
+                                    animation: pulse 1.5s infinite;
+                                }
+
+                                @keyframes pulse {
+                                    0%, 100% {
+                                        box-shadow: 0 0 0 0 hsl(var(--primary) / 0.7);
+                                    }
+                                    50% {
+                                        box-shadow: 0 0 0 10px hsl(var(--primary) / 0);
+                                    }
+                                }
+
+                                .react-flow__node {
+                                    --glow-color-career: hsl(28 90% 60%);
+                                    --glow-color-education: hsl(210 90% 60%);
+                                    --glow-color-financial: hsl(140 80% 50%);
+                                    --glow-color-lifeEvent: hsl(330 90% 65%);
+                                    --glow-color-goal: hsl(270 90% 65%);
+                                    --glow-color-health: hsl(0 80% 60%);
+                                    --glow-color-other: hsl(180 80% 50%);
+                                    --glow-color-system: hsl(220 80% 70%);
+                                    --glow-color-default: hsl(var(--primary));
+                                }
+                                
+                                .react-flow__node.selected,
+                                .react-flow__node:hover {
+                                    box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px var(--glow-color, var(--glow-color-default)), 0 0 15px var(--glow-color, var(--glow-color-default));
+                                }
+                                .react-flow__node[data-type='career']:hover, .react-flow__node[data-type='career'].selected { --glow-color: var(--glow-color-career); }
+                                .react-flow__node[data-type='education']:hover, .react-flow__node[data-type='education'].selected { --glow-color: var(--glow-color-education); }
+                                .react-flow__node[data-type='financial']:hover, .react-flow__node[data-type='financial'].selected { --glow-color: var(--glow-color-financial); }
+                                .react-flow__node[data-type='lifeEvent']:hover, .react-flow__node[data-type='lifeEvent'].selected { --glow-color: var(--glow-color-lifeEvent); }
+                                .react-flow__node[data-type='goal']:hover, .react-flow__node[data-type='goal'].selected { --glow-color: var(--glow-color-goal); }
+                                .react-flow__node[data-type='health']:hover, .react-flow__node[data-type='health'].selected { --glow-color: var(--glow-color-health); }
+                                .react-flow__node[data-type='other']:hover, .react-flow__node[data-type='other'].selected { --glow-color: var(--glow-color-other); }
+                                .react-flow__node[data-type='system']:hover, .react-flow__node[data-type='system'].selected { --glow-color: var(--glow-color-system); }
+
+                                .react-flow__resize-control.handle {
+                                    width: 10px;
+                                    height: 10px;
+                                    border-radius: 2px;
+                                    background-color: hsl(var(--primary));
+                                    border-color: hsl(var(--primary-foreground));
+                                    border-width: 2px;
+                                }
+                                
+                                .react-flow__node-other .editable-content {
+                                    background-color: transparent;
+                                    border: none;
+                                    width: 100%;
+                                    height: 100%;
+                                    padding: 1rem;
+                                    outline: none;
+                                    resize: none;
+                                    color: inherit;
+                                }
+                                
+                            `}</style>
+                    </div>
+                    <div className={cn('pt-8 pb-8 flex-shrink-0 w-full', isExpanded && 'hidden')}>
+                        <AIPlanGenerator onGenerate={handleAIGenerate} />
+                    </div>
+                </TabsContent>
+                <TabsContent value="timeline" className="flex-grow mt-0">
+                    <TimelineView nodes={nodes} onFocusNode={(nodeId) => { handleFocusNode(nodeId); setActiveTab('life-plan'); }} />
+                </TabsContent>
+                <TabsContent value="calendar" className="flex-grow mt-0">
+                    <FullCalendar />
+                </TabsContent>
+                <TabsContent value="resources" className="flex-grow mt-0">
+                    <ResourcesView />
+                </TabsContent>
+            </Tabs>
+        </div>
+    </div>
     );
 }
 
