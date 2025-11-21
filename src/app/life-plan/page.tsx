@@ -99,34 +99,6 @@ const nodeMenu = [
 const defaultNodeWidth = 208;
 const defaultNodeHeight = 88;
 
-const useSystemNodeSnapper = (nodes: Node[], setNodes: (nodes: Node[] | ((prevNodes: Node[]) => Node[])) => void) => {
-    const onNodeDragStop = useCallback((_: any, node: Node) => {
-        if (node.type !== 'system') {
-            return;
-        }
-
-        const systemNodes = nodes.filter(n => n.type === 'system');
-        const otherSystemNodes = systemNodes.filter(n => n.id !== node.id);
-
-        for (const otherNode of otherSystemNodes) {
-            const dx = Math.abs(node.position.x - (otherNode.position.x + (otherNode.width || 0)));
-            const dy = Math.abs(node.position.y - otherNode.y);
-
-            if (dx < 20 && dy < 20) {
-                const newX = otherNode.position.x + (otherNode.width || 0) + 10;
-                setNodes(nds =>
-                    nds.map(n =>
-                        n.id === node.id ? { ...n, position: { ...n.position, x: newX, y: otherNode.position.y } } : n
-                    )
-                );
-                break;
-            }
-        }
-    }, [nodes, setNodes]);
-
-    return onNodeDragStop;
-};
-
 const getLayoutedElements = (
   nodes: Node[],
   edges: Edge[],
@@ -348,11 +320,39 @@ const GuideLines = ({ nodes, show, type, direction, timeScale }: { nodes: Node[]
 };
 
 
-function LifePlanCanvas({ activeTab, setActiveTab, isExpanded, setIsExpanded}: any) {
-    const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-    const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+function useSystemNodeSnapper(nodes: Node[], setNodes: (nodes: Node[] | ((prevNodes: Node[]) => Node[])) => void) {
+    const onNodeDragStop = useCallback((_: any, node: Node) => {
+        if (node.type !== 'system') {
+            return;
+        }
+
+        const systemNodes = nodes.filter(n => n.type === 'system');
+        const otherSystemNodes = systemNodes.filter(n => n.id !== node.id);
+
+        for (const otherNode of otherSystemNodes) {
+            const dx = Math.abs(node.position.x - (otherNode.position.x + (otherNode.width || 0)));
+            const dy = Math.abs(node.position.y - otherNode.y);
+
+            if (dx < 20 && dy < 20) {
+                const newX = otherNode.position.x + (otherNode.width || 0) + 10;
+                setNodes(nds =>
+                    nds.map(n =>
+                        n.id === node.id ? { ...n, position: { ...n.position, x: newX, y: otherNode.position.y } } : n
+                    )
+                );
+                break;
+            }
+        }
+    }, [nodes, setNodes]);
+
+    return onNodeDragStop;
+};
+
+function LifePlanCanvas(
+    { activeTab, setActiveTab, isExpanded, setIsExpanded, nodes, setNodes, onNodesChange, edges, setEdges, onEdgesChange, selectedNode, setSelectedNode}: 
+    { activeTab: string, setActiveTab: (tab: string) => void, isExpanded: boolean, setIsExpanded: (expanded: boolean) => void, nodes: Node[], setNodes: any, onNodesChange: any, edges: Edge[], setEdges: any, onEdgesChange: any, selectedNode: Node | null, setSelectedNode: any }
+) {
     const { fitView, setCenter, getNode, getViewport } = useReactFlow();
-    const [selectedNode, setSelectedNode] = useState<Node | null>(null);
     const [connectingNodeId, setConnectingNodeId] = useState<string | null>(null);
     const [timeScale, setTimeScale] = useState(1);
     const [is3dMode, setIs3dMode] = useState(false);
@@ -529,7 +529,7 @@ function LifePlanCanvas({ activeTab, setActiveTab, isExpanded, setIsExpanded}: a
                         }
                     }}
                     nodeTypes={nodeTypes}
-                    fitView={false} // Disable fitView to allow free panning
+                    fitView={false}
                     className={cn('bg-card/30', connectingNodeId && 'cursor-crosshair')}
                     proOptions={{ hideAttribution: true }}
                     deleteKeyCode={['Backspace', 'Delete']}
@@ -758,6 +758,9 @@ function LifePlanCanvas({ activeTab, setActiveTab, isExpanded, setIsExpanded}: a
 export default function LifePlanPage() {
     const [activeTab, setActiveTab] = useState<'life-plan' | 'timeline' | 'resources' | 'calendar'>('life-plan');
     const [isExpanded, setIsExpanded] = useState(false);
+    const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+    const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+    const [selectedNode, setSelectedNode] = useState<Node | null>(null);
 
 
     return (
@@ -775,6 +778,14 @@ export default function LifePlanPage() {
             setActiveTab={setActiveTab}
             isExpanded={isExpanded}
             setIsExpanded={setIsExpanded}
+            nodes={nodes}
+            setNodes={setNodes}
+            onNodesChange={onNodesChange}
+            edges={edges}
+            setEdges={setEdges}
+            onEdgesChange={onEdgesChange}
+            selectedNode={selectedNode}
+            setSelectedNode={setSelectedNode}
           />
         </ReactFlowProvider>
     </Tabs>
