@@ -107,12 +107,20 @@ const getLayoutedElements = (
 ) => {
   const { direction, timeScale, is3dMode } = options;
   const isHorizontal = direction === 'LR';
+  const ranksep = isHorizontal ? 150 * timeScale : 100;
+  const nodesep = isHorizontal ? 100 : 150 * timeScale;
+
 
   if (!is3dMode) {
-    dagreGraph.setGraph({ rankdir: direction, nodesep: 100, ranksep: 100 * timeScale });
+    dagreGraph.setGraph({ rankdir: direction, nodesep: ranksep, ranksep: nodesep });
+
     nodes.forEach((node) => {
-      dagreGraph.setNode(node.id, { width: node.width || defaultNodeWidth, height: node.height || defaultNodeHeight });
+      const isSystem = node.type === 'system';
+      const nodeWidth = isSystem ? node.width || 250 : defaultNodeWidth;
+      const nodeHeight = isSystem ? node.height || 64 : defaultNodeHeight;
+      dagreGraph.setNode(node.id, { width: nodeWidth, height: nodeHeight });
     });
+
     edges.forEach((edge) => {
       dagreGraph.setEdge(edge.source, edge.target);
     });
@@ -120,12 +128,14 @@ const getLayoutedElements = (
   }
   
   const years = nodes.map(n => n.data.year).filter(Boolean);
-  const minYear = Math.min(...years);
+  const minYear = Math.min(...years, new Date().getFullYear());
 
   const layoutedNodes = nodes.map((node) => {
     const nodeWithPosition = !is3dMode ? dagreGraph.node(node.id) : null;
-    const nodeWidth = node.width || defaultNodeWidth;
-    const nodeHeight = node.height || defaultNodeHeight;
+    const isSystem = node.type === 'system';
+    const nodeWidth = isSystem ? node.width || 250 : defaultNodeWidth;
+    const nodeHeight = isSystem ? node.height || 64 : defaultNodeHeight;
+
     
     node.targetPosition = isHorizontal ? 'left' : 'top';
     node.sourcePosition = isHorizontal ? 'right' : 'bottom';
@@ -254,20 +264,25 @@ const ResourcesView = () => (
     </div>
 );
 
-const GuideLines = ({ nodes, show, type, direction }: { nodes: Node[], show: boolean, type: 'year' | 'month', direction: 'TB' | 'LR'}) => {
+const GuideLines = ({ nodes, show, type, direction, timeScale }: { nodes: Node[], show: boolean, type: 'year' | 'month', direction: 'TB' | 'LR', timeScale: number }) => {
     if (!show || nodes.length === 0) return null;
 
     const years = [...new Set(nodes.map(n => n.data.year).filter(y => y))].sort();
-    if (years.length < 2) return null;
+    if (years.length === 0) return null;
+    
+    const minYear = Math.min(...years);
+    const maxYear = Math.max(...years);
 
-    const firstYear = years[0];
-    const lastYear = years[years.length - 1];
-    const totalYears = lastYear - firstYear + 1;
-    const items = type === 'year' ? Array.from({ length: totalYears }, (_, i) => firstYear + i) : Array.from({ length: totalYears * 12 }, (_, i) => i);
-    const scale = direction === 'TB' ? '400px' : '600px';
+    const totalYears = maxYear - minYear + 1;
+    const items = type === 'year' ? Array.from({ length: totalYears }, (_, i) => minYear + i) : Array.from({ length: totalYears * 12 }, (_, i) => i);
+    
+    const ranksep = direction === 'LR' ? 150 * timeScale : 100;
+    const nodesep = direction === 'LR' ? 100 : 150 * timeScale;
+    
+    const yearScale = direction === 'TB' ? nodesep : ranksep;
 
     return (
-        <div className={cn("absolute inset-0 pointer-events-none", direction === 'TB' ? 'flex flex-col' : 'flex flex-row')}>
+        <div className={cn("absolute inset-0 pointer-events-none z-0", direction === 'TB' ? 'flex flex-col' : 'flex flex-row')}>
             {items.map((item, index) => (
                 <div 
                     key={index}
@@ -276,10 +291,10 @@ const GuideLines = ({ nodes, show, type, direction }: { nodes: Node[], show: boo
                         direction === 'TB' ? 'w-full border-t' : 'h-full border-l',
                         type === 'month' && 'border-primary/10'
                     )}
-                    style={direction === 'TB' ? { height: scale } : { width: scale }}
+                    style={direction === 'TB' ? { minHeight: type === 'year' ? yearScale : yearScale / 12 } : { minWidth: type === 'year' ? yearScale : yearScale / 12 }}
                 >
                     {type === 'year' && (
-                        <span className="text-xs text-primary/40 p-1">{item}</span>
+                        <span className="text-xs text-primary/40 p-1 font-semibold">{item}</span>
                     )}
                 </div>
             ))}
@@ -289,7 +304,7 @@ const GuideLines = ({ nodes, show, type, direction }: { nodes: Node[], show: boo
 
 function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSelectedNode, onFocusNode, onTemplateLoad, selectedNode, connectingNodeId, setConnectingNodeId, onDeleteNode, isExpanded, setIsExpanded, onNodeDragStop, timeScale, setTimeScale, is3dMode, setIs3dMode }: any) {
   const { fitView } = useReactFlow();
-  const [layoutDirection, setLayoutDirection] = useState<'TB' | 'LR'>('TB');
+  const [layoutDirection, setLayoutDirection] = useState<'TB' | 'LR'>('LR');
   const [showYearGuides, setShowYearGuides] = useState(false);
   const [showMonthGuides, setShowMonthGuides] = useState(false);
 
@@ -300,7 +315,7 @@ function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSe
     setEdges([...layoutedEdges]);
     window.requestAnimationFrame(() => fitView({ duration: 500 }));
   }, [nodes, edges, setNodes, setEdges, fitView, timeScale, is3dMode]);
-
+  
   const passedNodes = useMemo(() => {
     return nodes.map((node: Node) => ({
       ...node,
@@ -340,8 +355,8 @@ function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSe
           onNodeDragStop={onNodeDragStop}
         >
           <Background gap={24} size={1} color="hsl(var(--border))" />
-          <GuideLines nodes={nodes} show={showYearGuides} type="year" direction={layoutDirection} />
-          <GuideLines nodes={nodes} show={showMonthGuides} type="month" direction={layoutDirection} />
+          <GuideLines nodes={nodes} show={showYearGuides} type="year" direction={layoutDirection} timeScale={timeScale} />
+          <GuideLines nodes={nodes} show={showMonthGuides} type="month" direction={layoutDirection} timeScale={timeScale} />
            <NodeResizeControl minWidth={208} minHeight={88} isVisible={selectedNode?.type === 'system' || selectedNode?.type === 'other'}>
              <div className="w-full h-full border-2 border-dashed border-primary rounded-lg" />
            </NodeResizeControl>
@@ -572,11 +587,16 @@ function LifePlanPageContent({
 
     const onNodeDragStop = useSystemNodeSnapper(nodes, setNodes);
 
-    React.useEffect(() => {
-        const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(nodes, edges, { direction: 'LR', timeScale, is3dMode });
-        setNodes(layoutedNodes);
-        setEdges(layoutedEdges);
-        window.requestAnimationFrame(() => fitView({duration: 500}));
+    const onLayout = useCallback((direction: 'TB' | 'LR') => {
+        const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(nodes, edges, { direction, timeScale, is3dMode });
+        setNodes([...layoutedNodes]);
+        setEdges([...layoutedEdges]);
+        window.requestAnimationFrame(() => fitView({ duration: 500 }));
+    }, [nodes, edges, setNodes, setEdges, fitView, timeScale, is3dMode]);
+
+
+    useEffect(() => {
+        onLayout('LR');
     }, [timeScale, is3dMode]);
 
     const handleNodesChange = (changes: NodeChange[]) => {
@@ -777,3 +797,5 @@ export default function LifePlanPage() {
     </Tabs>
   );
 }
+
+    
