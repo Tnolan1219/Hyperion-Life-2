@@ -104,15 +104,28 @@ const NODE_GAP_HORIZONTAL = 250;
 const getLayoutedElements = (
   nodes: Node[],
   edges: Edge[],
-  options: { direction: 'TB' | 'LR', timeScale: number }
+  options: { direction: 'TB' | 'LR', timeScale: number, is3dMode: boolean }
 ) => {
-  const { direction, timeScale } = options;
+  const { direction, timeScale, is3dMode } = options;
+  if (is3dMode) {
+      // 3D mode doesn't need complex layouting, just basic positioning
+      const layoutedNodes = nodes.map(node => ({
+          ...node,
+          position: node.position, // Keep original position for 3d
+          targetPosition: Position.Top,
+          sourcePosition: Position.Bottom,
+      }));
+      return { nodes: layoutedNodes, edges };
+  }
+  
   const isHorizontal = direction === 'LR';
 
   const yearNodes = nodes.filter(n => n.data.year && n.type !== 'system');
   const systemNodes = nodes.filter(n => n.type === 'system');
   const years = yearNodes.map(n => n.data.year).filter(y => y);
   const minYear = years.length > 0 ? Math.min(...years) : new Date().getFullYear();
+
+  const layoutedNodes: Node[] = [];
 
   const nodesByYear: { [year: number]: Node[] } = {};
   yearNodes.forEach(node => {
@@ -122,8 +135,6 @@ const getLayoutedElements = (
     }
     nodesByYear[year].push(node);
   });
-
-  const layoutedNodes: Node[] = [];
   
   Object.keys(nodesByYear).sort((a, b) => parseInt(a) - parseInt(b)).forEach(yearStr => {
     const year = parseInt(yearStr);
@@ -131,18 +142,14 @@ const getLayoutedElements = (
     const yearOffset = year - minYear;
 
     nodesInYear.forEach((node, index) => {
-      // If a node was manually dragged, its y-position is preserved.
-      // Otherwise, stack them vertically.
-      const yPos = node.position.y !== 0 && !node.dragging
-        ? node.position.y 
-        : isHorizontal 
-            ? index * NODE_GAP_VERTICAL
-            : yearOffset * YEAR_GAP_VERTICAL * timeScale;
-            
-      const xPos = isHorizontal
-            ? yearOffset * YEAR_GAP_HORIZONTAL * timeScale
-            : index * NODE_GAP_HORIZONTAL;
-
+      const xPos = isHorizontal 
+        ? yearOffset * YEAR_GAP_HORIZONTAL * timeScale
+        : node.position.x; // Preserve x for vertical layout
+        
+      const yPos = isHorizontal
+        ? index * NODE_GAP_VERTICAL // Stack vertically for horizontal layout
+        : yearOffset * YEAR_GAP_VERTICAL * timeScale;
+      
       node.position = { x: xPos, y: yPos };
       node.targetPosition = isHorizontal ? Position.Left : Position.Top;
       node.sourcePosition = isHorizontal ? Position.Right : Position.Bottom;
@@ -167,6 +174,35 @@ const getLayoutedElements = (
   return { nodes: layoutedNodes, edges: layoutedEdges };
 };
 
+
+function useSystemNodeSnapper(nodes: Node[], setNodes: (nodes: Node[] | ((prevNodes: Node[]) => Node[])) => void) {
+    const onNodeDragStop = useCallback((_: React.MouseEvent, node: Node) => {
+        if (node.type !== 'system') return;
+
+        const systemTrayY = -100;
+        const snapThreshold = 50;
+
+        if (Math.abs(node.position.y - systemTrayY) > snapThreshold) {
+            // If dragged out of the tray, convert it to a 'financial' node
+            const newNode = {
+                ...node,
+                type: 'financial',
+                position: { x: node.position.x, y: node.position.y },
+                data: {
+                    ...node.data,
+                    title: node.data.title || 'New Financial Event',
+                    year: new Date().getFullYear(),
+                },
+            };
+            setNodes(nds => nds.map(n => n.id === node.id ? newNode : n));
+        } else {
+            // Snap back to tray if not dragged far enough
+            setNodes(nds => nds.map(n => n.id === node.id ? { ...n, position: { ...n.position, y: systemTrayY } } : n));
+        }
+    }, [setNodes]);
+
+    return onNodeDragStop;
+}
 
 function AIPlanGenerator({ onGenerate }: { onGenerate: (nodes: Node[], edges: Edge[]) => void }) {
     const [prompt, setPrompt] = useState('');
@@ -307,38 +343,21 @@ function useLifePlan() {
     const [showYearGuides, setShowYearGuides] = useState(true);
     const [showMonthGuides, setShowMonthGuides] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false);
+  
+    const onNodeDragStop = useSystemNodeSnapper(nodes, setNodes);
 
-    useEffect(() => {
-        const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(nodes, edges, { direction: layoutDirection, timeScale });
+    const onLayout = useCallback((direction: 'TB' | 'LR', currentNodes: Node[], currentEdges: Edge[], scale: number, is3d: boolean) => {
+        const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(currentNodes, currentEdges, { direction, timeScale: scale, is3dMode: is3d });
         setNodes(layoutedNodes);
         setEdges(layoutedEdges);
-        // We only want this to run on initial load and when layout parameters change, not when nodes themselves change.
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [layoutDirection, timeScale, setNodes, setEdges]);
+    }, [setNodes, setEdges]);
     
     // This effect re-runs the layout whenever the nodes array fundamentally changes (e.g. adding/deleting)
     useEffect(() => {
-        const { nodes: layoutedNodes } = getLayoutedElements(nodes, edges, { direction: layoutDirection, timeScale });
-        setNodes(layoutedNodes);
+        onLayout(layoutDirection, nodes, edges, timeScale, is3dMode);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [nodes.length, timeScale, layoutDirection, setNodes]);
+    }, [nodes.length, timeScale, layoutDirection, is3dMode]);
 
-
-    const onNodeDragStop = useCallback((_: React.MouseEvent, node: Node) => {
-        const isHorizontal = layoutDirection === 'LR';
-        if (!isHorizontal) return; // Only implement for horizontal timeline for now
-
-        const yearNodes = nodes.filter(n => n.data.year && n.type !== 'system');
-        const years = yearNodes.map(n => n.data.year).filter(Boolean);
-        const minYear = years.length > 0 ? Math.min(...years) : new Date().getFullYear();
-        
-        const year = Math.round(node.position.x / (YEAR_GAP_HORIZONTAL * timeScale)) + minYear;
-        
-        const updatedNode = { ...node, data: { ...node.data, year } };
-        const newNodes = nodes.map(n => n.id === node.id ? updatedNode : n);
-        const { nodes: layoutedNodes } = getLayoutedElements(newNodes, edges, { direction: layoutDirection, timeScale });
-        setNodes(layoutedNodes);
-    }, [nodes, edges, layoutDirection, setNodes, timeScale]);
 
     const passedNodes = useMemo(() => {
         return nodes.map((node: Node) => ({
@@ -399,7 +418,7 @@ function useLifePlan() {
 
         const template = lifePlanTemplates[templateName as keyof typeof lifePlanTemplates];
         if (template) {
-            const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(template.nodes, template.edges, { direction: layoutDirection, timeScale });
+            const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(template.nodes, template.edges, { direction: layoutDirection, timeScale, is3dMode });
             setNodes(layoutedNodes);
             setEdges(layoutedEdges);
         } else {
@@ -409,7 +428,7 @@ function useLifePlan() {
     };
 
     const handleAIGenerate = (aiNodes: Node[], aiEdges: Edge[]) => {
-        const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(aiNodes, aiEdges, { direction: layoutDirection, timeScale });
+        const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(aiNodes, aiEdges, { direction: layoutDirection, timeScale, is3dMode });
         setNodes(layoutedNodes);
         setEdges(layoutedEdges);
         setSelectedNode(null);
@@ -442,6 +461,7 @@ function useLifePlan() {
         isExpanded,
         setIsExpanded,
         fitView,
+        layoutDirection,
         setLayoutDirection,
         timeScale,
         setTimeScale,
@@ -474,6 +494,7 @@ function LifePlanCanvas() {
         isExpanded,
         setIsExpanded,
         fitView,
+        layoutDirection,
         setLayoutDirection,
         timeScale,
         setTimeScale,
@@ -751,4 +772,3 @@ export default function LifePlanPage() {
         </ReactFlowProvider>
     );
 }
-
