@@ -199,6 +199,15 @@ service cloud.firestore {
             allow get, list, create, update, delete: if isOwner(userId);
         }
     }
+    
+    /**
+     * @description Rules for the /users/{userId}/lifePlans/{planId} collection.
+     * @path /users/{userId}/lifePlans/{planId}
+     * @principle Enforces document ownership for writes.
+     */
+    match /users/{userId}/lifePlans/{planId} {
+        allow get, list, create, update, delete: if isOwner(userId);
+    }
 
     /**
      * @description Rules for the /tips/{tipId} collection.

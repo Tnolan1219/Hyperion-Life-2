@@ -314,6 +314,21 @@
         }
       },
       "required": ["userId", "level", "xp", "stats", "netWorth"]
+    },
+    "LifePlan": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "LifePlan",
+      "type": "object",
+      "description": "Represents a saved Life Plan map for a user, containing all nodes and edges.",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the saved Life Plan." },
+        "userId": { "type": "string", "description": "Reference to User. (Relationship: User 1:N LifePlan)" },
+        "name": { "type": "string", "description": "The user-given name for this Life Plan." },
+        "nodes": { "type": "array", "description": "An array of all node objects in the plan.", "items": { "type": "object" } },
+        "edges": { "type": "array", "description": "An array of all edge objects in the plan.", "items": { "type": "object" } },
+        "createdAt": { "type": "string", "description": "Creation date and time of the plan.", "format": "date-time" }
+      },
+      "required": ["id", "userId", "name", "nodes", "edges"]
     }
   },
   "auth": {
@@ -334,12 +349,13 @@
       { "path": "/users/{userId}/lifeStats/{statsId}", "definition": { "entityName": "LifeStats", "schema": { "$ref": "#/backend/entities/LifeStats" }, "description": "Stores the user's gamified life statistics." } },
       { "path": "/users/{userId}/lifeStats/{statsId}/quests/{questId}", "definition": { "entityName": "Quest", "schema": { "$ref": "#/backend/entities/Quest" }, "description": "Stores quests for the user." } },
       { "path": "/users/{userId}/lifeStats/{statsId}/badges/{badgeId}", "definition": { "entityName": "Badge", "schema": { "$ref": "#/backend/entities/Badge" }, "description": "Stores badges earned by the user." } },
+      { "path": "/users/{userId}/lifePlans/{planId}", "definition": { "entityName": "LifePlan", "schema": { "$ref": "#/backend/entities/LifePlan" }, "description": "Stores the user's saved Life Plan maps." } },
       { "path": "/tips/{tipId}", "definition": { "entityName": "Tip", "schema": { "$ref": "#/backend/entities/Tip" }, "description": "Stores financial tips." } },
       { "path": "/links/{linkId}", "definition": { "entityName": "Link", "schema": { "$ref": "#/backend/entities/Link" }, "description": "Stores links to external resources." } },
       { "path": "/newsCache/{newsCacheId}", "definition": { "entityName": "NewsCache", "schema": { "$ref": "#/backend/entities/NewsCache" }, "description": "Stores cached news articles." } },
       { "path": "/users/{userId}/advice/{adviceId}", "definition": { "entityName": "Advice", "schema": { "$ref": "#/backend/entities/Advice" }, "description": "Stores AI-generated financial advice for the user." } },
       { "path": "/users/{userId}/aiSessions/{aiSessionId}", "definition": { "entityName": "AiSession", "schema": { "$ref": "#/backend/entities/AiSession" }, "description": "Stores AI coaching sessions for the user." } }
     ],
-    "reasoning": "The Firestore data structure has been updated to support the new gamification features. The 'LifeStats' entity now includes more detailed sub-stats and new objects for 'avatar' and 'balanceMeter'. Crucially, new sub-collections for 'quests' and 'badges' have been added under `/users/{userId}/lifeStats/{statsId}`. This maintains our principle of hierarchical data ownership, ensuring that a user's quests and badges are directly tied to their life stats document and can be secured with the same ownership-based rules, while also allowing for efficient querying of these items without loading the entire LifeStats document."
+    "reasoning": "A new collection `/users/{userId}/lifePlans/{planId}` has been added to store saved Life Plan maps. This follows the established pattern of nesting user-specific data under their `userId` for security and data locality. This allows each user to save multiple named versions of their Life Plan, each containing the nodes and edges for that specific scenario."
   }
 }
