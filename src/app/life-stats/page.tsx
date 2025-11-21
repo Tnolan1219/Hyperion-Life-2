@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, doc, increment, runTransaction } from 'firebase/firestore';
@@ -18,6 +18,7 @@ import { GoalDialog } from '@/components/goals/GoalDialog';
 import { differenceInDays } from 'date-fns';
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from 'recharts';
 import { ChartContainer } from '@/components/ui/chart';
+import { CardFooter } from '@/components/ui/card';
 
 // Define the structure of the LifeStats document
 interface LifeStats {
@@ -499,55 +500,57 @@ export default function LifeStatsPage() {
   return (
     <>
     <div className="space-y-8">
-      <div className="flex justify-between items-center">
         <div>
             <h1 className="text-4xl font-bold text-primary">Hyperion Self – Life Plan</h1>
-            <p className="text-muted-foreground mt-2">
-                Your gamified character sheet for life.
-            </p>
+            <div className="flex justify-between items-center">
+                 <p className="text-muted-foreground mt-2">
+                    Your gamified character sheet for life.
+                </p>
+                <div className="hidden sm:flex items-center gap-2 glass rounded-full px-3 py-1.5 text-sm font-semibold text-amber-400 shadow-[0_0_15px_rgba(252,163,17,0.2)] hover:shadow-[0_0_20px_rgba(252,163,17,0.4)] transition-shadow">
+                    <Gem className="h-5 w-5" />
+                    {isLoading ? <Skeleton className="h-5 w-20" /> : <span>{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', notation: 'compact' }).format(lifeStats?.netWorth || 0)}</span>}
+                </div>
+            </div>
         </div>
-        <div className="hidden sm:flex items-center gap-2 glass rounded-full px-3 py-1.5 text-sm font-semibold text-amber-400 shadow-[0_0_15px_rgba(252,163,17,0.2)] hover:shadow-[0_0_20px_rgba(252,163,17,0.4)] transition-shadow">
-            <Gem className="h-5 w-5" />
-             {isLoading ? <Skeleton className="h-5 w-20" /> : <span>{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', notation: 'compact' }).format(lifeStats?.netWorth || 0)}</span>}
-        </div>
-      </div>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Left Panel: Stats */}
-        <div className="lg:col-span-4 space-y-6">
-            <h2 className="text-2xl font-bold text-center lg:text-left">Core Attributes</h2>
-            {isLoading ? (
-                Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-[76px] w-full" />)
-            ) : (
-                Object.keys(statConfig).map((key) => (
-                    <StatCard 
-                        key={key} 
-                        statKey={key as StatKey}
-                        statsData={lifeStats?.stats || null}
-                    />
-                ))
-            )}
+        
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div className="lg:col-span-4 space-y-6">
+                <h2 className="text-2xl font-bold">Core Attributes</h2>
+                {isLoading ? (
+                    Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-[76px] w-full" />)
+                ) : (
+                    Object.keys(statConfig).map((key) => (
+                        <StatCard 
+                            key={key} 
+                            statKey={key as StatKey}
+                            statsData={lifeStats?.stats || null}
+                        />
+                    ))
+                )}
+            </div>
+
+            <div className="lg:col-span-8 flex items-center justify-center">
+                <CharacterAvatar level={levelInfo.level} avatarData={lifeStats?.avatar || null} />
+            </div>
         </div>
 
-        {/* Center Panel: Avatar */}
-        <div className="lg:col-span-4 flex items-center justify-center">
-            <CharacterAvatar level={levelInfo.level} avatarData={lifeStats?.avatar || null} />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pt-8">
+             <div className="lg:col-span-1">
+                <AiAdvisorPanel onCompleteQuest={handleCompleteQuest} />
+            </div>
+            <div className="lg:col-span-1">
+                <BalanceMeter statsData={lifeStats?.stats || null} />
+            </div>
+            <div className="lg:col-span-1">
+                 <MilestoneBadges />
+            </div>
         </div>
-
-        {/* Right Panel: Advisor */}
-        <div className="lg:col-span-4 space-y-8">
-            <AiAdvisorPanel onCompleteQuest={handleCompleteQuest} />
-            <BalanceMeter statsData={lifeStats?.stats || null} />
-            <MilestoneBadges />
-        </div>
-
-        {/* Bottom Section */}
+        
         <div className="lg:col-span-12">
             <ProgressTimeline />
             <QuickActions onAddGoal={handleAddGoal} />
         </div>
 
-         {/* Goals Section */}
         <div className="lg:col-span-12 mt-8">
             <div className="flex justify-between items-center mb-4">
                 <h2 className="text-2xl font-bold">Financial Quests (Goals)</h2>
@@ -573,8 +576,6 @@ export default function LifeStatsPage() {
                  </Card>
              )}
         </div>
-
-      </div>
     </div>
     <GoalDialog isOpen={isGoalDialogOpen} setIsOpen={setIsGoalDialogOpen} goal={selectedGoal} />
     </>
