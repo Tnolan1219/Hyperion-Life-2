@@ -348,12 +348,7 @@ const GuideLines = ({ nodes, show, type, direction, timeScale }: { nodes: Node[]
 };
 
 
-function LifePlanPageContent({
-  activeTab,
-  setActiveTab,
-  isExpanded,
-  setIsExpanded
-}: any) {
+function LifePlanCanvas({ activeTab, setActiveTab, isExpanded, setIsExpanded}: any) {
     const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
     const { fitView, setCenter, getNode, getViewport } = useReactFlow();
@@ -483,8 +478,7 @@ function LifePlanPageContent({
     };
 
     return (
-      <ReactFlowProvider>
-        <div className={cn("flex flex-col", isExpanded ? "fixed inset-0 bg-background z-50 p-0 h-screen" : "relative h-[calc(100vh-8rem)]")}>
+      <div className={cn("flex flex-col", isExpanded ? "fixed inset-0 bg-background z-50 p-0 h-screen" : "relative h-[calc(100vh-8rem)]")}>
         <div className="flex flex-col items-center justify-center">
             <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">
                 Life Plan
@@ -535,7 +529,7 @@ function LifePlanPageContent({
                         }
                     }}
                     nodeTypes={nodeTypes}
-                    fitView
+                    fitView={false} // Disable fitView to allow free panning
                     className={cn('bg-card/30', connectingNodeId && 'cursor-crosshair')}
                     proOptions={{ hideAttribution: true }}
                     deleteKeyCode={['Backspace', 'Delete']}
@@ -758,7 +752,6 @@ function LifePlanPageContent({
             <ResourcesView />
         </TabsContent>
       </div>
-    </ReactFlowProvider>
     );
 }
 
@@ -776,14 +769,14 @@ export default function LifePlanPage() {
             isExpanded ? "fixed inset-0 bg-background z-50 p-0" : "relative h-[calc(100vh-8rem)]"
         )}
     >
-        
-          <LifePlanPageContent
+        <ReactFlowProvider>
+          <LifePlanCanvas
             activeTab={activeTab}
             setActiveTab={setActiveTab}
             isExpanded={isExpanded}
             setIsExpanded={setIsExpanded}
           />
-        
+        </ReactFlowProvider>
     </Tabs>
     );
 }
