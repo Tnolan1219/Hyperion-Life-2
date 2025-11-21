@@ -177,6 +177,7 @@ const getLayoutedElements = (
 };
 
 
+
 function AIPlanGenerator({ onGenerate }: { onGenerate: (nodes: Node[], edges: Edge[]) => void }) {
     const [prompt, setPrompt] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -323,6 +324,34 @@ function LifePlanPageContent({
     const [showYearGuides, setShowYearGuides] = useState(true);
     const [showMonthGuides, setShowMonthGuides] = useState(false);
   
+    const useSystemNodeSnapper = (nodes: Node[], setNodes: (nodes: Node[] | ((prevNodes: Node[]) => Node[])) => void) => {
+        const onNodeDragStop = useCallback((_: any, node: Node) => {
+            if (node.type !== 'system') {
+                return;
+            }
+
+            const systemNodes = nodes.filter(n => n.type === 'system');
+            const otherSystemNodes = systemNodes.filter(n => n.id !== node.id);
+
+            for (const otherNode of otherSystemNodes) {
+                const dx = Math.abs(node.position.x - (otherNode.position.x + (otherNode.width || 0)));
+                const dy = Math.abs(node.position.y - otherNode.position.y);
+
+                if (dx < 20 && dy < 20) {
+                    const newX = otherNode.position.x + (otherNode.width || 0) + 10;
+                    setNodes(nds =>
+                        nds.map(n =>
+                            n.id === node.id ? { ...n, position: { ...n.position, x: newX, y: otherNode.position.y } } : n
+                        )
+                    );
+                    break;
+                }
+            }
+        }, [nodes, setNodes]);
+
+        return onNodeDragStop;
+    };
+
     const onNodeDragStop = useSystemNodeSnapper(nodes, setNodes);
 
     const onLayout = useCallback((direction: 'TB' | 'LR', currentNodes: Node[], currentEdges: Edge[], scale: number, is3d: boolean) => {
@@ -600,7 +629,7 @@ function LifePlanPageContent({
                         }}
                         />
                     </div>
-                    <style jsx global>{`
+                    <style jsx global>{\`
                         .react-flow__edge-path {
                             filter: drop-shadow(0 0 5px hsl(var(--primary)));
                         }
@@ -677,7 +706,8 @@ function LifePlanPageContent({
                         }
 
 
-                    `}</style>
+                    \`}
+</style>
                 </div>
             </div>
             <div className={cn('pt-8 pb-8 flex-shrink-0 w-full', isExpanded && 'hidden')}>
@@ -702,7 +732,7 @@ export default function LifePlanPage() {
     const [isExpanded, setIsExpanded] = useState(false);
 
 
-  return (
+    return (
     <Tabs 
         value={activeTab}
         onValueChange={(value) => setActiveTab(value as any)}
@@ -721,6 +751,8 @@ export default function LifePlanPage() {
             />
         </ReactFlowProvider>
     </Tabs>
-  );
+    );
 }
+    
+
     
