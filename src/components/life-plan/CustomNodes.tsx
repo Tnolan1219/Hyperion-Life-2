@@ -3,7 +3,7 @@ import React from 'react';
 import { Handle, Position, NodeResizer, useReactFlow, useNodeId } from 'reactflow';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { Briefcase, GraduationCap, PiggyBank, Heart, Flag, Zap, Users, Repeat } from 'lucide-react';
+import { Briefcase, GraduationCap, PiggyBank, Heart, Flag, Zap, Users, Repeat, HeartPulse } from 'lucide-react';
 import { Textarea } from '../ui/textarea';
 
 const iconMap = {
@@ -12,6 +12,7 @@ const iconMap = {
   financial: PiggyBank,
   lifeEvent: Heart,
   goal: Flag,
+  health: HeartPulse,
   other: Zap,
   system: Repeat,
 };
@@ -22,6 +23,7 @@ const colorMap = {
   financial: 'green',
   lifeEvent: 'pink',
   goal: 'purple',
+  health: 'red',
   other: 'teal',
   system: 'system',
 };
@@ -221,5 +223,7 @@ export const EducationNode = (props: any) => (
 );
 export const CareerNode = (props: any) => <CustomNode {...props} type="career" />;
 export const GoalNode = (props: any) => <CustomNode {...props} type="goal" />;
+export const HealthNode = (props: any) => <CustomNode {...props} type="health" />;
 export const OtherNode = (props: any) => <CustomNode {...props} type="other" />;
 export const SystemNode = (props: any) => <CustomNode {...props} type="system" />;
+    

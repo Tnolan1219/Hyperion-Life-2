@@ -26,6 +26,7 @@ import {
   EducationNode,
   CareerNode,
   GoalNode,
+  HealthNode,
   OtherNode,
   SystemNode,
 } from '@/components/life-plan/CustomNodes';
@@ -52,6 +53,7 @@ import {
   Shrink,
   Repeat,
   Route,
+  HeartPulse,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { NodeEditor } from '@/components/life-plan/NodeEditor';
@@ -81,6 +83,7 @@ const nodeTypes = {
   education: EducationNode,
   career: CareerNode,
   goal: GoalNode,
+  health: HealthNode,
   other: OtherNode,
   system: SystemNode,
 };
@@ -90,6 +93,7 @@ const nodeMenu = [
   { type: 'education', label: 'Education', icon: GraduationCap, color: 'blue' },
   { type: 'financial', label: 'Milestone', icon: PiggyBank, color: 'green' },
   { type: 'lifeEvent', label: 'Life Event', icon: Heart, color: 'pink' },
+  { type: 'health', label: 'Health', icon: HeartPulse, color: 'red' },
   { type: 'goal', label: 'Goal', icon: Flag, color: 'purple' },
   { type: 'other', label: 'Note', icon: Zap, color: 'teal' },
 ];
@@ -187,7 +191,7 @@ function AIPlanGenerator({ onGenerate }: { onGenerate: (nodes: Node[], edges: Ed
 
         For each 'node', include:
         - id: A unique string identifier (e.g., "node_1", "node_2").
-        - type: One of the following strings: 'career', 'education', 'financial', 'lifeEvent', 'goal', 'other'.
+        - type: One of the following strings: 'career', 'education', 'financial', 'lifeEvent', 'goal', 'health', 'other'.
         - position: An object with { x: 0, y: 0 }.
         - data: An object with a 'title' (string), 'year' (number, representing the year of the event), and optionally 'amount' (number) and 'frequency' ('one-time' or 'yearly'). Infer amounts, years, and frequencies where possible.
 
@@ -302,43 +306,6 @@ const GuideLines = ({ nodes, show, type, direction, timeScale }: { nodes: Node[]
     );
 };
 
-function LifePlanFlowProvider(props: any) {
-  return (
-    <ReactFlowProvider>
-      <LifePlanPageContent {...props} />
-    </ReactFlowProvider>
-  )
-}
-
-function useSystemNodeSnapper(nodes: Node[], setNodes: (nodes: Node[] | ((prevNodes: Node[]) => Node[])) => void) {
-    const onNodeDragStop = useCallback((event: React.MouseEvent, node: Node) => {
-        if (node.type === 'system') {
-            const systemNodes = nodes.filter(n => n.type === 'system');
-            const otherNodes = nodes.filter(n => n.type !== 'system');
-            
-            const snappedY = 10; // Snap to top
-            
-            setNodes((prevNodes) => {
-              let currentX = 10;
-              const updatedSystemNodes = systemNodes.map(sn => {
-                  if (sn.id === node.id) {
-                      sn.position.y = snappedY;
-                  }
-                  return sn;
-              }).sort((a,b) => a.position.x - b.position.x)
-              .map(sn => {
-                  sn.position.x = currentX;
-                  currentX += (sn.width || 208) + 10;
-                  return sn;
-              });
-              return [...otherNodes, ...updatedSystemNodes];
-            });
-        }
-    }, [nodes, setNodes]);
-
-    return onNodeDragStop;
-}
-
 function LifePlanPageContent({
   activeTab,
   setActiveTab,
@@ -353,7 +320,7 @@ function LifePlanPageContent({
     const [timeScale, setTimeScale] = useState(1);
     const [is3dMode, setIs3dMode] = useState(false);
     const [layoutDirection, setLayoutDirection] = useState<'TB' | 'LR'>('LR');
-    const [showYearGuides, setShowYearGuides] = useState(false);
+    const [showYearGuides, setShowYearGuides] = useState(true);
     const [showMonthGuides, setShowMonthGuides] = useState(false);
   
     const onNodeDragStop = useSystemNodeSnapper(nodes, setNodes);
@@ -366,14 +333,9 @@ function LifePlanPageContent({
     }, [setNodes, setEdges, fitView]);
     
     useEffect(() => {
-        onLayout(layoutDirection, nodes, edges, timeScale, is3dMode);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [timeScale, is3dMode]);
-
-    const handleLayoutDirectionChange = (direction: 'TB' | 'LR') => {
-        setLayoutDirection(direction);
-        onLayout(direction, nodes, edges, timeScale, is3dMode);
-    };
+      onLayout(layoutDirection, nodes, edges, timeScale, is3dMode);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [timeScale, is3dMode, layoutDirection]);
 
 
     const passedNodes = useMemo(() => {
@@ -598,10 +560,10 @@ function LifePlanPageContent({
                             <Button variant="ghost" size="icon" onClick={() => fitView({ duration: 500 })} title="Fit View">
                                 <ZoomIn className="h-5 w-5"/>
                             </Button>
-                            <Button variant="ghost" size="icon" onClick={() => handleLayoutDirectionChange('TB')} title="Top-to-Bottom Layout">
+                            <Button variant="ghost" size="icon" onClick={() => setLayoutDirection('TB')} title="Top-to-Bottom Layout">
                                 <LayoutIcon className="h-5 w-5"/>
                             </Button>
-                            <Button variant="ghost" size="icon" onClick={() => handleLayoutDirectionChange('LR')} title="Left-to-Right Layout">
+                            <Button variant="ghost" size="icon" onClick={() => setLayoutDirection('LR')} title="Left-to-Right Layout">
                                 <Rows className="h-5 w-5"/>
                             </Button>
                             <Slider defaultValue={[timeScale]} min={0.25} max={4} step={0.25} onValueChange={(value) => setTimeScale(value[0])} className="w-32" />
@@ -649,6 +611,7 @@ function LifePlanPageContent({
                             --glow-color-financial: hsl(140 80% 50%);
                             --glow-color-lifeEvent: hsl(330 90% 65%);
                             --glow-color-goal: hsl(270 90% 65%);
+                            --glow-color-health: hsl(0 80% 60%);
                             --glow-color-other: hsl(180 80% 50%);
                             --glow-color-system: hsl(220 80% 70%);
                             --glow-color-default: hsl(var(--primary));
@@ -664,6 +627,7 @@ function LifePlanPageContent({
                         .react-flow__node[data-type='financial']:hover, .react-flow__node[data-type='financial'][data-connecting='true'] { --glow-color: var(--glow-color-financial); }
                         .react-flow__node[data-type='lifeEvent']:hover, .react-flow__node[data-type='lifeEvent'][data-connecting='true'] { --glow-color: var(--glow-color-lifeEvent); }
                         .react-flow__node[data-type='goal']:hover, .react-flow__node[data-type='goal'][data-connecting='true'] { --glow-color: var(--glow-color-goal); }
+                        .react-flow__node[data-type='health']:hover, .react-flow__node[data-type='health'][data-connecting='true'] { --glow-color: var(--glow-color-health); }
                         .react-flow__node[data-type='other']:hover, .react-flow__node[data-type='other'][data-connecting='true'] { --glow-color: var(--glow-color-other); }
                         .react-flow__node[data-type='system']:hover, .react-flow__node[data-type='system'][data-connecting='true'] { --glow-color: var(--glow-color-system); }
 
@@ -701,6 +665,7 @@ function LifePlanPageContent({
                         .react-flow-3d-mode .react-flow__edge-path[data-node-type='financial'] { --edge-color: hsl(140 80% 50%); }
                         .react-flow-3d-mode .react-flow__edge-path[data-node-type='lifeEvent'] { --edge-color: hsl(330 90% 65%); }
                         .react-flow-3d-mode .react-flow__edge-path[data-node-type='goal'] { --edge-color: hsl(270 90% 65%); }
+                        .react-flow-3d-mode .react-flow__edge-path[data-node-type='health'] { --edge-color: hsl(0 80% 60%); }
                         .react-flow-3d-mode .react-flow__edge-path[data-node-type='other'] { --edge-color: hsl(180 80% 50%); }
                         
                         .react-flow-3d-mode .react-flow__edge-path {
@@ -758,3 +723,4 @@ export default function LifePlanPage() {
     </Tabs>
   );
 }
+    
