@@ -351,7 +351,7 @@ function LifePlanPageContent({
 
         return onNodeDragStop;
     };
-
+    
     const onNodeDragStop = useSystemNodeSnapper(nodes, setNodes);
 
     const onLayout = useCallback((direction: 'TB' | 'LR', currentNodes: Node[], currentEdges: Edge[], scale: number, is3d: boolean) => {
@@ -471,7 +471,7 @@ function LifePlanPageContent({
     };
 
     return (
-      <div className={cn("flex flex-col", isExpanded ? "fixed inset-0 bg-background z-50 p-0 h-screen" : "relative h-[calc(100vh-8rem)]")}>
+        <div className={cn("flex flex-col", isExpanded ? "fixed inset-0 bg-background z-50 p-0 h-screen" : "relative h-[calc(100vh-8rem)]")}>
         <div className="flex flex-col items-center justify-center">
             <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">
                 Life Plan
@@ -629,7 +629,7 @@ function LifePlanPageContent({
                         }}
                         />
                     </div>
-                    <style jsx global>{\`
+                    <style jsx global>{`
                         .react-flow__edge-path {
                             filter: drop-shadow(0 0 5px hsl(var(--primary)));
                         }
@@ -706,7 +706,7 @@ function LifePlanPageContent({
                         }
 
 
-                    \`}
+                    `}
 </style>
                 </div>
             </div>
@@ -741,18 +741,16 @@ export default function LifePlanPage() {
             isExpanded ? "fixed inset-0 bg-background z-50 p-0" : "relative h-[calc(100vh-8rem)]"
         )}
     >
-        
         <ReactFlowProvider>
-            <LifePlanPageContent
+          <LifePlanPageContent
             activeTab={activeTab}
             setActiveTab={setActiveTab}
             isExpanded={isExpanded}
             setIsExpanded={setIsExpanded}
-            />
+          />
         </ReactFlowProvider>
     </Tabs>
     );
 }
-    
 
     
