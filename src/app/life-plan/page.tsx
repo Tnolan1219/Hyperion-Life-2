@@ -14,7 +14,6 @@ import ReactFlow, {
   Panel,
   NodeChange,
   NodeResizeControl,
-  NodeToolbar,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { lifePlanTemplates } from '@/lib/life-plan-templates';
@@ -48,7 +47,6 @@ import {
   Rows,
   Maximize,
   CalendarDays,
-  Search as SearchIcon,
   Shrink,
   Repeat,
   Route,
@@ -67,7 +65,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { LifePlanTimeline } from '@/components/life-plan/LifePlanTimeline';
 import { ContactManager } from '@/components/life-plan/resources/ContactManager';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CalendarView } from '@/components/life-plan/calendar/CalendarView';
 import { FullCalendar } from '@/components/life-plan/calendar/FullCalendar';
 import { Slider } from '@/components/ui/slider';
 
@@ -97,72 +94,22 @@ const nodeMenu = [
 ];
 
 const defaultNodeWidth = 208;
-const defaultNodeHeight = 88;
-
-const useSystemNodeSnapper = (nodes: Node[], setNodes: (nodes: Node[] | ((prevNodes: Node[]) => Node[])) => void) => {
-    const onNodeDragStop = useCallback((_: any, node: Node) => {
-        if (node.type !== 'system') {
-            return;
-        }
-
-        const systemNodes = nodes.filter(n => n.type === 'system');
-        const otherSystemNodes = systemNodes.filter(n => n.id !== node.id);
-
-        for (const otherNode of otherSystemNodes) {
-            const dx = Math.abs(node.position.x - (otherNode.position.x + (otherNode.width || 0)));
-            const dy = Math.abs(node.position.y - otherNode.position.y);
-
-            if (dx < 20 && dy < 20) {
-                const newX = otherNode.position.x + (otherNode.width || 0) + 10;
-                setNodes(nds =>
-                    nds.map(n =>
-                        n.id === node.id ? { ...n, position: { ...n.position, x: newX, y: otherNode.position.y } } : n
-                    )
-                );
-                break;
-            }
-        }
-    }, [nodes, setNodes]);
-
-    return onNodeDragStop;
-};
-
+const YEAR_GAP_HORIZONTAL = 350;
+const YEAR_GAP_VERTICAL = 250;
+const NODE_GAP_VERTICAL = 120;
+const NODE_GAP_HORIZONTAL = 250;
 
 const getLayoutedElements = (
   nodes: Node[],
   edges: Edge[],
-  options: { direction: 'TB' | 'LR', timeScale: number, is3dMode: boolean }
+  options: { direction: 'TB' | 'LR', timeScale: number }
 ) => {
-  const { direction, timeScale, is3dMode } = options;
+  const { direction, timeScale } = options;
   const isHorizontal = direction === 'LR';
-  
-  if (is3dMode) {
-    // 3D Layout Logic
-    const years = nodes.map(n => n.data.year).filter(Boolean);
-    const minYear = Math.min(...years, new Date().getFullYear());
-    const layoutedNodes = nodes.map((node) => {
-      const yearOffset = (node.data.year || minYear) - minYear;
-      node.position = {
-          x: (Math.random() - 0.5) * 400,
-          y: yearOffset * 200 * timeScale,
-      };
-      node.targetPosition = isHorizontal ? 'left' : 'top';
-      node.sourcePosition = isHorizontal ? 'right' : 'bottom';
-      return node;
-    });
-    const layoutedEdges = edges.map(edge => {
-      edge.type = 'smoothstep';
-      edge.animated = false;
-      edge.data = { ...edge.data, is3dMode: true, sourceNodeType: nodes.find(n => n.id === edge.source)?.type };
-      return edge;
-    });
-    return { nodes: layoutedNodes, edges: layoutedEdges };
-  }
 
-  // 2D Spacetime Layout Logic
   const yearNodes = nodes.filter(n => n.data.year && n.type !== 'system');
   const systemNodes = nodes.filter(n => n.type === 'system');
-  const years = yearNodes.map(n => n.data.year).filter(Boolean);
+  const years = yearNodes.map(n => n.data.year).filter(y => y);
   const minYear = years.length > 0 ? Math.min(...years) : new Date().getFullYear();
 
   const nodesByYear: { [year: number]: Node[] } = {};
@@ -175,50 +122,43 @@ const getLayoutedElements = (
   });
 
   const layoutedNodes: Node[] = [];
-  const yearGap = isHorizontal ? 300 * timeScale : 200 * timeScale;
-  const nodeGap = isHorizontal ? 120 : 150;
-
-  Object.keys(nodesByYear).sort().forEach(yearStr => {
+  
+  Object.keys(nodesByYear).sort((a, b) => parseInt(a) - parseInt(b)).forEach(yearStr => {
     const year = parseInt(yearStr);
-    const yearNodes = nodesByYear[year];
+    const nodesInYear = nodesByYear[year];
     const yearOffset = year - minYear;
 
-    yearNodes.forEach((node, index) => {
-      // If node has been dragged, we respect its position.
-      // A simple check could be if it has a 'dragging' property set by React Flow.
-      // However, to keep positions relative to the timeline, we recalculate.
-      // A better approach would be to store an offset if dragged. For now, let's relayout.
-      if (node.dragging) {
-        layoutedNodes.push(node);
-        return;
-      }
-      
-      const xPos = isHorizontal ? yearOffset * yearGap : index * (defaultNodeWidth + 50);
-      const yPos = isHorizontal ? index * nodeGap : yearOffset * yearGap;
+    nodesInYear.forEach((node, index) => {
+      // If a node was manually dragged, its y-position is preserved.
+      // Otherwise, stack them vertically.
+      const yPos = node.position.y !== 0 && !node.dragging
+        ? node.position.y 
+        : isHorizontal 
+            ? index * NODE_GAP_VERTICAL
+            : yearOffset * YEAR_GAP_VERTICAL * timeScale;
+            
+      const xPos = isHorizontal
+            ? yearOffset * YEAR_GAP_HORIZONTAL * timeScale
+            : index * NODE_GAP_HORIZONTAL;
 
-      node.position = {
-        x: xPos,
-        y: yPos
-      };
-      node.targetPosition = isHorizontal ? 'left' : 'top';
-      node.sourcePosition = isHorizontal ? 'right' : 'bottom';
+      node.position = { x: xPos, y: yPos };
+      node.targetPosition = isHorizontal ? Position.Left : Position.Top;
+      node.sourcePosition = isHorizontal ? Position.Right : Position.Bottom;
       layoutedNodes.push(node);
     });
   });
 
-  // Position system nodes separately at the top
+  // Position system nodes separately
   let currentX = 10;
   systemNodes.forEach(node => {
-    node.position = { x: currentX, y: 10 };
+    node.position = { x: currentX, y: isHorizontal ? -100 : -150 };
     currentX += (node.width || defaultNodeWidth) + 10;
     layoutedNodes.push(node);
   });
 
-
   const layoutedEdges = edges.map(edge => {
     edge.type = 'smoothstep';
     edge.animated = true;
-    edge.data = { ...edge.data, is3dMode: false };
     return edge;
   });
 
@@ -329,7 +269,7 @@ const GuideLines = ({ nodes, show, type, direction, timeScale }: { nodes: Node[]
     const totalYears = maxYear - minYear + 1;
     const items = type === 'year' ? Array.from({ length: totalYears }, (_, i) => minYear + i) : Array.from({ length: totalYears * 12 }, (_, i) => i);
     
-    const yearScale = direction === 'LR' ? 300 * timeScale : 200 * timeScale;
+    const yearScale = direction === 'LR' ? YEAR_GAP_HORIZONTAL * timeScale : YEAR_GAP_VERTICAL * timeScale;
 
     return (
         <div className={cn("absolute inset-0 pointer-events-none z-0", direction === 'TB' ? 'flex flex-col' : 'flex flex-row')}>
@@ -352,10 +292,11 @@ const GuideLines = ({ nodes, show, type, direction, timeScale }: { nodes: Node[]
     );
 };
 
+
 function LifePlanCanvas() {
     const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-    const { fitView, setCenter, getNode, getViewport } = useReactFlow();
+    const { fitView, setCenter, getNode, getViewport, project } = useReactFlow();
     const [selectedNode, setSelectedNode] = useState<Node | null>(null);
     const [connectingNodeId, setConnectingNodeId] = useState<string | null>(null);
     const [timeScale, setTimeScale] = useState(1);
@@ -365,19 +306,37 @@ function LifePlanCanvas() {
     const [showMonthGuides, setShowMonthGuides] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false);
   
-    const onNodeDragStop = useSystemNodeSnapper(nodes, setNodes);
-
-    const onLayout = useCallback((direction: 'TB' | 'LR', currentNodes: Node[], currentEdges: Edge[], scale: number, is3d: boolean) => {
-        const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(currentNodes, currentEdges, { direction, timeScale: scale, is3dMode: is3d });
-        setNodes([...layoutedNodes]);
-        setEdges([...layoutedEdges]);
-    }, [setNodes, setEdges]);
-    
     useEffect(() => {
-        onLayout(layoutDirection, nodes, edges, timeScale, is3dMode);
+        const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(nodes, edges, { direction: layoutDirection, timeScale });
+        setNodes(layoutedNodes);
+        setEdges(layoutedEdges);
+        // We only want this to run on initial load and when layout parameters change, not when nodes themselves change.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [layoutDirection, timeScale, setNodes, setEdges]);
+    
+    // This effect re-runs the layout whenever the nodes array fundamentally changes (e.g. adding/deleting)
+    useEffect(() => {
+        const { nodes: layoutedNodes } = getLayoutedElements(nodes, edges, { direction: layoutDirection, timeScale });
+        setNodes(layoutedNodes);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [layoutDirection, timeScale, is3dMode]);
+    }, [nodes.length, timeScale, layoutDirection, setNodes]);
 
+
+    const onNodeDragStop = useCallback((_: React.MouseEvent, node: Node) => {
+        const isHorizontal = layoutDirection === 'LR';
+        if (!isHorizontal) return; // Only implement for horizontal timeline for now
+
+        const yearNodes = nodes.filter(n => n.data.year && n.type !== 'system');
+        const years = yearNodes.map(n => n.data.year).filter(Boolean);
+        const minYear = years.length > 0 ? Math.min(...years) : new Date().getFullYear();
+        
+        const year = Math.round(node.position.x / (YEAR_GAP_HORIZONTAL * timeScale)) + minYear;
+        
+        const updatedNode = { ...node, data: { ...node.data, year } };
+        const newNodes = nodes.map(n => n.id === node.id ? updatedNode : n);
+        const { nodes: layoutedNodes } = getLayoutedElements(newNodes, edges, { direction: layoutDirection, timeScale });
+        setNodes(layoutedNodes);
+    }, [nodes, edges, layoutDirection, setNodes, timeScale]);
 
     const passedNodes = useMemo(() => {
         return nodes.map((node: Node) => ({
@@ -388,43 +347,22 @@ function LifePlanCanvas() {
 
     const handleNodesChange = (changes: NodeChange[]) => {
       onNodesChange(changes);
-      
-      const resizeChange = changes.find(c => c.type === 'dimensions' && c.resizing);
-      if (resizeChange && (resizeChange as any).id) {
-          const node = getNode((resizeChange as any).id);
-          if (node?.type === 'system') {
-              const systemNodes = nodes.filter(n => n.type === 'system' && n.id !== node.id);
-              let currentX = 10 + (node.width || 208) + 10;
-              
-              const updatedNodes = systemNodes.sort((a,b) => a.position.x - b.position.x).map(sn => {
-                  sn.position.x = currentX;
-                  currentX += (sn.width || 208) + 10;
-                  return sn;
-              });
-
-              setNodes([...nodes.filter(n => n.type !== 'system' || n.id === node.id), ...updatedNodes]);
-          }
-      }
     };
 
-
     const handleDeleteNode = (nodeId: string) => {
-        const changes: NodeChange[] = [{type: 'remove', id: nodeId}];
-        
-        const deletedNodeIds = [nodeId];
-        setEdges((eds: Edge[]) => eds.filter(edge => !deletedNodeIds.includes(edge.source) && !deletedNodeIds.includes(edge.target)));
-        if (selectedNode && deletedNodeIds.includes(selectedNode.id)) {
+        setNodes(nds => nds.filter(n => n.id !== nodeId));
+        setEdges(eds => eds.filter(edge => edge.source !== nodeId && edge.target !== nodeId));
+        if (selectedNode && nodeId === selectedNode.id) {
             setSelectedNode(null);
         }
-        onNodesChange(changes);
     }
     
     const addNode = (type: string, label: string) => {
         const { x, y, zoom } = getViewport();
-        const position = {
-            x: -x/zoom + 100/zoom,
-            y: -y/zoom + 100/zoom,
-        };
+        const position = project({
+            x: window.innerWidth / 2,
+            y: window.innerHeight / 2,
+        });
 
         const newNode: Node = {
             id: `node_${+new Date()}`,
@@ -438,12 +376,12 @@ function LifePlanCanvas() {
     
     const addSystemNode = () => {
        const systemNodes = nodes.filter(n => n.type === 'system');
-       const xPos = systemNodes.reduce((acc, node) => acc + (node.width || 208) + 10, 10);
+       const xPos = systemNodes.reduce((acc, node) => acc + (node.width || defaultNodeWidth) + 10, 10);
 
         const newNode: Node = {
             id: `node_${+new Date()}`,
             type: 'system',
-            position: { x: xPos, y: 10 },
+            position: { x: xPos, y: layoutDirection === 'LR' ? -100 : -150 },
             data: { title: 'Weekly Investment', amount: 100, frequency: 'weekly', notes: 'Auto-invest into VTI' },
             width: 250,
             height: 64,
@@ -459,7 +397,9 @@ function LifePlanCanvas() {
 
         const template = lifePlanTemplates[templateName as keyof typeof lifePlanTemplates];
         if (template) {
-            onLayout(layoutDirection, template.nodes, template.edges, timeScale, is3dMode);
+            const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(template.nodes, template.edges, { direction: layoutDirection, timeScale });
+            setNodes(layoutedNodes);
+            setEdges(layoutedEdges);
         } else {
              addNode(templateName, `New ${templateName}`);
         }
@@ -467,71 +407,25 @@ function LifePlanCanvas() {
     };
 
     const handleAIGenerate = (aiNodes: Node[], aiEdges: Edge[]) => {
-        onLayout(layoutDirection, aiNodes, aiEdges, timeScale, is3dMode);
+        const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(aiNodes, aiEdges, { direction: layoutDirection, timeScale });
+        setNodes(layoutedNodes);
+        setEdges(layoutedEdges);
         setSelectedNode(null);
     };
 
     const handleFocusNode = (nodeId: string) => {
         const node = getNode(nodeId);
         if (node) {
-            const { x, y } = node.position;
             const zoom = 1.5;
-            setCenter(x + (node.width || 0) / 2, y + (node.height || 0) / 2, { zoom, duration: 500 });
+            setCenter(node.position.x + (node.width || 0) / 2, node.position.y + (node.height || 0) / 2, { zoom, duration: 800 });
             setSelectedNode(node);
         }
     };
     
-    return {
-        nodes,
-        setNodes,
-        onNodesChange,
-        edges,
-        setEdges,
-        onEdgesChange,
-        selectedNode,
-        setSelectedNode,
-        handleAIGenerate,
-        handleFocusNode,
-        is3dMode,
-        connectingNodeId,
-        handleNodesChange,
-        onNodeDragStop,
-        layoutDirection,
-        timeScale,
-        showYearGuides,
-        showMonthGuides,
-        passedNodes,
-        setConnectingNodeId,
-        handleTemplateLoad,
-        setIsExpanded,
-        isExpanded,
-        fitView,
-        setLayoutDirection,
-        setTimeScale,
-        setIs3dMode,
-        setShowYearGuides,
-        setShowMonthGuides,
-        handleDeleteNode
-    }
-}
-
-function LifePlanPageContent() {
     const [activeTab, setActiveTab] = useState<'life-plan' | 'timeline' | 'resources' | 'calendar'>('life-plan');
-    
-    const {
-        nodes, setNodes, onNodesChange,
-        edges, setEdges, onEdgesChange,
-        selectedNode, setSelectedNode,
-        handleAIGenerate, handleFocusNode,
-        is3dMode, connectingNodeId, handleNodesChange, onNodeDragStop,
-        layoutDirection, timeScale, showYearGuides, showMonthGuides, passedNodes,
-        setConnectingNodeId, handleTemplateLoad,
-        setIsExpanded, isExpanded,
-        fitView, setLayoutDirection, setTimeScale, setIs3dMode, setShowYearGuides, setShowMonthGuides, handleDeleteNode
-    } = LifePlanCanvas();
-    
+
     return (
-        <div className={cn("flex flex-col", isExpanded ? "fixed inset-0 bg-background z-50 p-0 h-screen" : "relative h-[calc(100vh-8rem)]")}>
+        <div className={cn("flex flex-col h-full")}>
             <div className="flex flex-col items-center justify-center">
                 <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">
                     Life Plan
@@ -560,11 +454,10 @@ function LifePlanPageContent() {
                 </div>
             </div>
             
-            <div className="flex-grow mt-4">
+            <div className={cn("flex-grow mt-4", isExpanded ? "fixed inset-0 bg-background z-50 p-4" : "relative")}>
                  <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="h-full">
                     <TabsContent value="life-plan" className="h-full m-0">
                         <div className="relative border border-border/20 rounded-xl overflow-hidden h-full">
-                            <div className={cn("flex-grow h-full relative", is3dMode && 'react-flow-3d-mode')}>
                                 <ReactFlow
                                 nodes={passedNodes}
                                 edges={edges}
@@ -700,12 +593,12 @@ function LifePlanPageContent() {
                                     }
 
                                     .react-flow__handle {
-                                        width: 16px;
-                                        height: 16px;
+                                        width: 16px !important;
+                                        height: 16px !important;
                                         border-radius: 99px;
-                                        border-width: 3px;
-                                        border-color: hsl(var(--primary));
-                                        background: hsl(var(--background));
+                                        border-width: 3px !important;
+                                        border-color: hsl(var(--primary)) !important;
+                                        background: hsl(var(--background)) !important;
                                     }
 
                                     .react-flow__handle.connecting,
@@ -766,35 +659,8 @@ function LifePlanPageContent() {
                                         resize: none;
                                         color: inherit;
                                     }
-
-                                    .react-flow-3d-mode .react-flow__viewport {
-                                        perspective: 1000px;
-                                        transform: scale(1) translate(0px, 0px) rotateX(60deg) rotateZ(0deg);
-                                        transition: transform 0.5s;
-                                    }
-                                    .react-flow-3d-mode .react-flow__node {
-                                        transform: rotateX(-60deg) rotateZ(0deg);
-                                        
-                                    }
-                                    .react-flow-3d-mode .react-flow__edge-path[data-node-type='career'] { --edge-color: hsl(28 90% 60%); }
-                                    .react-flow-3d-mode .react-flow__edge-path[data-node-type='education'] { --edge-color: hsl(210 90% 60%); }
-                                    .react-flow-3d-mode .react-flow__edge-path[data-node-type='financial'] { --edge-color: hsl(140 80% 50%); }
-                                    .react-flow-3d-mode .react-flow__edge-path[data-node-type='lifeEvent'] { --edge-color: hsl(330 90% 65%); }
-                                    .react-flow-3d-mode .react-flow__edge-path[data-node-type='goal'] { --edge-color: hsl(270 90% 65%); }
-                                    .react-flow-3d-mode .react-flow__edge-path[data-node-type='health'] { --edge-color: hsl(0 80% 60%); }
-                                    .react-flow-3d-mode .react-flow__edge-path[data-node-type='other'] { --edge-color: hsl(180 80% 50%); }
                                     
-                                    .react-flow-3d-mode .react-flow__edge-path {
-                                        stroke-width: 10;
-                                        stroke: var(--edge-color, hsl(var(--primary)));
-                                        filter: none;
-                                        stroke-dasharray: 1 12;
-                                        stroke-linecap: round;
-                                    }
-
-
                                 `}</style>
-                            </div>
                         </div>
                         <div className={cn('pt-8 pb-8 flex-shrink-0 w-full', isExpanded && 'hidden')}>
                             <AIPlanGenerator onGenerate={handleAIGenerate} />
@@ -818,7 +684,7 @@ function LifePlanPageContent() {
 export default function LifePlanPage() {
     return (
         <ReactFlowProvider>
-          <LifePlanPageContent />
+          <LifePlanCanvas />
         </ReactFlowProvider>
     );
 }
