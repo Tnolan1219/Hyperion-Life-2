@@ -1,6 +1,6 @@
 
 'use client';
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import ReactFlow, {
   ReactFlowProvider,
   useNodesState,
@@ -597,7 +597,7 @@ function LifePlanPageContent({
 
     useEffect(() => {
         onLayout('LR');
-    }, [timeScale, is3dMode]);
+    }, [timeScale, is3dMode, onLayout]);
 
     const handleNodesChange = (changes: NodeChange[]) => {
       onNodesChange(changes);
@@ -798,4 +798,3 @@ export default function LifePlanPage() {
   );
 }
 
-    
