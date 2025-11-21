@@ -1,3 +1,4 @@
+
 'use client';
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import ReactFlow, {
@@ -14,6 +15,7 @@ import ReactFlow, {
   Panel,
   NodeChange,
   NodeResizeControl,
+  Position,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { lifePlanTemplates } from '@/lib/life-plan-templates';
@@ -293,7 +295,7 @@ const GuideLines = ({ nodes, show, type, direction, timeScale }: { nodes: Node[]
 };
 
 
-function LifePlanCanvas() {
+function useLifePlan() {
     const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
     const { fitView, setCenter, getNode, getViewport, project } = useReactFlow();
@@ -305,7 +307,7 @@ function LifePlanCanvas() {
     const [showYearGuides, setShowYearGuides] = useState(true);
     const [showMonthGuides, setShowMonthGuides] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false);
-  
+
     useEffect(() => {
         const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(nodes, edges, { direction: layoutDirection, timeScale });
         setNodes(layoutedNodes);
@@ -422,6 +424,67 @@ function LifePlanCanvas() {
         }
     };
     
+    return {
+        nodes,
+        edges,
+        passedNodes,
+        handleNodesChange,
+        onEdgesChange,
+        selectedNode,
+        setSelectedNode,
+        handleDeleteNode,
+        handleTemplateLoad,
+        handleAIGenerate,
+        handleFocusNode,
+        connectingNodeId,
+        setConnectingNodeId,
+        onNodeDragStop,
+        isExpanded,
+        setIsExpanded,
+        fitView,
+        setLayoutDirection,
+        timeScale,
+        setTimeScale,
+        is3dMode,
+        setIs3dMode,
+        showYearGuides,
+        setShowYearGuides,
+        showMonthGuides,
+        setShowMonthGuides
+    }
+}
+
+
+function LifePlanCanvas() {
+    const { 
+        nodes,
+        edges,
+        passedNodes,
+        handleNodesChange,
+        onEdgesChange,
+        selectedNode,
+        setSelectedNode,
+        handleDeleteNode,
+        handleTemplateLoad,
+        handleAIGenerate,
+        handleFocusNode,
+        connectingNodeId,
+        setConnectingNodeId,
+        onNodeDragStop,
+        isExpanded,
+        setIsExpanded,
+        fitView,
+        setLayoutDirection,
+        timeScale,
+        setTimeScale,
+        is3dMode,
+        setIs3dMode,
+        showYearGuides,
+        setShowYearGuides,
+        showMonthGuides,
+        setShowMonthGuides
+    } = useLifePlan();
+  
     const [activeTab, setActiveTab] = useState<'life-plan' | 'timeline' | 'resources' | 'calendar'>('life-plan');
 
     return (
@@ -688,3 +751,4 @@ export default function LifePlanPage() {
         </ReactFlowProvider>
     );
 }
+
