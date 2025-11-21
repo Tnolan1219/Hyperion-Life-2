@@ -302,235 +302,6 @@ const GuideLines = ({ nodes, show, type, direction, timeScale }: { nodes: Node[]
     );
 };
 
-function LifePlanCanvas({ nodes, edges, onNodesChange, setEdges, setSelectedNode, onTemplateLoad, selectedNode, connectingNodeId, setConnectingNodeId, onDeleteNode, isExpanded, setIsExpanded, onNodeDragStop, timeScale, setTimeScale, is3dMode, setIs3dMode, onFocusNode, onLayout }: any) {
-  const { fitView } = useReactFlow();
-  const [layoutDirection, setLayoutDirection] = useState<'TB' | 'LR'>('LR');
-  const [showYearGuides, setShowYearGuides] = useState(false);
-  const [showMonthGuides, setShowMonthGuides] = useState(false);
-  
-  const passedNodes = useMemo(() => {
-    return nodes.map((node: Node) => ({
-      ...node,
-      data: { ...node.data, is3dMode },
-    }));
-  }, [nodes, is3dMode]);
-  
-  useEffect(() => {
-    if (onLayout) {
-      onLayout(layoutDirection);
-    }
-  }, [layoutDirection, onLayout]);
-
-  return (
-    <div className={cn("flex-grow h-full relative", is3dMode && 'react-flow-3d-mode')}>
-        <ReactFlow
-          nodes={passedNodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={(changes) => setEdges((prevEdges: any) => addEdge(changes, prevEdges))}
-          onConnect={(params) => setEdges((eds: Edge[]) => addEdge({ ...params, type: 'smoothstep', animated: true }, eds))}
-          onNodeClick={(e, node) => {
-            if (connectingNodeId) {
-                setEdges((eds: Edge[]) => addEdge({ source: connectingNodeId, target: node.id, type: 'smoothstep', animated: true }, eds));
-                setConnectingNodeId(null);
-            } else {
-                setSelectedNode(node);
-            }
-          }}
-          onPaneClick={() => {
-            setSelectedNode(null);
-            if (connectingNodeId) {
-                setConnectingNodeId(null);
-            }
-          }}
-          nodeTypes={nodeTypes}
-          fitView
-          className={cn('bg-card/30', connectingNodeId && 'cursor-crosshair')}
-          proOptions={{ hideAttribution: true }}
-          deleteKeyCode={['Backspace', 'Delete']}
-          minZoom={0.1}
-          connectionRadius={120}
-          onNodeDragStop={onNodeDragStop}
-        >
-          <Background gap={24} size={1} color="hsl(var(--border))" />
-          <GuideLines nodes={nodes} show={showYearGuides} type="year" direction={layoutDirection} timeScale={timeScale} />
-          <GuideLines nodes={nodes} show={showMonthGuides} type="month" direction={layoutDirection} timeScale={timeScale} />
-           <NodeResizeControl minWidth={208} minHeight={88} isVisible={selectedNode?.type === 'system' || selectedNode?.type === 'other'}>
-             <div className="w-full h-full border-2 border-dashed border-primary rounded-lg" />
-           </NodeResizeControl>
-          <div className="absolute top-4 right-4 z-10 flex gap-2">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="glass h-auto py-2">
-                    <PlusCircle className="mr-2 h-4 w-4" /> Add Node
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  {nodeMenu.map(({ type, label, icon: Icon, color }) => (
-                    <DropdownMenuItem key={type} onClick={() => onTemplateLoad(type, `New ${label}`)}>
-                      <Icon className={cn('mr-2 h-4 w-4', `text-${color}-400`)} />
-                      <span>{label}</span>
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-               <Button variant="outline" className="glass h-auto py-2" onClick={() => onTemplateLoad('system')}>
-                    <Repeat className="mr-2 h-4 w-4" /> Add System
-               </Button>
-              
-
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="glass h-auto py-2">
-                    <Zap className="mr-2 h-4 w-4" /> Templates
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem onClick={() => onTemplateLoad('default')}>
-                    Standard Career Path
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onTemplateLoad('earlyRetirement')}>
-                    Early Retirement (FIRE)
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onTemplateLoad('startup')}>
-                    Startup Founder
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-          </div>
-          
-           <Panel position="top-left">
-              <Button variant="ghost" size="icon" onClick={() => setIsExpanded(!isExpanded)} title={isExpanded ? "Collapse" : "Expand"}>
-                    {isExpanded ? <Shrink className="h-5 w-5" /> : <Maximize className="h-5 w-5"/>}
-              </Button>
-          </Panel>
-
-          <Panel position="bottom-center" className={cn(isExpanded && "block")}>
-            <div className={cn("flex flex-col md:flex-row items-center gap-2 glass p-2 rounded-2xl")}>
-                <Button variant="ghost" size="icon" onClick={() => fitView({ duration: 500 })} title="Fit View">
-                    <ZoomIn className="h-5 w-5"/>
-                </Button>
-                <Button variant="ghost" size="icon" onClick={() => { onLayout('TB'); setLayoutDirection('TB'); }} title="Top-to-Bottom Layout">
-                    <LayoutIcon className="h-5 w-5"/>
-                </Button>
-                <Button variant="ghost" size="icon" onClick={() => { onLayout('LR'); setLayoutDirection('LR'); }} title="Left-to-Right Layout">
-                    <Rows className="h-5 w-5"/>
-                </Button>
-                <Slider defaultValue={[timeScale]} min={0.25} max={4} step={0.25} onValueChange={(value) => setTimeScale(value[0])} className="w-32" />
-                <Button variant="ghost" size="icon" onClick={() => setIs3dMode(!is3dMode)} title="Toggle 3D Roadmap View" className={cn(is3dMode && 'text-primary bg-primary/10')}>
-                    <Route className="h-5 w-5" />
-                </Button>
-                <Button variant="ghost" size="icon" onClick={() => setShowYearGuides(!showYearGuides)} title="Toggle Year Guides" className={cn(showYearGuides && 'text-primary bg-primary/10')}>
-                    <CalendarIcon className="h-5 w-5" />
-                </Button>
-                <Button variant="ghost" size="icon" onClick={() => setShowMonthGuides(!showMonthGuides)} title="Toggle Month Guides" className={cn(showMonthGuides && 'text-primary bg-primary/10')}>
-                    <CalendarDays className="h-5 w-5" />
-                </Button>
-            </div>
-          </Panel>
-        </ReactFlow>
-
-        <div className="absolute top-0 right-0 h-full w-auto pointer-events-none">
-            <NodeEditor
-              selectedNode={selectedNode}
-              onNodeDataChange={(nodeId: string, newData: any) => setNodes((nds: Node[]) => nds.map((n: Node) => n.id === nodeId ? { ...n, data: { ...n.data, ...newData } } : n))}
-              closeEditor={() => setSelectedNode(null)}
-              startConnecting={() => {
-                  if (selectedNode) {
-                    setNodes((nds: Node[]) => nds.map(n => n.id === selectedNode.id ? {...n, data: { ...n.data, connecting: true }} : n));
-                    setConnectingNodeId(selectedNode.id);
-                  }
-                  setSelectedNode(null);
-              }}
-              onDeleteNode={() => {
-                  if (selectedNode) onDeleteNode(selectedNode.id);
-              }}
-              onCenterNode={() => {
-                  if (selectedNode) onFocusNode(selectedNode.id);
-              }}
-            />
-        </div>
-        <style jsx global>{`
-            .react-flow__edge-path {
-                filter: drop-shadow(0 0 5px hsl(var(--primary)));
-            }
-
-            .react-flow__node {
-                --glow-color-career: hsl(28 90% 60%);
-                --glow-color-education: hsl(210 90% 60%);
-                --glow-color-financial: hsl(140 80% 50%);
-                --glow-color-lifeEvent: hsl(330 90% 65%);
-                --glow-color-goal: hsl(270 90% 65%);
-                --glow-color-other: hsl(180 80% 50%);
-                --glow-color-system: hsl(220 80% 70%);
-                --glow-color-default: hsl(var(--primary));
-            }
-            
-            .react-flow__node.connecting, 
-            .react-flow__node[data-connecting='true'],
-            .react-flow__node:hover {
-                 box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px var(--glow-color, var(--glow-color-default)), 0 0 15px var(--glow-color, var(--glow-color-default));
-            }
-            .react-flow__node[data-type='career']:hover, .react-flow__node[data-type='career'][data-connecting='true'] { --glow-color: var(--glow-color-career); }
-            .react-flow__node[data-type='education']:hover, .react-flow__node[data-type='education'][data-connecting='true'] { --glow-color: var(--glow-color-education); }
-            .react-flow__node[data-type='financial']:hover, .react-flow__node[data-type='financial'][data-connecting='true'] { --glow-color: var(--glow-color-financial); }
-            .react-flow__node[data-type='lifeEvent']:hover, .react-flow__node[data-type='lifeEvent'][data-connecting='true'] { --glow-color: var(--glow-color-lifeEvent); }
-            .react-flow__node[data-type='goal']:hover, .react-flow__node[data-type='goal'][data-connecting='true'] { --glow-color: var(--glow-color-goal); }
-            .react-flow__node[data-type='other']:hover, .react-flow__node[data-type='other'][data-connecting='true'] { --glow-color: var(--glow-color-other); }
-             .react-flow__node[data-type='system']:hover, .react-flow__node[data-type='system'][data-connecting='true'] { --glow-color: var(--glow-color-system); }
-
-            .react-flow__resize-control.handle {
-                width: 10px;
-                height: 10px;
-                border-radius: 2px;
-                background-color: hsl(var(--primary));
-                border-color: hsl(var(--primary-foreground));
-                border-width: 2px;
-            }
-            
-            .react-flow__node-other .editable-content {
-                background-color: transparent;
-                border: none;
-                width: 100%;
-                height: 100%;
-                padding: 1rem;
-                outline: none;
-                resize: none;
-                color: inherit;
-            }
-
-            .react-flow-3d-mode .react-flow__viewport {
-                perspective: 1000px;
-                transform: scale(1) translate(0px, 0px) rotateX(60deg) rotateZ(0deg);
-                transition: transform 0.5s;
-            }
-            .react-flow-3d-mode .react-flow__node {
-                transform: rotateX(-60deg) rotateZ(0deg);
-                
-            }
-            .react-flow-3d-mode .react-flow__edge-path[data-node-type='career'] { --edge-color: hsl(28 90% 60%); }
-            .react-flow-3d-mode .react-flow__edge-path[data-node-type='education'] { --edge-color: hsl(210 90% 60%); }
-            .react-flow-3d-mode .react-flow__edge-path[data-node-type='financial'] { --edge-color: hsl(140 80% 50%); }
-            .react-flow-3d-mode .react-flow__edge-path[data-node-type='lifeEvent'] { --edge-color: hsl(330 90% 65%); }
-            .react-flow-3d-mode .react-flow__edge-path[data-node-type='goal'] { --edge-color: hsl(270 90% 65%); }
-            .react-flow-3d-mode .react-flow__edge-path[data-node-type='other'] { --edge-color: hsl(180 80% 50%); }
-            
-            .react-flow-3d-mode .react-flow__edge-path {
-                stroke-width: 10;
-                stroke: var(--edge-color, hsl(var(--primary)));
-                filter: none;
-                stroke-dasharray: 1 12;
-                stroke-linecap: round;
-            }
-
-
-        `}</style>
-    </div>
-  );
-}
-
-
 function LifePlanFlowProvider(props: any) {
   return (
     <ReactFlowProvider>
@@ -581,20 +352,36 @@ function LifePlanPageContent({
     const [connectingNodeId, setConnectingNodeId] = useState<string | null>(null);
     const [timeScale, setTimeScale] = useState(1);
     const [is3dMode, setIs3dMode] = useState(false);
-
+    const [layoutDirection, setLayoutDirection] = useState<'TB' | 'LR'>('LR');
+    const [showYearGuides, setShowYearGuides] = useState(false);
+    const [showMonthGuides, setShowMonthGuides] = useState(false);
+  
     const onNodeDragStop = useSystemNodeSnapper(nodes, setNodes);
 
-    const onLayout = useCallback((direction: 'TB' | 'LR', currentNodes: Node[], currentEdges: Edge[]) => {
-        const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(currentNodes, currentEdges, { direction, timeScale, is3dMode });
+    const onLayout = useCallback((direction: 'TB' | 'LR', currentNodes: Node[], currentEdges: Edge[], scale: number, is3d: boolean) => {
+        const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(currentNodes, currentEdges, { direction, timeScale: scale, is3dMode: is3d });
         setNodes([...layoutedNodes]);
         setEdges([...layoutedEdges]);
         window.requestAnimationFrame(() => fitView({ duration: 500 }));
-    }, [setNodes, setEdges, fitView, timeScale, is3dMode]);
-
+    }, [setNodes, setEdges, fitView]);
+    
     useEffect(() => {
-        onLayout('LR', nodes, edges);
+        onLayout(layoutDirection, nodes, edges, timeScale, is3dMode);
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [timeScale, is3dMode]);
+
+    const handleLayoutDirectionChange = (direction: 'TB' | 'LR') => {
+        setLayoutDirection(direction);
+        onLayout(direction, nodes, edges, timeScale, is3dMode);
+    };
+
+
+    const passedNodes = useMemo(() => {
+        return nodes.map((node: Node) => ({
+        ...node,
+        data: { ...node.data, is3dMode },
+        }));
+    }, [nodes, is3dMode]);
 
     const handleNodesChange = (changes: NodeChange[]) => {
       onNodesChange(changes);
@@ -669,22 +456,16 @@ function LifePlanPageContent({
 
         const template = lifePlanTemplates[templateName as keyof typeof lifePlanTemplates];
         if (template) {
-            const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(template.nodes, template.edges, { direction: 'LR', timeScale, is3dMode });
-            setNodes(layoutedNodes);
-            setEdges(layoutedEdges);
+            onLayout(layoutDirection, template.nodes, template.edges, timeScale, is3dMode);
         } else {
              addNode(templateName, `New ${templateName}`);
         }
         setSelectedNode(null);
-        window.requestAnimationFrame(() => fitView({ duration: 500 }));
     };
 
     const handleAIGenerate = (aiNodes: Node[], aiEdges: Edge[]) => {
-        const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(aiNodes, aiEdges, { direction: 'LR', timeScale, is3dMode });
-        setNodes(layoutedNodes);
-        setEdges(layoutedEdges);
+        onLayout(layoutDirection, aiNodes, aiEdges, timeScale, is3dMode);
         setSelectedNode(null);
-        window.requestAnimationFrame(() => fitView({ duration: 500 }));
     };
 
     const handleFocusNode = (nodeId: string) => {
@@ -728,29 +509,211 @@ function LifePlanPageContent({
         
         <TabsContent value="life-plan" className="flex-grow flex flex-col mt-4">
             <div className="relative border border-border/20 rounded-xl overflow-hidden h-[85vh]">
-                <LifePlanCanvas
-                nodes={nodes}
-                edges={edges}
-                onNodesChange={handleNodesChange}
-                setNodes={setNodes}
-                setEdges={setEdges}
-                setSelectedNode={setSelectedNode}
-                onFocusNode={handleFocusNode}
-                onAIGenerate={handleAIGenerate}
-                onTemplateLoad={handleTemplateLoad}
-                selectedNode={selectedNode}
-                onDeleteNode={handleDeleteNode}
-                connectingNodeId={connectingNodeId}
-                setConnectingNodeId={setConnectingNodeId}
-                isExpanded={isExpanded}
-                setIsExpanded={setIsExpanded}
-                onNodeDragStop={onNodeDragStop}
-                timeScale={timeScale}
-                setTimeScale={setTimeScale}
-                is3dMode={is3dMode}
-                setIs3dMode={setIs3dMode}
-                onLayout={(direction: 'TB' | 'LR') => onLayout(direction, nodes, edges)}
-                />
+                <div className={cn("flex-grow h-full relative", is3dMode && 'react-flow-3d-mode')}>
+                    <ReactFlow
+                    nodes={passedNodes}
+                    edges={edges}
+                    onNodesChange={handleNodesChange}
+                    onEdgesChange={(changes) => setEdges((prevEdges: any) => addEdge(changes, prevEdges))}
+                    onConnect={(params) => setEdges((eds: Edge[]) => addEdge({ ...params, type: 'smoothstep', animated: true }, eds))}
+                    onNodeClick={(e, node) => {
+                        if (connectingNodeId) {
+                            setEdges((eds: Edge[]) => addEdge({ source: connectingNodeId, target: node.id, type: 'smoothstep', animated: true }, eds));
+                            setConnectingNodeId(null);
+                        } else {
+                            setSelectedNode(node);
+                        }
+                    }}
+                    onPaneClick={() => {
+                        setSelectedNode(null);
+                        if (connectingNodeId) {
+                            setConnectingNodeId(null);
+                        }
+                    }}
+                    nodeTypes={nodeTypes}
+                    fitView
+                    className={cn('bg-card/30', connectingNodeId && 'cursor-crosshair')}
+                    proOptions={{ hideAttribution: true }}
+                    deleteKeyCode={['Backspace', 'Delete']}
+                    minZoom={0.1}
+                    connectionRadius={120}
+                    onNodeDragStop={onNodeDragStop}
+                    >
+                    <Background gap={24} size={1} color="hsl(var(--border))" />
+                    <GuideLines nodes={nodes} show={showYearGuides} type="year" direction={layoutDirection} timeScale={timeScale} />
+                    <GuideLines nodes={nodes} show={showMonthGuides} type="month" direction={layoutDirection} timeScale={timeScale} />
+                    <NodeResizeControl minWidth={208} minHeight={88} isVisible={selectedNode?.type === 'system' || selectedNode?.type === 'other'}>
+                        <div className="w-full h-full border-2 border-dashed border-primary rounded-lg" />
+                    </NodeResizeControl>
+                    <div className="absolute top-4 right-4 z-10 flex gap-2">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                            <Button variant="outline" className="glass h-auto py-2">
+                                <PlusCircle className="mr-2 h-4 w-4" /> Add Node
+                            </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                            {nodeMenu.map(({ type, label, icon: Icon, color }) => (
+                                <DropdownMenuItem key={type} onClick={() => handleTemplateLoad(type)}>
+                                <Icon className={cn('mr-2 h-4 w-4', `text-${color}-400`)} />
+                                <span>{label}</span>
+                                </DropdownMenuItem>
+                            ))}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+
+                        <Button variant="outline" className="glass h-auto py-2" onClick={() => handleTemplateLoad('system')}>
+                            <Repeat className="mr-2 h-4 w-4" /> Add System
+                        </Button>
+                        
+
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                            <Button variant="outline" className="glass h-auto py-2">
+                                <Zap className="mr-2 h-4 w-4" /> Templates
+                            </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                            <DropdownMenuItem onClick={() => handleTemplateLoad('default')}>
+                                Standard Career Path
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleTemplateLoad('earlyRetirement')}>
+                                Early Retirement (FIRE)
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleTemplateLoad('startup')}>
+                                Startup Founder
+                            </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
+                    
+                    <Panel position="top-left">
+                        <Button variant="ghost" size="icon" onClick={() => setIsExpanded(!isExpanded)} title={isExpanded ? "Collapse" : "Expand"}>
+                                {isExpanded ? <Shrink className="h-5 w-5" /> : <Maximize className="h-5 w-5"/>}
+                        </Button>
+                    </Panel>
+
+                    <Panel position="bottom-center" className={cn(isExpanded && "block")}>
+                        <div className={cn("flex flex-col md:flex-row items-center gap-2 glass p-2 rounded-2xl")}>
+                            <Button variant="ghost" size="icon" onClick={() => fitView({ duration: 500 })} title="Fit View">
+                                <ZoomIn className="h-5 w-5"/>
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => handleLayoutDirectionChange('TB')} title="Top-to-Bottom Layout">
+                                <LayoutIcon className="h-5 w-5"/>
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => handleLayoutDirectionChange('LR')} title="Left-to-Right Layout">
+                                <Rows className="h-5 w-5"/>
+                            </Button>
+                            <Slider defaultValue={[timeScale]} min={0.25} max={4} step={0.25} onValueChange={(value) => setTimeScale(value[0])} className="w-32" />
+                            <Button variant="ghost" size="icon" onClick={() => setIs3dMode(!is3dMode)} title="Toggle 3D Roadmap View" className={cn(is3dMode && 'text-primary bg-primary/10')}>
+                                <Route className="h-5 w-5" />
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => setShowYearGuides(!showYearGuides)} title="Toggle Year Guides" className={cn(showYearGuides && 'text-primary bg-primary/10')}>
+                                <CalendarIcon className="h-5 w-5" />
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => setShowMonthGuides(!showMonthGuides)} title="Toggle Month Guides" className={cn(showMonthGuides && 'text-primary bg-primary/10')}>
+                                <CalendarDays className="h-5 w-5" />
+                            </Button>
+                        </div>
+                    </Panel>
+                    </ReactFlow>
+
+                    <div className="absolute top-0 right-0 h-full w-auto pointer-events-none">
+                        <NodeEditor
+                        selectedNode={selectedNode}
+                        onNodeDataChange={(nodeId: string, newData: any) => setNodes((nds: Node[]) => nds.map((n: Node) => n.id === nodeId ? { ...n, data: { ...n.data, ...newData } } : n))}
+                        closeEditor={() => setSelectedNode(null)}
+                        startConnecting={() => {
+                            if (selectedNode) {
+                                setNodes((nds: Node[]) => nds.map(n => n.id === selectedNode.id ? {...n, data: { ...n.data, connecting: true }} : n));
+                                setConnectingNodeId(selectedNode.id);
+                            }
+                            setSelectedNode(null);
+                        }}
+                        onDeleteNode={() => {
+                            if (selectedNode) handleDeleteNode(selectedNode.id);
+                        }}
+                        onCenterNode={() => {
+                            if (selectedNode) handleFocusNode(selectedNode.id);
+                        }}
+                        />
+                    </div>
+                    <style jsx global>{`
+                        .react-flow__edge-path {
+                            filter: drop-shadow(0 0 5px hsl(var(--primary)));
+                        }
+
+                        .react-flow__node {
+                            --glow-color-career: hsl(28 90% 60%);
+                            --glow-color-education: hsl(210 90% 60%);
+                            --glow-color-financial: hsl(140 80% 50%);
+                            --glow-color-lifeEvent: hsl(330 90% 65%);
+                            --glow-color-goal: hsl(270 90% 65%);
+                            --glow-color-other: hsl(180 80% 50%);
+                            --glow-color-system: hsl(220 80% 70%);
+                            --glow-color-default: hsl(var(--primary));
+                        }
+                        
+                        .react-flow__node.connecting, 
+                        .react-flow__node[data-connecting='true'],
+                        .react-flow__node:hover {
+                            box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px var(--glow-color, var(--glow-color-default)), 0 0 15px var(--glow-color, var(--glow-color-default));
+                        }
+                        .react-flow__node[data-type='career']:hover, .react-flow__node[data-type='career'][data-connecting='true'] { --glow-color: var(--glow-color-career); }
+                        .react-flow__node[data-type='education']:hover, .react-flow__node[data-type='education'][data-connecting='true'] { --glow-color: var(--glow-color-education); }
+                        .react-flow__node[data-type='financial']:hover, .react-flow__node[data-type='financial'][data-connecting='true'] { --glow-color: var(--glow-color-financial); }
+                        .react-flow__node[data-type='lifeEvent']:hover, .react-flow__node[data-type='lifeEvent'][data-connecting='true'] { --glow-color: var(--glow-color-lifeEvent); }
+                        .react-flow__node[data-type='goal']:hover, .react-flow__node[data-type='goal'][data-connecting='true'] { --glow-color: var(--glow-color-goal); }
+                        .react-flow__node[data-type='other']:hover, .react-flow__node[data-type='other'][data-connecting='true'] { --glow-color: var(--glow-color-other); }
+                        .react-flow__node[data-type='system']:hover, .react-flow__node[data-type='system'][data-connecting='true'] { --glow-color: var(--glow-color-system); }
+
+                        .react-flow__resize-control.handle {
+                            width: 10px;
+                            height: 10px;
+                            border-radius: 2px;
+                            background-color: hsl(var(--primary));
+                            border-color: hsl(var(--primary-foreground));
+                            border-width: 2px;
+                        }
+                        
+                        .react-flow__node-other .editable-content {
+                            background-color: transparent;
+                            border: none;
+                            width: 100%;
+                            height: 100%;
+                            padding: 1rem;
+                            outline: none;
+                            resize: none;
+                            color: inherit;
+                        }
+
+                        .react-flow-3d-mode .react-flow__viewport {
+                            perspective: 1000px;
+                            transform: scale(1) translate(0px, 0px) rotateX(60deg) rotateZ(0deg);
+                            transition: transform 0.5s;
+                        }
+                        .react-flow-3d-mode .react-flow__node {
+                            transform: rotateX(-60deg) rotateZ(0deg);
+                            
+                        }
+                        .react-flow-3d-mode .react-flow__edge-path[data-node-type='career'] { --edge-color: hsl(28 90% 60%); }
+                        .react-flow-3d-mode .react-flow__edge-path[data-node-type='education'] { --edge-color: hsl(210 90% 60%); }
+                        .react-flow-3d-mode .react-flow__edge-path[data-node-type='financial'] { --edge-color: hsl(140 80% 50%); }
+                        .react-flow-3d-mode .react-flow__edge-path[data-node-type='lifeEvent'] { --edge-color: hsl(330 90% 65%); }
+                        .react-flow-3d-mode .react-flow__edge-path[data-node-type='goal'] { --edge-color: hsl(270 90% 65%); }
+                        .react-flow-3d-mode .react-flow__edge-path[data-node-type='other'] { --edge-color: hsl(180 80% 50%); }
+                        
+                        .react-flow-3d-mode .react-flow__edge-path {
+                            stroke-width: 10;
+                            stroke: var(--edge-color, hsl(var(--primary)));
+                            filter: none;
+                            stroke-dasharray: 1 12;
+                            stroke-linecap: round;
+                        }
+
+
+                    `}</style>
+                </div>
             </div>
             <div className={cn('pt-8 pb-8 flex-shrink-0 w-full', isExpanded && 'hidden')}>
                 <AIPlanGenerator onGenerate={handleAIGenerate} />
