@@ -302,7 +302,7 @@ const GuideLines = ({ nodes, show, type, direction, timeScale }: { nodes: Node[]
     );
 };
 
-function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSelectedNode, onTemplateLoad, selectedNode, connectingNodeId, setConnectingNodeId, onDeleteNode, isExpanded, setIsExpanded, onNodeDragStop, timeScale, setTimeScale, is3dMode, setIs3dMode, onLayout }: any) {
+function LifePlanCanvas({ nodes, edges, onNodesChange, setEdges, setSelectedNode, onTemplateLoad, selectedNode, connectingNodeId, setConnectingNodeId, onDeleteNode, isExpanded, setIsExpanded, onNodeDragStop, timeScale, setTimeScale, is3dMode, setIs3dMode, onFocusNode, onLayout }: any) {
   const { fitView } = useReactFlow();
   const [layoutDirection, setLayoutDirection] = useState<'TB' | 'LR'>('LR');
   const [showYearGuides, setShowYearGuides] = useState(false);
@@ -411,10 +411,10 @@ function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSe
                 <Button variant="ghost" size="icon" onClick={() => fitView({ duration: 500 })} title="Fit View">
                     <ZoomIn className="h-5 w-5"/>
                 </Button>
-                <Button variant="ghost" size="icon" onClick={() => { setLayoutDirection('TB'); }} title="Top-to-Bottom Layout">
+                <Button variant="ghost" size="icon" onClick={() => { onLayout('TB'); setLayoutDirection('TB'); }} title="Top-to-Bottom Layout">
                     <LayoutIcon className="h-5 w-5"/>
                 </Button>
-                <Button variant="ghost" size="icon" onClick={() => { setLayoutDirection('LR'); }} title="Left-to-Right Layout">
+                <Button variant="ghost" size="icon" onClick={() => { onLayout('LR'); setLayoutDirection('LR'); }} title="Left-to-Right Layout">
                     <Rows className="h-5 w-5"/>
                 </Button>
                 <Slider defaultValue={[timeScale]} min={0.25} max={4} step={0.25} onValueChange={(value) => setTimeScale(value[0])} className="w-32" />
@@ -584,15 +584,15 @@ function LifePlanPageContent({
 
     const onNodeDragStop = useSystemNodeSnapper(nodes, setNodes);
 
-    const onLayout = useCallback((direction: 'TB' | 'LR') => {
-        const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(nodes, edges, { direction, timeScale, is3dMode });
+    const onLayout = useCallback((direction: 'TB' | 'LR', currentNodes: Node[], currentEdges: Edge[]) => {
+        const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(currentNodes, currentEdges, { direction, timeScale, is3dMode });
         setNodes([...layoutedNodes]);
         setEdges([...layoutedEdges]);
         window.requestAnimationFrame(() => fitView({ duration: 500 }));
-    }, [nodes, edges, setNodes, setEdges, fitView, timeScale, is3dMode]);
+    }, [setNodes, setEdges, fitView, timeScale, is3dMode]);
 
     useEffect(() => {
-        onLayout('LR');
+        onLayout('LR', nodes, edges);
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [timeScale, is3dMode]);
 
@@ -749,7 +749,7 @@ function LifePlanPageContent({
                 setTimeScale={setTimeScale}
                 is3dMode={is3dMode}
                 setIs3dMode={setIs3dMode}
-                onLayout={onLayout}
+                onLayout={(direction: 'TB' | 'LR') => onLayout(direction, nodes, edges)}
                 />
             </div>
             <div className={cn('pt-8 pb-8 flex-shrink-0 w-full', isExpanded && 'hidden')}>
