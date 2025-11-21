@@ -227,7 +227,7 @@ export function NodeEditor({ selectedNode, onNodeDataChange, closeEditor, startC
       </CardContent>
       <div className="p-4 space-y-2 mt-auto">
         <Separator className="my-2" />
-        {!isSystemNode && <Button onClick={startConnecting} className="w-full" variant="outline">
+        {!isSystemNode && <Button onClick={startConnecting} className="w-full" variant="outline" size="lg">
             <Zap className="mr-2 h-4 w-4" />
             Connect to another node
         </Button>}

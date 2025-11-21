@@ -1,4 +1,3 @@
-
 'use client';
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import ReactFlow, {
@@ -64,7 +63,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
-import dagre from 'dagre';
 import { Textarea } from '@/components/ui/textarea';
 import { LifePlanTimeline } from '@/components/life-plan/LifePlanTimeline';
 import { ContactManager } from '@/components/life-plan/resources/ContactManager';
@@ -97,9 +95,6 @@ const nodeMenu = [
   { type: 'goal', label: 'Goal', icon: Flag, color: 'purple' },
   { type: 'other', label: 'Note', icon: Zap, color: 'teal' },
 ];
-
-const dagreGraph = new dagre.graphlib.Graph({ multigraph: true });
-dagreGraph.setDefaultEdgeLabel(() => ({}));
 
 const defaultNodeWidth = 208;
 const defaultNodeHeight = 88;
@@ -352,6 +347,7 @@ const GuideLines = ({ nodes, show, type, direction, timeScale }: { nodes: Node[]
     );
 };
 
+
 function LifePlanPageContent({
   activeTab,
   setActiveTab,
@@ -375,8 +371,7 @@ function LifePlanPageContent({
         const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(currentNodes, currentEdges, { direction, timeScale: scale, is3dMode: is3d });
         setNodes([...layoutedNodes]);
         setEdges([...layoutedEdges]);
-        window.requestAnimationFrame(() => fitView({ duration: 500, padding: 0.1 }));
-    }, [setNodes, setEdges, fitView]);
+    }, [setNodes, setEdges]);
     
     useEffect(() => {
         onLayout(layoutDirection, nodes, edges, timeScale, is3dMode);
@@ -387,9 +382,9 @@ function LifePlanPageContent({
     const passedNodes = useMemo(() => {
         return nodes.map((node: Node) => ({
         ...node,
-        data: { ...node.data, is3dMode },
+        data: { ...node.data, is3dMode, connecting: node.id === connectingNodeId },
         }));
-    }, [nodes, is3dMode]);
+    }, [nodes, is3dMode, connectingNodeId]);
 
     const handleNodesChange = (changes: NodeChange[]) => {
       onNodesChange(changes);
@@ -488,6 +483,7 @@ function LifePlanPageContent({
     };
 
     return (
+      <ReactFlowProvider>
         <div className={cn("flex flex-col", isExpanded ? "fixed inset-0 bg-background z-50 p-0 h-screen" : "relative h-[calc(100vh-8rem)]")}>
         <div className="flex flex-col items-center justify-center">
             <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">
@@ -633,7 +629,6 @@ function LifePlanPageContent({
                         closeEditor={() => setSelectedNode(null)}
                         startConnecting={() => {
                             if (selectedNode) {
-                                setNodes((nds: Node[]) => nds.map(n => n.id === selectedNode.id ? {...n, data: { ...n.data, connecting: true }} : n));
                                 setConnectingNodeId(selectedNode.id);
                             }
                             setSelectedNode(null);
@@ -651,6 +646,29 @@ function LifePlanPageContent({
                             filter: drop-shadow(0 0 5px hsl(var(--primary)));
                         }
 
+                        .react-flow__handle {
+                            width: 12px;
+                            height: 12px;
+                            border-radius: 99px;
+                            border-width: 2px;
+                            border-color: hsl(var(--primary));
+                            background: hsl(var(--background));
+                        }
+
+                        .react-flow__handle.connecting,
+                        [data-connecting='true'] .react-flow__handle {
+                            animation: pulse 1.5s infinite;
+                        }
+
+                        @keyframes pulse {
+                            0%, 100% {
+                                box-shadow: 0 0 0 0 hsl(var(--primary) / 0.7);
+                            }
+                            50% {
+                                box-shadow: 0 0 0 10px hsl(var(--primary) / 0);
+                            }
+                        }
+
                         .react-flow__node {
                             --glow-color-career: hsl(28 90% 60%);
                             --glow-color-education: hsl(210 90% 60%);
@@ -663,19 +681,18 @@ function LifePlanPageContent({
                             --glow-color-default: hsl(var(--primary));
                         }
                         
-                        .react-flow__node.connecting, 
-                        .react-flow__node[data-connecting='true'],
+                        .react-flow__node.selected,
                         .react-flow__node:hover {
                             box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px var(--glow-color, var(--glow-color-default)), 0 0 15px var(--glow-color, var(--glow-color-default));
                         }
-                        .react-flow__node[data-type='career']:hover, .react-flow__node[data-type='career'][data-connecting='true'] { --glow-color: var(--glow-color-career); }
-                        .react-flow__node[data-type='education']:hover, .react-flow__node[data-type='education'][data-connecting='true'] { --glow-color: var(--glow-color-education); }
-                        .react-flow__node[data-type='financial']:hover, .react-flow__node[data-type='financial'][data-connecting='true'] { --glow-color: var(--glow-color-financial); }
-                        .react-flow__node[data-type='lifeEvent']:hover, .react-flow__node[data-type='lifeEvent'][data-connecting='true'] { --glow-color: var(--glow-color-lifeEvent); }
-                        .react-flow__node[data-type='goal']:hover, .react-flow__node[data-type='goal'][data-connecting='true'] { --glow-color: var(--glow-color-goal); }
-                        .react-flow__node[data-type='health']:hover, .react-flow__node[data-type='health'][data-connecting='true'] { --glow-color: var(--glow-color-health); }
-                        .react-flow__node[data-type='other']:hover, .react-flow__node[data-type='other'][data-connecting='true'] { --glow-color: var(--glow-color-other); }
-                        .react-flow__node[data-type='system']:hover, .react-flow__node[data-type='system'][data-connecting='true'] { --glow-color: var(--glow-color-system); }
+                        .react-flow__node[data-type='career']:hover, .react-flow__node[data-type='career'].selected { --glow-color: var(--glow-color-career); }
+                        .react-flow__node[data-type='education']:hover, .react-flow__node[data-type='education'].selected { --glow-color: var(--glow-color-education); }
+                        .react-flow__node[data-type='financial']:hover, .react-flow__node[data-type='financial'].selected { --glow-color: var(--glow-color-financial); }
+                        .react-flow__node[data-type='lifeEvent']:hover, .react-flow__node[data-type='lifeEvent'].selected { --glow-color: var(--glow-color-lifeEvent); }
+                        .react-flow__node[data-type='goal']:hover, .react-flow__node[data-type='goal'].selected { --glow-color: var(--glow-color-goal); }
+                        .react-flow__node[data-type='health']:hover, .react-flow__node[data-type='health'].selected { --glow-color: var(--glow-color-health); }
+                        .react-flow__node[data-type='other']:hover, .react-flow__node[data-type='other'].selected { --glow-color: var(--glow-color-other); }
+                        .react-flow__node[data-type='system']:hover, .react-flow__node[data-type='system'].selected { --glow-color: var(--glow-color-system); }
 
                         .react-flow__resize-control.handle {
                             width: 10px;
@@ -741,6 +758,7 @@ function LifePlanPageContent({
             <ResourcesView />
         </TabsContent>
       </div>
+    </ReactFlowProvider>
     );
 }
 
@@ -758,14 +776,14 @@ export default function LifePlanPage() {
             isExpanded ? "fixed inset-0 bg-background z-50 p-0" : "relative h-[calc(100vh-8rem)]"
         )}
     >
-        <ReactFlowProvider>
+        
           <LifePlanPageContent
             activeTab={activeTab}
             setActiveTab={setActiveTab}
             isExpanded={isExpanded}
             setIsExpanded={setIsExpanded}
           />
-        </ReactFlowProvider>
+        
     </Tabs>
     );
 }

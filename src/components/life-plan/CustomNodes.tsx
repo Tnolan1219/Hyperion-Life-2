@@ -36,6 +36,7 @@ type CustomNodeProps = {
     linkedContact?: { id: string, name: string };
     notes?: string;
     htmlContent?: string;
+    connecting?: boolean;
   };
   type: keyof typeof iconMap;
   selected: boolean;
@@ -166,8 +167,9 @@ const CustomNode = ({ data, type, selected, is3dMode }: CustomNodeProps) => {
         `!w-52 shadow-lg rounded-lg border-2 bg-card/80 backdrop-blur-sm transition-all duration-300`,
         selected ? 'border-primary shadow-lg shadow-primary/20' : `border-${colorClass}-400/20`
       )}
+      data-connecting={data.connecting}
     >
-      <Handle type="target" position={Position.Top} className="!bg-primary/50" isConnectable={true} />
+      <Handle type="target" position={Position.Top} isConnectable={true} />
       <CardHeader className="p-3">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-2">
@@ -205,7 +207,6 @@ const CustomNode = ({ data, type, selected, is3dMode }: CustomNodeProps) => {
       <Handle
         type="source"
         position={Position.Bottom}
-        className="!bg-primary/50"
         isConnectable={true}
       />
     </Card>
