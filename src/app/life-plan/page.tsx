@@ -302,7 +302,7 @@ const GuideLines = ({ nodes, show, type, direction, timeScale }: { nodes: Node[]
     );
 };
 
-function LifePlanCanvas({ nodes, edges, onNodesChange, setEdges, setSelectedNode, onFocusNode, onTemplateLoad, selectedNode, connectingNodeId, setConnectingNodeId, onDeleteNode, isExpanded, setIsExpanded, onNodeDragStop, timeScale, setTimeScale, is3dMode, setIs3dMode, onLayout }: any) {
+function LifePlanCanvas({ nodes, edges, onNodesChange, setNodes, setEdges, setSelectedNode, onTemplateLoad, selectedNode, connectingNodeId, setConnectingNodeId, onDeleteNode, isExpanded, setIsExpanded, onNodeDragStop, timeScale, setTimeScale, is3dMode, setIs3dMode, onLayout }: any) {
   const { fitView } = useReactFlow();
   const [layoutDirection, setLayoutDirection] = useState<'TB' | 'LR'>('LR');
   const [showYearGuides, setShowYearGuides] = useState(false);
@@ -319,7 +319,7 @@ function LifePlanCanvas({ nodes, edges, onNodesChange, setEdges, setSelectedNode
     if (onLayout) {
       onLayout(layoutDirection);
     }
-  }, [timeScale, is3dMode, layoutDirection, onLayout]);
+  }, [layoutDirection, onLayout]);
 
   return (
     <div className={cn("flex-grow h-full relative", is3dMode && 'react-flow-3d-mode')}>
@@ -568,24 +568,6 @@ function useSystemNodeSnapper(nodes: Node[], setNodes: (nodes: Node[] | ((prevNo
     return onNodeDragStop;
 }
 
-const useOnLayout = (
-  setNodes: (nodes: Node[]) => void,
-  setEdges: (edges: Edge[]) => void,
-  fitView: (options?: { duration?: number }) => void
-) => {
-  return useCallback((nodes: Node[], edges: Edge[], direction: 'TB' | 'LR', timeScale: number, is3dMode: boolean) => {
-    const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
-      nodes,
-      edges,
-      { direction, timeScale, is3dMode }
-    );
-    setNodes([...layoutedNodes]);
-    setEdges([...layoutedEdges]);
-    window.requestAnimationFrame(() => fitView({ duration: 500 }));
-  }, [setNodes, setEdges, fitView]);
-};
-
-
 function LifePlanPageContent({
   activeTab,
   setActiveTab,
@@ -611,7 +593,8 @@ function LifePlanPageContent({
 
     useEffect(() => {
         onLayout('LR');
-    }, [onLayout]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [timeScale, is3dMode]);
 
     const handleNodesChange = (changes: NodeChange[]) => {
       onNodesChange(changes);
@@ -812,6 +795,3 @@ export default function LifePlanPage() {
     </Tabs>
   );
 }
-
-
-    
