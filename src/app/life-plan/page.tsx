@@ -115,7 +115,6 @@ const defaultNodeWidth = 208;
 const YEAR_GAP_HORIZONTAL = 350;
 const NODE_GAP_VERTICAL = 120;
 
-
 const getLayoutedElements = (
   nodes: Node[],
   edges: Edge[],
@@ -511,10 +510,7 @@ function LifePlanCanvas() {
                                                 </DropdownMenuItem>
                                             ))}
                                             {savedPlans && savedPlans.length > 0 && <DropdownMenuSeparator />}
-                                            <Dialog>
-                                                <DialogTrigger asChild><DropdownMenuItem onSelect={(e) => e.preventDefault()}><Save className="mr-2 h-4 w-4" /> Save Current Plan...</DropdownMenuItem></DialogTrigger>
-                                                <SavePlanDialog onSave={handleSavePlan} />
-                                            </Dialog>
+                                            <SavePlanDialog onSave={handleSavePlan} />
                                         </DropdownMenuContent>
                                     </DropdownMenu>
                                 </div>
